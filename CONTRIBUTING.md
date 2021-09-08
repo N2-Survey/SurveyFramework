@@ -58,11 +58,37 @@ poetry shell
 pre-commit install
 ```
 
-3. Done!
+3. Done!:tada:
 
 
 ## Windows
-TBD
+1. Install prerequisites (skip if you already have it):
+  - `conda` - see the [anaconda](https://www.anaconda.com/products/individual-d)
+  - `git` - see [here](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+  - `poetry` - see the [instructions](https://python-poetry.org/docs/master/#windows-powershell-install-instructions). **NOTE**: Most probably, you will have to add `%USERPROFILE%\AppData\Roaming\Python\Scripts` to your `PATH`. For that, *Control Panel>User Accounts>User Accounts>Change my environment variables>Edit...(under User variables for <username>)* (see [here](http://www.kscodes.com/misc/how-to-set-path-in-windows-without-admin-rights/))
+
+2. In your PowerShell (with `conda`)
+```bash
+# Clone the project
+git clone https://github.com/N2-Survey/SurveyFramework.git
+
+# Go to the project folder
+cd SurveyFramework
+
+# Create a virtual env for the project
+conda create -n n2survey python=3.9
+
+# Activate the virtual environment
+conda activate n2survey
+
+# Install all dependencies
+poetry install
+
+# Add pre-commit hooks (optional)
+pre-commit install
+```
+
+3. Done!:tada:
 
 ## MacOS
 TBD
