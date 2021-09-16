@@ -1,17 +1,17 @@
-# flake8: noqa
 import re
 import sys
-import bs4
-from bs4 import BeautifulSoup
-
 from json import dump
 from typing import Dict
+
+import bs4
+from bs4 import BeautifulSoup
 
 
 def _text_refining(s: str) -> str:
     matched = ["\n", "\t", "\xa0"]
     res_s = re.sub("|".join(matched), "", s)
     return res_s
+
 
 def _sectioninfo_text_parse(bsString: str) -> str:
     text = ""
@@ -20,6 +20,7 @@ def _sectioninfo_text_parse(bsString: str) -> str:
         if bool(sp.string):
             text += _text_refining(sp.string)
     return text
+
 
 def _find_choices(resp: bs4.element.Tag) -> dict:
     cates = dict()
@@ -30,7 +31,9 @@ def _find_choices(resp: bs4.element.Tag) -> dict:
         # A#other case
         if bool(category.contingentQuestion):
             category_val = category.contingentQuestion.attrs["varName"]
-            category_lab = _text_refining(category.contingentQuestion.find("text").get_text())
+            category_lab = _text_refining(
+                category.contingentQuestion.find("text").get_text()
+            )
         cates[category_lab] = category_val
     return cates
 
@@ -53,13 +56,19 @@ def _integrate_subquestions(question: bs4.element.Tag, section_id: int) -> list:
                 "is_sub": True,
                 "choices": _find_choices(question.response),
                 "section_id": section_id,
-                "qustion group": question.response.attrs["varName"]
-            })
+                "qustion group": question.response.attrs["varName"],
+            }
+        )
     return res_subquestions
 
 
-def _store_questions(question: bs4.element.Tag, section_id: int, question_content: str, question_desc: str) -> list:
-    '''
+def _store_questions(
+    question: bs4.element.Tag,
+    section_id: int,
+    question_content: str,
+    question_desc: str,
+) -> list:
+    """
     question include:
         1. multiple choice question (w/o descriptions)
             1.1 multi choice + other choice item + "other" type question. See F3T
@@ -69,47 +78,51 @@ def _store_questions(question: bs4.element.Tag, section_id: int, question_conten
             2.2 pure single choice
         3. pure "text" question
         4. "comment" type question
-    '''
+    """
     store_question = list()
     resps = question.find_all("response")
 
     for resp in resps:
-        len_cate = len(resp.find_all('category'))
+        len_cate = len(resp.find_all("category"))
         # multiple choice or contingent-> other + multiple choice (eg. "F3T")
         if len_cate == 1:
             if bool(resp.category.contingentQuestion):
                 is_other = True
-                name = resp.attrs["varName"]+'[other]'
-                question_type = 'other text'
-                question_choices = resp.category.contingentQuestion.find('text').string # other
+                name = resp.attrs["varName"] + "[other]"
+                question_type = "other text"
+                question_choices = resp.category.contingentQuestion.find(
+                    "text"
+                ).string  # other
             else:
                 is_other = False
                 name = resp.attrs["varName"]
-                question_type = 'multi choice'
-                question_choices = _find_choices(resp)            
+                question_type = "multi choice"
+                question_choices = _find_choices(resp)
         # single choice or contingent -> other + single choice (eg. "A1other")
         elif len_cate > 1:
             if bool(resp.category.contingentQuestion):
                 is_other = True
-                name = resp.attrs["varName"]+'[other]'
-                question_type = 'other text'
-                question_choices = resp.category.contingentQuestion.find('text').string # other
+                name = resp.attrs["varName"] + "[other]"
+                question_type = "other text"
+                question_choices = resp.category.contingentQuestion.find(
+                    "text"
+                ).string  # other
             else:
                 is_other = False
                 name = resp.attrs["varName"]
-                question_type = 'single choice'
-                question_choices = _find_choices(resp)  
+                question_type = "single choice"
+                question_choices = _find_choices(resp)
         # here len_cate == 0 which is comment type (eg. "F5a1_comment") or pure text (eg. "last")
         else:
             question_choices = {}
             is_other = False
             # "comment" type question
             if len(resps) == 2:
-                question_type = 'comment text'
+                question_type = "comment text"
                 name = resps[-1].attrs["varName"] + "[comment]"
             # pure "text" type
             else:
-                question_type = 'text'
+                question_type = "text"
                 name = question.response.attrs["varName"]
 
         store_question.append(
@@ -122,8 +135,9 @@ def _store_questions(question: bs4.element.Tag, section_id: int, question_conten
                 "is_sub": False,
                 "choices": question_choices,
                 "section_id": section_id,
-                "qustion group": resps[-1].attrs["varName"]
-            })
+                "qustion group": resps[-1].attrs["varName"],
+            }
+        )
     return store_question
 
 
@@ -133,9 +147,10 @@ def _concat_question_text(questions: list) -> str:
         res_desc += _html_purify(question.string)
     return res_desc
 
-def _html_purify(htmls: str)-> str:
+
+def _html_purify(htmls: str) -> str:
     return _text_refining(BeautifulSoup(htmls, "html.parser").get_text())
- 
+
 
 def decompose_results(sections, questions):
     with open("../data/tmp/Sections.dat", "w") as fs:
@@ -144,7 +159,7 @@ def decompose_results(sections, questions):
         dump(questions, fq)
 
 
-def read_lime_questionnaire_structure(filepath: str)-> Dict[dict, dict]:
+def read_lime_questionnaire_structure(filepath: str) -> Dict[dict, dict]:
     """
     Reads questionnaire structure XML file
 
@@ -167,7 +182,7 @@ def read_lime_questionnaire_structure(filepath: str)-> Dict[dict, dict]:
                 {
                     "name": "A1",
                     "question": "What is your year of birth?",
-                    "description": "Please use the following format: 'xxxx' , e.g. 1989",
+                    "description": "Please use the following format: 'xxxx', e.g. 1989",
                     "question type": "sigle choice",
                     "is_other": False,
                     "is_sub": False,
@@ -183,7 +198,7 @@ def read_lime_questionnaire_structure(filepath: str)-> Dict[dict, dict]:
                     "is_other": True,
                     "is_sub": False,
                     "choices": {},
-                    "section_id": 13901, 
+                    "section_id": 13901,
                     "question group": A4
                 },
                 {
@@ -195,7 +210,7 @@ def read_lime_questionnaire_structure(filepath: str)-> Dict[dict, dict]:
                     "is_sub": False,
                     "chioces": {"Parents": "Y"},
                     "section_id": 13907 ,
-                    "question group": C5T     
+                    "question group": C5T
                 },
                 ...
             }
@@ -220,7 +235,7 @@ def read_lime_questionnaire_structure(filepath: str)-> Dict[dict, dict]:
 
     for section in sections:
         section_id = section.attrs["id"]
-        section_title = section.sectionInfo.find('text').get_text()
+        section_title = section.sectionInfo.find("text").get_text()
 
         for info in section.find_all("sectionInfo"):
             section_text = info.find_all("text")
@@ -228,7 +243,9 @@ def read_lime_questionnaire_structure(filepath: str)-> Dict[dict, dict]:
             for t in section_text:
                 text_p += _sectioninfo_text_parse(t.string)
             section_info = text_p
-        res_sections.append({"id": section_id, "title": section_title, "info": section_info})
+        res_sections.append(
+            {"id": section_id, "title": section_title, "info": section_info}
+        )
         questions = section.find_all("question")
 
         for question in questions:
@@ -238,7 +255,9 @@ def read_lime_questionnaire_structure(filepath: str)-> Dict[dict, dict]:
                 question_desc = _concat_question_text(question_descs)
             else:
                 question_desc = ""
-            stored_questions = _store_questions(question, section_id, question_content, question_desc)
+            stored_questions = _store_questions(
+                question, section_id, question_content, question_desc
+            )
             subquestion_dict = list()
             if bool(question.subQuestion):
                 subquestion_dict = _integrate_subquestions(question, section_id)
@@ -247,4 +266,3 @@ def read_lime_questionnaire_structure(filepath: str)-> Dict[dict, dict]:
     ans = {"sections": res_sections, "questions": res_questions}
 
     return ans
-
