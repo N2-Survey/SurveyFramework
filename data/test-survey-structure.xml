@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<questionnaire id="111861">
+  <title>All question types for N2 Framework</title>
+  <investigator/>
+  <dataCollector/>
+  <section id="16">
+    <sectionInfo>
+      <position>title</position>
+      <text>Group 1</text>
+      <administration>self</administration>
+    </sectionInfo>
+    <sectionInfo>
+      <position>before</position>
+      <text>This is Question Group 1</text>
+      <administration>self</administration>
+    </sectionInfo>
+    <question>
+      <text>This is Group 1 Question 1 of type "5 point choice".</text>
+      <response varName="G1Q1">
+        <fixed>
+          <category>
+            <label>1</label>
+            <value>1</value>
+          </category>
+          <category>
+            <label>2</label>
+            <value>2</value>
+          </category>
+          <category>
+            <label>3</label>
+            <value>3</value>
+          </category>
+          <category>
+            <label>4</label>
+            <value>4</value>
+          </category>
+          <category>
+            <label>5</label>
+            <value>5</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 1 Question 2 of type "list dropdown".</text>
+      <response varName="G1Q2">
+        <fixed>
+          <category>
+            <label>Option 1</label>
+            <value>A1</value>
+          </category>
+          <category>
+            <label>Option 2</label>
+            <value>A2</value>
+          </category>
+          <category>
+            <label>Option 3</label>
+            <value>A3</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+  </section>
+</questionnaire>
