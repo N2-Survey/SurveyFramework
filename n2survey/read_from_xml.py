@@ -1,13 +1,14 @@
 import re
-import sys
 from json import dump
 from typing import Dict
 
-import bs4
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 
 def _text_refining(s: str) -> str:
+    """
+    Replacing unnecessary indents, linebreaks, and unicodes due to consistent processing
+    """
     matched = ["\n", "\t", "\xa0"]
     res_s = re.sub("|".join(matched), "", s)
     return res_s
@@ -22,7 +23,28 @@ def _sectioninfo_text_parse(bsString: str) -> str:
     return text
 
 
-def _find_choices(resp: bs4.element.Tag) -> dict:
+def _assemble_section(section: Tag, section_id: int) -> dict:
+    """
+    assemble all contents for each section as a dict
+    """
+    section_info = ""
+    for info in section.find_all("sectionInfo"):
+        if info.position.get_text() == "title":
+            section_title = section.sectionInfo.find("text").get_text()
+        else:
+            section_text = info.find_all("text")
+            text_p = ""
+            for t in section_text:
+                text_p += _sectioninfo_text_parse(t.string)
+            section_info = text_p
+    section_dict = {"id": section_id, "title": section_title, "info": section_info}
+    return section_dict
+
+
+def _find_choices(resp: Tag) -> dict:
+    """
+    find all the choices belong to each question
+    """
     cates = dict()
     categories = resp.find_all("category")
     for category in categories:
@@ -38,7 +60,12 @@ def _find_choices(resp: bs4.element.Tag) -> dict:
     return cates
 
 
-def _integrate_subquestions(question: bs4.element.Tag, section_id: int) -> list:
+def _integrate_subquestions(
+    question: Tag, question_content: str, section_id: int
+) -> list:
+    """
+    extract subquestions from data and make them as separated columns
+    """
     res_subquestions = list()
     subs = question.find_all("subQuestion")
     if question.response.category is not None:
@@ -49,7 +76,7 @@ def _integrate_subquestions(question: bs4.element.Tag, section_id: int) -> list:
         res_subquestions.append(
             {
                 "name": sub["varName"],
-                "question": sub.find("text").get_text(),
+                "question": question_content + "[" + sub.find("text").get_text() + "]",
                 "description": "",
                 "question type": sub_type,
                 "is_other": False,
@@ -63,7 +90,7 @@ def _integrate_subquestions(question: bs4.element.Tag, section_id: int) -> list:
 
 
 def _store_questions(
-    question: bs4.element.Tag,
+    question: Tag,
     section_id: int,
     question_content: str,
     question_desc: str,
@@ -89,6 +116,7 @@ def _store_questions(
             if bool(resp.category.contingentQuestion):
                 is_other = True
                 name = resp.attrs["varName"] + "[other]"
+                question_content = question_content + "[other]"
                 question_type = "other text"
                 question_choices = resp.category.contingentQuestion.find(
                     "text"
@@ -100,18 +128,26 @@ def _store_questions(
                 question_choices = _find_choices(resp)
         # single choice or contingent -> other + single choice (eg. "A1other")
         elif len_cate > 1:
-            if bool(resp.category.contingentQuestion):
-                is_other = True
-                name = resp.attrs["varName"] + "[other]"
-                question_type = "other text"
-                question_choices = resp.category.contingentQuestion.find(
-                    "text"
-                ).string  # other
-            else:
-                is_other = False
-                name = resp.attrs["varName"]
-                question_type = "single choice"
-                question_choices = _find_choices(resp)
+            is_other = False
+            name = resp.attrs["varName"]
+            question_type = "single choice"
+            question_choices = _find_choices(resp)
+            if bool(resp.find_all("category")[-1].contingentQuestion):
+                store_question.append(
+                    {
+                        "name": resp.attrs["varName"] + "[other]",
+                        "question": question_content,
+                        "description": question_desc,
+                        "question type": "other text",
+                        "is_other": True,
+                        "is_sub": False,
+                        "choices": resp.find_all("category")[-1]
+                        .contingentQuestion.find("text")
+                        .stringquestion_choices,
+                        "section_id": section_id,
+                        "qustion group": resps[-1].attrs["varName"],
+                    }
+                )
         # here len_cate == 0 which is comment type (eg. "F5a1_comment") or pure text (eg. "last")
         else:
             question_choices = {}
@@ -142,24 +178,56 @@ def _store_questions(
 
 
 def _concat_question_text(questions: list) -> str:
+    """
+    some question text contains long paragraphs or separated texts,
+    use thisfunc to concate them to one.
+    """
     res_desc = ""
     for question in questions:
         res_desc += _html_purify(question.string)
     return res_desc
 
 
+def _assemble_questions(question: Tag, section_id: int) -> dict:
+    """
+    assemble all contents for each question
+    """
+    question_content = _html_purify(question.find("text").string)
+    if question.find("directive") is not None:
+        question_descs = question.find("directive").find_all("text")
+        question_desc = _concat_question_text(question_descs)
+    else:
+        question_desc = ""
+    stored_questions = _store_questions(
+        question, section_id, question_content, question_desc
+    )
+    subquestion_dict = list()
+    if bool(question.subQuestion):
+        subquestion_dict = _integrate_subquestions(
+            question, question_content, section_id
+        )
+    return stored_questions + subquestion_dict
+
+
 def _html_purify(htmls: str) -> str:
+    """
+    after parsing from xml, some text still in form of html, use this func to parse it out
+    """
     return _text_refining(BeautifulSoup(htmls, "html.parser").get_text())
 
 
 def decompose_results(sections, questions):
+    """
+    dumps the "Sections" and "Questions" part to file
+    to make it easy for using.
+    """
     with open("../data/tmp/Sections.dat", "w") as fs:
         dump(sections, fs)
     with open("../data/tmp/Questions.dat", "w") as fq:
         dump(questions, fq)
 
 
-def read_lime_questionnaire_structure(filepath: str) -> Dict[dict, dict]:
+def read_lime_questionnaire_structure(filepath: str) -> Dict[str, dict]:
     """
     Reads questionnaire structure XML file
 
@@ -182,18 +250,18 @@ def read_lime_questionnaire_structure(filepath: str) -> Dict[dict, dict]:
                 {
                     "name": "A1",
                     "question": "What is your year of birth?",
-                    "description": "Please use the following format: 'xxxx', e.g. 1989",
+                    "description": "Please use the following format: "xxxx", e.g. 1989",
                     "question type": "sigle choice",
                     "is_other": False,
                     "is_sub": False,
-                    "choices": {"I don't want to answer this question": 'A2', ...},
+                    "choices": {"I don't want to answer this question": "A2", ...},
                     "section_id": 13901,
                     "question group": A1
                 },
                 {
                     "name": "A4[other]",
-                    "question": "What is your year of birth? other",
-                    "description": "Please use the following format: 'xxxx' , e.g. 1989",
+                    "question": "What is your year of birth? [other]",
+                    "description": "Please use the following format: "xxxx" , e.g. 1989",
                     "question type": "text",
                     "is_other": True,
                     "is_sub": False,
@@ -221,47 +289,22 @@ def read_lime_questionnaire_structure(filepath: str) -> Dict[dict, dict]:
         ValueError: Provided file has unexpected structure
     """
     ans = dict()
-    try:
-        f = open(filepath, "r")
-    except OSError:
-        print(f"{filepath} is an invalid xml file")
-        sys.exit()
     f = open(filepath, "r")
 
     soup = BeautifulSoup(f, "xml")
-    sections = soup.find_all("section")
     res_sections = list()
     res_questions = list()
+    sections = soup.find_all("section")
 
     for section in sections:
         section_id = section.attrs["id"]
-        section_title = section.sectionInfo.find("text").get_text()
-
-        for info in section.find_all("sectionInfo"):
-            section_text = info.find_all("text")
-            text_p = ""
-            for t in section_text:
-                text_p += _sectioninfo_text_parse(t.string)
-            section_info = text_p
-        res_sections.append(
-            {"id": section_id, "title": section_title, "info": section_info}
-        )
+        section_dict = _assemble_section(section, section_id)
+        res_sections.append(section_dict)
         questions = section.find_all("question")
 
         for question in questions:
-            question_content = _html_purify(question.find("text").string)
-            if question.find("directive") is not None:
-                question_descs = question.find("directive").find_all("text")
-                question_desc = _concat_question_text(question_descs)
-            else:
-                question_desc = ""
-            stored_questions = _store_questions(
-                question, section_id, question_content, question_desc
-            )
-            subquestion_dict = list()
-            if bool(question.subQuestion):
-                subquestion_dict = _integrate_subquestions(question, section_id)
-            res_questions += subquestion_dict + stored_questions
+            question_dict = _assemble_questions(question, section_id)
+            res_questions += question_dict
 
     ans = {"sections": res_sections, "questions": res_questions}
 
