@@ -1,0 +1,832 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<questionnaire id="111861">
+  <title>All question types for N2 Framework</title>
+  <investigator/>
+  <dataCollector/>
+  <questionnaireInfo>
+    <position>before</position>
+    <text>Welcome to the test survey.</text>
+    <administration>self</administration>
+  </questionnaireInfo>
+  <questionnaireInfo>
+    <position>after</position>
+    <text>This is the end of the test survey.</text>
+    <administration>self</administration>
+  </questionnaireInfo>
+  <section id="16">
+    <sectionInfo>
+      <position>title</position>
+      <text>Group 1</text>
+      <administration>self</administration>
+    </sectionInfo>
+    <sectionInfo>
+      <position>before</position>
+      <text>This is Question Group 1</text>
+      <administration>self</administration>
+    </sectionInfo>
+    <question>
+      <text>This is Group 1 Question 1 of type "5 point choice".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G1Q1
+
+ </text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G1Q1">
+        <fixed>
+          <category>
+            <label>1</label>
+            <value>1</value>
+          </category>
+          <category>
+            <label>2</label>
+            <value>2</value>
+          </category>
+          <category>
+            <label>3</label>
+            <value>3</value>
+          </category>
+          <category>
+            <label>4</label>
+            <value>4</value>
+          </category>
+          <category>
+            <label>5</label>
+            <value>5</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 1 Question 2 of type "list dropdown".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G1Q2
+
+ </text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G1Q2">
+        <fixed>
+          <category>
+            <label>Option 1</label>
+            <value>A1</value>
+          </category>
+          <category>
+            <label>Option 2</label>
+            <value>A2</value>
+          </category>
+          <category>
+            <label>Option 3</label>
+            <value>A3</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 1 Question 3 of type "list radio".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G1Q3</text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G1Q3">
+        <fixed>
+          <category>
+            <label>Option 1</label>
+            <value>A1</value>
+          </category>
+          <category>
+            <label>Option 2</label>
+            <value>A2</value>
+          </category>
+          <category>
+            <label>Option 3</label>
+            <value>A3</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 1 Question 4 of type "list with comment".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G1Q4</text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G1Q4">
+        <fixed>
+          <category>
+            <label>Option 1</label>
+            <value>A1</value>
+          </category>
+          <category>
+            <label>Option 2</label>
+            <value>A2</value>
+          </category>
+          <category>
+            <label>Option 3</label>
+            <value>A3</value>
+          </category>
+        </fixed>
+      </response>
+      <response varName="G1Q4_comment">
+        <free>
+          <format>longtext</format>
+          <length>40</length>
+          <label/>
+        </free>
+      </response>
+    </question>
+  </section>
+  <section id="17">
+    <sectionInfo>
+      <position>title</position>
+      <text>Group 2</text>
+      <administration>self</administration>
+    </sectionInfo>
+    <sectionInfo>
+      <position>before</position>
+      <text>This is Question Group 2</text>
+      <administration>self</administration>
+    </sectionInfo>
+    <question>
+      <text>This is Group 2 Question 1 of type "array".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G2Q1</text>
+        <administration>self</administration>
+      </directive>
+      <subQuestion varName="G2Q1_SQ001">
+        <text>How do you rate this?</text>
+      </subQuestion>
+      <subQuestion varName="G2Q1_SQ002">
+        <text>How do you rate that?</text>
+      </subQuestion>
+      <response varName="G2Q1">
+        <fixed>
+          <category>
+            <label>Option 1</label>
+            <value>A1</value>
+          </category>
+          <category>
+            <label>Option 2</label>
+            <value>A2</value>
+          </category>
+          <category>
+            <label>Option 3</label>
+            <value>A3</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 2 Question 2 of type "array 10 point choice".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G2Q2</text>
+        <administration>self</administration>
+      </directive>
+      <subQuestion varName="G2Q2_SQ001">
+        <text>How do you rate this?</text>
+      </subQuestion>
+      <subQuestion varName="G2Q2_SQ002">
+        <text>How do you rate that?</text>
+      </subQuestion>
+      <response varName="G2Q2">
+        <fixed>
+          <category>
+            <label>1</label>
+            <value>1</value>
+          </category>
+          <category>
+            <label>2</label>
+            <value>2</value>
+          </category>
+          <category>
+            <label>3</label>
+            <value>3</value>
+          </category>
+          <category>
+            <label>4</label>
+            <value>4</value>
+          </category>
+          <category>
+            <label>5</label>
+            <value>5</value>
+          </category>
+          <category>
+            <label>6</label>
+            <value>6</value>
+          </category>
+          <category>
+            <label>7</label>
+            <value>7</value>
+          </category>
+          <category>
+            <label>8</label>
+            <value>8</value>
+          </category>
+          <category>
+            <label>9</label>
+            <value>9</value>
+          </category>
+          <category>
+            <label>10</label>
+            <value>10</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 2 Question 3 of type "array 5 point choice".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G2Q3</text>
+        <administration>self</administration>
+      </directive>
+      <subQuestion varName="G2Q3_SQ001">
+        <text>How do you rate this?</text>
+      </subQuestion>
+      <subQuestion varName="G2Q3_SQ002">
+        <text>How do you rate that?</text>
+      </subQuestion>
+      <response varName="G2Q3">
+        <fixed>
+          <category>
+            <label>1</label>
+            <value>1</value>
+          </category>
+          <category>
+            <label>2</label>
+            <value>2</value>
+          </category>
+          <category>
+            <label>3</label>
+            <value>3</value>
+          </category>
+          <category>
+            <label>4</label>
+            <value>4</value>
+          </category>
+          <category>
+            <label>5</label>
+            <value>5</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 2 Question 4 of type "array increase/same/decrease".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G2Q4</text>
+        <administration>self</administration>
+      </directive>
+      <subQuestion varName="G2Q4_SQ001">
+        <text>How do you rate this?</text>
+      </subQuestion>
+      <subQuestion varName="G2Q4_SQ002">
+        <text>How do you rate that?</text>
+      </subQuestion>
+      <response varName="G2Q4">
+        <fixed>
+          <category>
+            <label>Increase</label>
+            <value>I</value>
+          </category>
+          <category>
+            <label>Same</label>
+            <value>S</value>
+          </category>
+          <category>
+            <label>Decrease</label>
+            <value>D</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 2 Question 5 of type "array numbers".</text>
+      <text>How do you rate this?</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G2Q5</text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G2Q5_SQ001_SQ001">
+        <free>
+          <format>integer</format>
+          <length>1</length>
+          <label>How do you rate that?</label>
+        </free>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 2 Question 6 of type "array texts".</text>
+      <text>What do you think about this?</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G2Q6</text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G2Q6_SQ001_SQ001">
+        <free>
+          <format>text</format>
+          <length>10</length>
+          <label>What is good about it?</label>
+        </free>
+      </response>
+      <response varName="G2Q6_SQ001_SQ002">
+        <free>
+          <format>text</format>
+          <length>10</length>
+          <label>What is bad about it?</label>
+        </free>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 2 Question 6 of type "array texts".</text>
+      <text>What about that?</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G2Q6</text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G2Q6_SQ002_SQ001">
+        <free>
+          <format>text</format>
+          <length>10</length>
+          <label>What is good about it?</label>
+        </free>
+      </response>
+      <response varName="G2Q6_SQ002_SQ002">
+        <free>
+          <format>text</format>
+          <length>10</length>
+          <label>What is bad about it?</label>
+        </free>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 2 Question 7 of type "array yes/no/uncertain".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G2Q7</text>
+        <administration>self</administration>
+      </directive>
+      <subQuestion varName="G2Q7_SQ001">
+        <text>How do you rate this?</text>
+      </subQuestion>
+      <subQuestion varName="G2Q7_SQ002">
+        <text>How do you rate that?</text>
+      </subQuestion>
+      <response varName="G2Q7">
+        <fixed>
+          <category>
+            <label>Yes</label>
+            <value>Y</value>
+          </category>
+          <category>
+            <label>Uncertain</label>
+            <value>U</value>
+          </category>
+          <category>
+            <label>No</label>
+            <value>N</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 2 Question 8 of type "array by column".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G2Q8</text>
+        <administration>self</administration>
+      </directive>
+      <subQuestion varName="G2Q8_SQ001">
+        <text>How do you rate this?</text>
+      </subQuestion>
+      <subQuestion varName="G2Q8_SQ002">
+        <text>How do you rate that?</text>
+      </subQuestion>
+      <response varName="G2Q8">
+        <fixed rotate="true">
+          <category>
+            <label>Option 1</label>
+            <value>A1</value>
+          </category>
+          <category>
+            <label>Option 2</label>
+            <value>A2</value>
+          </category>
+          <category>
+            <label>Option 3</label>
+            <value>A3</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 2 Question 9 of type "array dual scale".</text>
+      <text/>
+      <directive>
+        <position>during</position>
+        <text>Help text for G2Q9</text>
+        <administration>self</administration>
+      </directive>
+      <subQuestion varName="G2Q9_SQ001">
+        <text>How do you rate this?</text>
+      </subQuestion>
+      <subQuestion varName="G2Q9_SQ002">
+        <text>How do you rate that?</text>
+      </subQuestion>
+      <response>
+        <fixed>
+          <category>
+            <label>Option 1</label>
+            <value>A1</value>
+          </category>
+          <category>
+            <label>Option 2</label>
+            <value>A2</value>
+          </category>
+          <category>
+            <label>Option 3</label>
+            <value>A3</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 2 Question 9 of type "array dual scale".</text>
+      <text/>
+      <directive>
+        <position>during</position>
+        <text>Help text for G2Q9</text>
+        <administration>self</administration>
+      </directive>
+      <subQuestion varName="G2Q9_SQ001">
+        <text>How do you rate this?</text>
+      </subQuestion>
+      <subQuestion varName="G2Q9_SQ002">
+        <text>How do you rate that?</text>
+      </subQuestion>
+      <response>
+        <fixed>
+          <category>
+            <label>Option 1</label>
+            <value>A1</value>
+          </category>
+          <category>
+            <label>Option 2</label>
+            <value>A2</value>
+          </category>
+          <category>
+            <label>Option 3</label>
+            <value>A3</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+  </section>
+  <section id="18">
+    <sectionInfo>
+      <position>title</position>
+      <text>Group 3</text>
+      <administration>self</administration>
+    </sectionInfo>
+    <sectionInfo>
+      <position>before</position>
+      <text>This is Question Group 3</text>
+      <administration>self</administration>
+    </sectionInfo>
+    <sectionInfo>
+      <position>before</position>
+      <text>This is Group 3 Question 9 of type "text display".</text>
+      <administration>self</administration>
+    </sectionInfo>
+    <question>
+      <text>This is Group 3 Question 1 of type "date/time".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G3Q1
+
+ </text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G3Q1">
+        <free>
+          <format>date</format>
+          <length>19</length>
+          <label/>
+        </free>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 3 Question 2 of type "equation".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G3Q2</text>
+        <administration>self</administration>
+      </directive>
+    </question>
+    <question>
+      <text>This is Group 3 Question 3 of type "file upload".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G3Q3</text>
+        <administration>self</administration>
+      </directive>
+    </question>
+    <question>
+      <text>This is Group 3 Question 4 of type "gender".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G3Q4</text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G3Q4">
+        <fixed>
+          <category>
+            <label>Female</label>
+            <value>F</value>
+          </category>
+          <category>
+            <label>Male</label>
+            <value>M</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 3 Question 5 of type "language switch".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G3Q5</text>
+        <administration>self</administration>
+      </directive>
+    </question>
+    <question>
+      <text>This is Group 3 Question 6 of type "multiple numerical input".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G3Q6</text>
+        <administration>self</administration>
+      </directive>
+      <subQuestion varName="G3Q6_SQ001">
+        <text>How much is this?</text>
+      </subQuestion>
+      <subQuestion varName="G3Q6_SQ002">
+        <text>How much is that?</text>
+      </subQuestion>
+      <response varName="G3Q6">
+        <free>
+          <format>integer</format>
+          <length>10</length>
+          <label/>
+        </free>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 3 Question 7 of type "numerical input".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G3Q7</text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G3Q7">
+        <free>
+          <format>integer</format>
+          <length>10</length>
+          <label/>
+        </free>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 3 Question 8 of type "ranking".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G3Q8</text>
+        <administration>self</administration>
+      </directive>
+      <subQuestion varName="G3Q8_A1">
+        <text>Rank 1</text>
+      </subQuestion>
+      <subQuestion varName="G3Q8_A2">
+        <text>Rank 2</text>
+      </subQuestion>
+      <subQuestion varName="G3Q8_A3">
+        <text>Rank 3</text>
+      </subQuestion>
+      <response varName="G3Q8">
+        <free>
+          <format>integer</format>
+          <length>2</length>
+          <label/>
+        </free>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 3 Question 10 of type "yes/no".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G3Q10</text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G3Q10">
+        <fixed>
+          <category>
+            <label>Yes</label>
+            <value>Y</value>
+          </category>
+          <category>
+            <label>No</label>
+            <value>N</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+  </section>
+  <section id="19">
+    <sectionInfo>
+      <position>title</position>
+      <text>Group 4</text>
+      <administration>self</administration>
+    </sectionInfo>
+    <question>
+      <text>This is Group 4 Question 1 of type "huge free text".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G4Q1
+
+ </text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G4Q1">
+        <free>
+          <format>longtext</format>
+          <length>80</length>
+          <label/>
+        </free>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 4 Question 2 of type "long free text".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G4Q2</text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G4Q2">
+        <free>
+          <format>longtext</format>
+          <length>40</length>
+          <label/>
+        </free>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 4 Question 3 of type "multiple short text".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G4Q3</text>
+        <administration>self</administration>
+      </directive>
+      <subQuestion varName="G4Q3_SQ001">
+        <text>What do you think about this?</text>
+      </subQuestion>
+      <subQuestion varName="G4Q3_SQ002">
+        <text>What about that?</text>
+      </subQuestion>
+      <response varName="G4Q3">
+        <free>
+          <format>text</format>
+          <length>10</length>
+          <label/>
+        </free>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 4 Question 4 of type "short free text".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G4Q4</text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G4Q4">
+        <free>
+          <format>longtext</format>
+          <length>24</length>
+          <label/>
+        </free>
+      </response>
+    </question>
+  </section>
+  <section id="20">
+    <sectionInfo>
+      <position>title</position>
+      <text>Group 5</text>
+      <administration>self</administration>
+    </sectionInfo>
+    <sectionInfo>
+      <position>before</position>
+      <text>This is Question Group 5</text>
+      <administration>self</administration>
+    </sectionInfo>
+    <question>
+      <text>This is Group 5 Question 1 of type "multiple choice".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G5Q1</text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G5Q1_SQ001">
+        <fixed>
+          <category>
+            <label>Option 1</label>
+            <value>Y</value>
+          </category>
+        </fixed>
+      </response>
+      <response varName="G5Q1_SQ002">
+        <fixed>
+          <category>
+            <label>Option 2</label>
+            <value>Y</value>
+          </category>
+        </fixed>
+      </response>
+      <response varName="G5Q1_SQ003">
+        <fixed>
+          <category>
+            <label>Option 3</label>
+            <value>Y</value>
+          </category>
+        </fixed>
+      </response>
+      <response varName="G5Q1T">
+        <fixed>
+          <category>
+            <label>Other</label>
+            <value>Y</value>
+            <contingentQuestion varName="G5Q1other">
+              <text>Other</text>
+              <length>24</length>
+              <format>longtext</format>
+            </contingentQuestion>
+          </category>
+        </fixed>
+      </response>
+    </question>
+    <question>
+      <text>This is Group 5 Question 2 of type "multiple choice with comments".</text>
+      <directive>
+        <position>during</position>
+        <text>Help text for G5Q2</text>
+        <administration>self</administration>
+      </directive>
+      <response varName="G5Q2_SQ001">
+        <fixed>
+          <category>
+            <label>Option 1</label>
+            <value>Y</value>
+            <contingentQuestion varName="G5Q2_SQ001comment">
+              <text>Comment</text>
+              <length>10</length>
+              <format>longtext</format>
+            </contingentQuestion>
+          </category>
+        </fixed>
+      </response>
+      <response varName="G5Q2_SQ002">
+        <fixed>
+          <category>
+            <label>Option 2</label>
+            <value>Y</value>
+            <contingentQuestion varName="G5Q2_SQ002comment">
+              <text>Comment</text>
+              <length>10</length>
+              <format>longtext</format>
+            </contingentQuestion>
+          </category>
+        </fixed>
+      </response>
+      <response varName="G5Q2T">
+        <fixed>
+          <category>
+            <label>Other</label>
+            <value>Y</value>
+            <contingentQuestion varName="G5Q2other">
+              <text>Other</text>
+              <length>24</length>
+              <format>longtext</format>
+            </contingentQuestion>
+          </category>
+        </fixed>
+      </response>
+    </question>
+  </section>
+</questionnaire>
