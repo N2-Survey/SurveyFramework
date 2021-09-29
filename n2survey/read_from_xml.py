@@ -83,7 +83,7 @@ def _integrate_subquestions(
                 "is_sub": True,
                 "choices": _find_choices(question.response),
                 "section_id": section_id,
-                "qustion group": question.response.attrs["varName"],
+                "qustion group": re.split("_", sub["varName"])[0],
             }
         )
     return res_subquestions
@@ -114,13 +114,17 @@ def _store_questions(
         # multiple choice or contingent-> other + multiple choice (eg. "F3T")
         if len_cate == 1:
             if bool(resp.category.contingentQuestion):
-                is_other = True
-                name = resp.attrs["varName"] + "[other]"
-                question_content = question_content + "[other]"
-                question_type = "other text"
-                question_choices = resp.category.contingentQuestion.find(
-                    "text"
-                ).string  # other
+                text_type = re.split(
+                    ",", resp.category.contingentQuestion.find("text").string
+                )
+                if text_type[0].lower() == "other":
+                    is_other = True
+                else:
+                    is_other = False
+                name = resp.attrs["varName"] + "_[" + text_type[0] + "]"
+                question_content = question_content + "[" + text_type[0] + "]"
+                question_type = text_type[0] + "-text"  # "other-text" or "comment-text"
+                question_choices = {}  # text question has no choice options
             else:
                 is_other = False
                 name = resp.attrs["varName"]
@@ -135,7 +139,7 @@ def _store_questions(
             if bool(resp.find_all("category")[-1].contingentQuestion):
                 store_question.append(
                     {
-                        "name": resp.attrs["varName"] + "[other]",
+                        "name": resp.attrs["varName"] + "_[Other]",
                         "question": question_content,
                         "description": question_desc,
                         "question type": "other text",
@@ -152,10 +156,10 @@ def _store_questions(
         else:
             question_choices = {}
             is_other = False
-            # "comment" type question
+            # "Comment" type question
             if len(resps) == 2:
-                question_type = "comment text"
-                name = resps[-1].attrs["varName"] + "[comment]"
+                question_type = "Comment-text"
+                name = resps[-1].attrs["varName"] + "_[Comment]"
             # pure "text" type
             else:
                 question_type = "text"
@@ -171,7 +175,7 @@ def _store_questions(
                 "is_sub": False,
                 "choices": question_choices,
                 "section_id": section_id,
-                "qustion group": resps[-1].attrs["varName"],
+                "qustion group": re.split("_", name)[0],
             }
         )
     return store_question
@@ -190,23 +194,26 @@ def _concat_question_text(questions: list) -> str:
 
 def _assemble_questions(question: Tag, section_id: int) -> dict:
     """
-    assemble all contents for each question
+    assemble all contents for each question dict
     """
     question_content = _html_purify(question.find("text").string)
-    if question.find("directive") is not None:
-        question_descs = question.find("directive").find_all("text")
-        question_desc = _concat_question_text(question_descs)
-    else:
-        question_desc = ""
-    stored_questions = _store_questions(
-        question, section_id, question_content, question_desc
-    )
     subquestion_dict = list()
+    question_dict = list()
     if bool(question.subQuestion):
         subquestion_dict = _integrate_subquestions(
             question, question_content, section_id
         )
-    return stored_questions + subquestion_dict
+    else:
+        if question.find("directive") is not None:
+            question_descs = question.find("directive").find_all("text")
+            question_desc = _concat_question_text(question_descs)
+        else:
+            question_desc = ""
+        question_dict = _store_questions(
+            question, section_id, question_content, question_desc
+        )
+
+    return question_dict + subquestion_dict
 
 
 def _html_purify(htmls: str) -> str:
@@ -216,14 +223,15 @@ def _html_purify(htmls: str) -> str:
     return _text_refining(BeautifulSoup(htmls, "html.parser").get_text())
 
 
-def decompose_results(sections, questions):
+def decompose_results(sections: dict, questions: dict):
     """
     dumps the "Sections" and "Questions" part to file
     to make it easy for using.
     """
-    with open("../data/tmp/Sections.dat", "w") as fs:
+    path = "../data/tmp/"
+    with open(path + "/Sections.dat", "w") as fs:
         dump(sections, fs)
-    with open("../data/tmp/Questions.dat", "w") as fq:
+    with open(path + "/Questions.dat", "w") as fq:
         dump(questions, fq)
 
 
