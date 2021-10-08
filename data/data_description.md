@@ -1,7 +1,7 @@
 - survey_structure.xml: Question and answer structures of the survey are described connecting the codes with the text
 - dummy_data_codeonly.csv: Dummy data from 2020 using only the question codes for the column headers
 - dummy_data_codeandtext.csv: Dummy data from 2020 using the code and the question text for the column headers
-- test-survey-structure.ssl: Test survey with all question types; for LimeSurvey import
-- test-survey-strucutre.xml: Test survey with all question types; for xml parser
+- test-survey-structure.lss: Test survey with all question types (created on LimeSurvey Version 3.27.16); for LimeSurvey import
+- test-survey-strucutre.xml: Test survey with all question types (created on LimeSurvey Version 3.27.16); for xml parser
 - survey_structure_2021.xml: Question and answer structures of the new 2021 survey are described connecting the codes with the text
 - dummy_data_2021_codeonly.csv: Dummy data from 2021 using only the question codes for the column headers
