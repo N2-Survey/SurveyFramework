@@ -503,10 +503,10 @@ class TestXMLQuestionnarieParsing(unittest.TestCase):
 
         structure = read_lime_questionnaire_structure(
             # "tests/data/test_survey_structure.xml"
-            "data/survey_structure.xml"
+            "data/survey_structure_2021.xml"
         )
-        self.assertEqual(len(structure["sections"]), 10)
-        self.assertEqual(len(structure["questions"]), 453)
+        self.assertEqual(len(structure["sections"]), 13)
+        self.assertEqual(len(structure["questions"]), 553)
 
 
 if __name__ == "__main__":
