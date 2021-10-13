@@ -35,6 +35,17 @@ def _get_clean_string(tag: Tag) -> str:
 
 
 def _parse_question_title(question: Tag) -> str:
+    """Get a question title from <question> element
+
+    Args:
+        question (Tag): bs4 tag of <question> element
+
+    Raises:
+        AssertionError: There is not children <text> section
+
+    Returns:
+        str: Parsed question title cleaned from HTML tags and extra spaces
+    """
     text_sections = question.find_all("text", recursive=False)
     if len(text_sections) >= 1:
         question_label = _get_clean_string(text_sections[0])
@@ -50,6 +61,16 @@ def _parse_question_title(question: Tag) -> str:
 
 
 def _parse_question_description(question: Tag) -> str:
+    """Get a question description from <question> element
+
+    Args:
+        question (Tag): bs4 tag of <question> element
+
+    Returns:
+        str: Parsed question description cleaned from HTML
+          tags and extra spaces. Or empty string if there is
+          no <directive> child element.
+    """
     description = ""
     directive_sections = question.find_all("directive", recursive=False)
     if len(directive_sections) >= 1:
@@ -68,6 +89,17 @@ def _parse_question_description(question: Tag) -> str:
 
 
 def _parse_question_subquestions(question: Tag) -> list[tuple[str, str]]:
+    """Collect subquestions data
+
+    Collects names and labes of each <subQuestion> sections
+
+    Args:
+        question (Tag): bs4 tag of <question> element
+
+    Returns:
+        list[tuple[str, str]]: List of pairs (<subsection varName>,
+          <subsection cleaned label>)
+    """
     # TODO: Add validation that varName is provided
     # TODO: Add validation that there is only one <text> tag
     return [
@@ -77,9 +109,26 @@ def _parse_question_subquestions(question: Tag) -> list[tuple[str, str]]:
 
 
 def _parse_single_question_response(response: Tag) -> tuple[dict, Optional[dict]]:
+    """Parse single <response> element of a question
+
+    Args:
+        response (Tag): bs4 tag of <response> element
+
+    Raises:
+        AssertionError: Unknown response type. First child must be
+          either "free" or "fixed".
+
+    Returns:
+        tuple[dict, Optional[dict]]: Pair:
+          1. Main response data: name, format, length, label, choices
+          2. Contingent question data. None if there is no contingent
+          question. Contains, name, text, length, format, and:
+            * contingent_of_name - name of the parent <response> element
+            * contingent_of_choice - <value> of the parent <choice> element
+    """
     # Common response structure
     parsed_response = {
-        "name": response.attrs.get("varName", ""),
+        "name": response["varName"],
         "format": None,
         "length": None,
         "label": None,
@@ -132,6 +181,11 @@ def _parse_single_question_response(response: Tag) -> tuple[dict, Optional[dict]
 
 
 def _parse_question_responses(question: Tag) -> list[tuple[dict, Optional[dict]]]:
+    """Parse all question responses
+
+    Simply runs `_parse_single_question_response` for each <response>
+    section. See `_parse_single_question_response` for the details.
+    """
     response_sections = question.find_all("response", recursive=False)
 
     if len(response_sections) == 0:
@@ -147,7 +201,23 @@ def _parse_question_responses(question: Tag) -> list[tuple[dict, Optional[dict]]
     return parsed_responses
 
 
-def _get_question_group_name(responses: list[Tag]) -> str:
+def _get_question_group_name(responses: list[dict, Optional[dict]]) -> str:
+    """Get a question group name
+
+    Some questions consist of many columns (subQuestions, contingent
+    question, etc.), for them we try to get question group name. If there
+    is only one <response> section, then we use its name. Otherwise, we are
+    looking for a longest common prefix.
+
+    Args:
+        responses (list[dict, Optional[dict]]): List of parsed responses
+
+    Raises:
+        ValueError: At least one response with a (var)name is required
+
+    Returns:
+        str: the question group name
+    """
     names = [response["name"] for response, _ in responses]
     if len(names) == 1:
         question_group_name = names[0]
@@ -161,8 +231,16 @@ def _get_question_group_name(responses: list[Tag]) -> str:
 
 
 def _parse_question(question: Tag) -> list[dict]:
-    """
-    TODO
+    """Parse single <question> section
+
+    Args:
+        question (Tag): bs4 tag of <question> element
+
+    Returns:
+        list[dict]: List of parsed response columns. The list consists of
+        of dictionaries. Each dictionary corresponds to only one data column
+        in responses CSV. I.e. single question with contingent will return
+        list of two dictionaries.
     """
 
     # Get question label
@@ -318,8 +396,19 @@ def _parse_section(section: Tag) -> dict:
     }
 
 
-def read_lime_questionnaire_structure(filepath: str) -> dict[str, dict]:
-    """TODO:"""
+def read_lime_questionnaire_structure(filepath: str) -> dict[str, list[dict]]:
+    """Read LimeSurvey XML structure file
+
+    Args:
+        filepath (str): Path to the XML structure file
+
+    Returns:
+        dict[str, list[dict]]: A dictionary
+        {
+            "sections": [...] - list of sections (see _parse_section)
+            "questions": [...] - list of data columns (see _parse_question)
+        }
+    """
 
     # Read the structure file
     with open(filepath, "r") as fp:
