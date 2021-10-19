@@ -3,7 +3,7 @@ import unittest
 
 from bs4 import BeautifulSoup
 
-from n2survey.lime import (  # TODO: test _get_clean_string,; TODO: test _get_question_group_name,
+from n2survey.lime.structure import (  # TODO: test _get_clean_string,; TODO: test _get_question_group_name,
     _parse_question,
     _parse_question_description,
     _parse_question_responses,

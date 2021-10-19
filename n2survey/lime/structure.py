@@ -6,7 +6,7 @@ lime survey data such as *.xml structure files
 
 import os
 import re
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 from warnings import warn
 
 from bs4 import BeautifulSoup
@@ -88,7 +88,7 @@ def _parse_question_description(question: Tag) -> str:
     return description
 
 
-def _parse_question_subquestions(question: Tag) -> list[tuple[str, str]]:
+def _parse_question_subquestions(question: Tag) -> List[Tuple[str, str]]:
     """Collect subquestions data
 
     Collects names and labes of each <subQuestion> sections
@@ -108,7 +108,7 @@ def _parse_question_subquestions(question: Tag) -> list[tuple[str, str]]:
     ]
 
 
-def _parse_single_question_response(response: Tag) -> tuple[dict, Optional[dict]]:
+def _parse_single_question_response(response: Tag) -> Tuple[Dict, Optional[Dict]]:
     """Parse single <response> element of a question
 
     Args:
@@ -180,7 +180,7 @@ def _parse_single_question_response(response: Tag) -> tuple[dict, Optional[dict]
     return (parsed_response, contingent_response)
 
 
-def _parse_question_responses(question: Tag) -> list[tuple[dict, Optional[dict]]]:
+def _parse_question_responses(question: Tag) -> List[Tuple[Dict, Optional[Dict]]]:
     """Parse all question responses
 
     Simply runs `_parse_single_question_response` for each <response>
@@ -201,7 +201,7 @@ def _parse_question_responses(question: Tag) -> list[tuple[dict, Optional[dict]]
     return parsed_responses
 
 
-def _get_question_group_name(responses: list[dict, Optional[dict]]) -> str:
+def _get_question_group_name(responses: List[Dict]) -> str:
     """Get a question group name
 
     Some questions consist of many columns (subQuestions, contingent
@@ -230,7 +230,7 @@ def _get_question_group_name(responses: list[dict, Optional[dict]]) -> str:
     return question_group_name
 
 
-def _parse_question(question: Tag) -> list[dict]:
+def _parse_question(question: Tag) -> List[Dict]:
     """Parse single <question> section
 
     Args:
@@ -343,7 +343,7 @@ def _parse_question(question: Tag) -> list[dict]:
     return columns_list
 
 
-def _parse_section(section: Tag) -> dict:
+def _parse_section(section: Tag) -> Dict:
     """Parse questionnaire section
 
     Args:
