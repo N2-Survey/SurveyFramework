@@ -49,18 +49,15 @@ class LimeSurvey:
               like images, etc. Defaults to current active directory.
             figsize (Tuple[int, int], optional): Default figure size to use in plots.
               Defaults to (6, 8).
-
-        Raises:
-            NotImplementedError: [description]
         """
         # Parse XML structure file
         structure_dict = lime.read_lime_questionnaire_structure(structure_file)
 
         # Get pandas.DataFrame table for the structure
         section_df = pd.DataFrame(structure_dict["sections"])
-        section_df = section_df.set_index("name")
+        section_df = section_df.set_index("id")
         question_df = pd.DataFrame(structure_dict["questions"])
-        question_df = question_df.set_index["name"]
+        question_df = question_df.set_index("name")
         self.structure = {
             "sections": section_df,
             "questions": question_df,

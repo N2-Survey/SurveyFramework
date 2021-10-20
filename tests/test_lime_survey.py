@@ -2,12 +2,23 @@
 import unittest
 
 import pandas as pd
+from pandas._testing import assert_frame_equal
 
 from n2survey.lime import LimeSurvey, read_lime_questionnaire_structure
 
 
 class TestLimeSurveyInitialisation(unittest.TestCase):
     """Test LimeSurvey class initialisation"""
+
+    def assert_df_equal(self, df1, df2, msg):
+        """DataFrame equality test from pandas"""
+        try:
+            assert_frame_equal(df1, df2)
+        except AssertionError:
+            raise self.failureException(msg)
+
+    def setUp(self):
+        self.addTypeEqualityFunc(pd.DataFrame, self.assert_df_equal)
 
     def test_simple_init(self):
         """Test simple initialisation"""
@@ -19,13 +30,17 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
 
         structure_dict = read_lime_questionnaire_structure(structure_file)
         section_df = pd.DataFrame(structure_dict["sections"])
-        section_df = section_df.set_index("name")
-        question_df = pd.DataFrame(structure_dict["name"])
+        section_df = section_df.set_index("id")
+        question_df = pd.DataFrame(structure_dict["questions"])
         question_df = question_df.set_index("name")
 
-        self.assertDictEqual(
-            survey.structure,
-            {"sections": section_df, "questions": question_df},
+        self.assertEqual(
+            survey.structure["sections"],
+            section_df,
+        )
+        self.assertEqual(
+            survey.structure["questions"],
+            question_df,
         )
 
     def test_init_cmap(self):
