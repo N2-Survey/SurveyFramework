@@ -3,6 +3,8 @@ from typing import Optional, Tuple
 
 import pandas as pd
 
+from n2survey import lime
+
 __all__ = ["LimeSurvey"]
 
 
@@ -52,15 +54,19 @@ class LimeSurvey:
             NotImplementedError: [description]
         """
         # Parse XML structure file
-        # TODO: ...
+        structure_dict = lime.read_lime_questionnaire_structure(structure_file)
 
         # Get pandas.DataFrame table for the structure
-        # TODO: self.structure = ...
+        section_df = pd.DataFrame(structure_dict["sections"])
+        section_df = section_df.set_index("name")
+        question_df = pd.DataFrame(structure_dict["questions"])
+        question_df = question_df.set_index["name"]
+        self.structure = (section_df, question_df)
 
         # Update default plotting options
-        # TODO: ...
-
-        raise NotImplementedError()
+        self.cmap = cmap
+        self.output_folder = output_folder
+        self.figsize = figsize
 
     def read_responses(self, responses_file: str) -> None:
         """Read responses CSV file
