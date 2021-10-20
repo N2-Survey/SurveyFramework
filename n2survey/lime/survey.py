@@ -61,7 +61,10 @@ class LimeSurvey:
         section_df = section_df.set_index("name")
         question_df = pd.DataFrame(structure_dict["questions"])
         question_df = question_df.set_index["name"]
-        self.structure = (section_df, question_df)
+        self.structure = {
+            "sections": section_df,
+            "questions": question_df,
+        }
 
         # Update default plotting options
         self.cmap = cmap
