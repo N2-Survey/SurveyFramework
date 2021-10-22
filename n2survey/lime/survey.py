@@ -3,9 +3,15 @@ from typing import Optional, Tuple
 
 import pandas as pd
 
-from n2survey import lime
+from n2survey.lime.structure import read_lime_questionnaire_structure
 
 __all__ = ["LimeSurvey"]
+
+default_plot_options = {
+    "cmap": "Blues",
+    "output_folder": os.path.abspath(os.curdir),
+    "figsize": (6, 8),
+}
 
 
 def _get_default_plot_kind(survey: "LimeSurvey", question: str) -> str:
@@ -24,13 +30,6 @@ def _get_default_plot_kind(survey: "LimeSurvey", question: str) -> str:
 
 class LimeSurvey:
     """Base LimeSurvey class"""
-
-    # Deafult options for plotting
-    default_plot_options = {
-        "cmap": None,
-        "figsize": (6, 8),
-        "output_folder": os.path.abspath(os.curdir),
-    }
 
     def __init__(
         self,
@@ -51,22 +50,24 @@ class LimeSurvey:
               Defaults to (6, 8).
         """
         # Parse XML structure file
-        structure_dict = lime.read_lime_questionnaire_structure(structure_file)
+        structure_dict = read_lime_questionnaire_structure(structure_file)
 
         # Get pandas.DataFrame table for the structure
         section_df = pd.DataFrame(structure_dict["sections"])
         section_df = section_df.set_index("id")
         question_df = pd.DataFrame(structure_dict["questions"])
         question_df = question_df.set_index("name")
-        self.structure = {
-            "sections": section_df,
-            "questions": question_df,
-        }
+        self.sections = section_df
+        self.questions = question_df
 
         # Update default plotting options
-        self.cmap = cmap
-        self.output_folder = output_folder
-        self.figsize = figsize
+        self.plot_options = default_plot_options.copy()
+        if cmap is not None:
+            self.plot_options["cmap"] = cmap
+        if output_folder is not None:
+            self.plot_options["output_folder"] = output_folder
+        if figsize is not None:
+            self.plot_options["figsize"] = figsize
 
     def read_responses(self, responses_file: str) -> None:
         """Read responses CSV file
@@ -128,23 +129,23 @@ class LimeSurvey:
         """Get choices for the corresponding column or group of colums"""
         raise NotImplementedError()
 
-    @property
-    def questions(self) -> pd.DataFrame:
-        """Get information about the quesions
+    # @property
+    # def questions(self) -> pd.DataFrame:
+    #     """Get information about the quesions
 
-        Returns:
-            pd.DataFrame: A data frame with information about the
-              questions in the survey
-        """
-        raise NotImplementedError()
+    #     Returns:
+    #         pd.DataFrame: A data frame with information about the
+    #           questions in the survey
+    #     """
+    #     raise NotImplementedError()
 
-    @property
-    def sections(self) -> pd.DataFrame:
-        """Get information about the sections
+    # @property
+    # def sections(self) -> pd.DataFrame:
+    #     """Get information about the sections
 
-        Returns:
-            pd.DataFrame: A data frame with information about the
-              sections in the survey, consisting of columns:
-              section_id, section_title, section_info, question_count
-        """
-        raise NotImplementedError()
+    #     Returns:
+    #         pd.DataFrame: A data frame with information about the
+    #           sections in the survey, consisting of columns:
+    #           section_id, section_title, section_info, question_count
+    #     """
+    #     raise NotImplementedError()
