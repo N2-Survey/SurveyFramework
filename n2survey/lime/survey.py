@@ -128,24 +128,3 @@ class LimeSurvey:
     def get_choices(self, question: str) -> str:
         """Get choices for the corresponding column or group of colums"""
         raise NotImplementedError()
-
-    # @property
-    # def questions(self) -> pd.DataFrame:
-    #     """Get information about the quesions
-
-    #     Returns:
-    #         pd.DataFrame: A data frame with information about the
-    #           questions in the survey
-    #     """
-    #     raise NotImplementedError()
-
-    # @property
-    # def sections(self) -> pd.DataFrame:
-    #     """Get information about the sections
-
-    #     Returns:
-    #         pd.DataFrame: A data frame with information about the
-    #           sections in the survey, consisting of columns:
-    #           section_id, section_title, section_info, question_count
-    #     """
-    #     raise NotImplementedError()
