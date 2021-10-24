@@ -56,7 +56,22 @@ class LimeSurvey:
         section_df = pd.DataFrame(structure_dict["sections"])
         section_df = section_df.set_index("id")
         question_df = pd.DataFrame(structure_dict["questions"])
+
+        # Infer question type from available choices
+        for i in range(question_df.shape[0]):
+            if question_df.loc[i]["format"] is None:
+                if "Y" in question_df.loc[i]["choices"].keys():
+                    question_df.loc[i, ["format"]] = "multiple_choice"
+                elif "SQ" in question_df.loc[i]["name"]:
+                    question_df.loc[i, ["format"]] = "array"
+                else:
+                    question_df.loc[i, ["format"]] = "single_choice"
+
+        # Correct inconsistency in column names and set index column
+        question_df["name"] = question_df["name"].str.replace("T", "_other")
         question_df = question_df.set_index("name")
+
+        # Save structure df to attributes
         self.sections = section_df
         self.questions = question_df
 
@@ -69,34 +84,91 @@ class LimeSurvey:
         if figsize is not None:
             self.plot_options["figsize"] = figsize
 
-    def read_responses(self, responses_file: str) -> None:
-        """Read responses CSV file
+    def read_response(self, responses_file: str) -> None:
+        """Read response CSV file
 
         Args:
-            responses_file (str): Path to the responses CSV file
+            response_file (str): Path to the responses CSV file
 
-        Raises:
-            ValueError: The structure of the CSV file does not correspond to
-              the structure in the XML file
         """
         # Read the CSV file
         # TODO: pd.read_csv
+        response = pd.read_csv(responses_file)
+        columns = response.columns.to_list()
+        new_columns = [column.replace("[", "_").replace("]", "") for column in columns]
+        response.rename(
+            columns={
+                column: new_column for column, new_column in zip(columns, new_columns)
+            }
+        )
 
-        # Validate the data:
-        # * Compare the the structure with `self.structure`
-        # * Something else?
-        # TODO: ...
+        # Validate the data structure
+        # Drop empty columns (including text-display "questions")
+        empty_columns = [
+            column for column in response.columns if response[column].isnull().all()
+        ]
+        response.drop(empty_columns, axis=1)
 
-        # Process the data (optional for now)
-        # * Optimize dtypes. At least for category fields
-        # the dtype can be optimized using category.
-        # * Clean values. Make sure that NA, None, etc. parsed properly
-        # TODO: ...
+        # Insert column for Question A2 (missing due to survey error)
+        if "A2" not in response.columns:
+            response.insert(response.columns.get_loc("A2_other"), "A2", [])
 
-        # Save to `self`
-        # TODO: self.responses = responses
+        # Check for columns not listed in survey structure df
+        first_question = response.columns.get_loc("A00")
+        last_question = response.columns.get_loc("M1")
+        missing_columns = [
+            column
+            for column in response.columns[first_question:last_question]
+            if column not in self.questions.index and "other" not in column
+        ]
+        if not missing_columns:
+            print(
+                f"There is a mismatch between response structure and survey structure.\n{len(missing_columns)} columns are missing in strucutre df."
+            )
 
-        raise NotImplementedError()
+        # Pre-process the data
+        # Cast date/time columns to datetime dtype
+        response["submitdate"] = pd.to_datetime(
+            response["submitdate"], format="%Y-%m-%d %H:%M:%S"
+        )
+        response["startdate"] = pd.to_datetime(
+            response["startdate"], format="%Y-%m-%d %H:%M:%S"
+        )
+        response["datestamp"] = pd.to_datetime(
+            response["datestamp"], format="%Y-%m-%d %H:%M:%S"
+        )
+
+        # Cast single-choice columns to unordered categorical dtype
+        single_choice_questions = [
+            question
+            for question in self.questions.index
+            if self.questions.loc[question]["format"] == "single_choice"
+        ]
+        response[single_choice_questions] = response[single_choice_questions].astype(
+            "category"
+        )
+
+        # Cast array columns to ordered categorical dtype
+        array_questions = [
+            question
+            for question in self.questions.index
+            if self.questions.loc[question]["format"] == "array"
+        ]
+        response[array_questions] = response[array_questions].astype("category")
+        for question in array_questions:
+            response[question] = response[question].cat.as_ordered()
+
+        # Cast multiple-choice columns to bool dtype
+        multiple_choice_questions = [
+            question
+            for question in self.questions.index
+            if self.questions.loc[question]["format"] == "multiple_choice"
+        ]
+        response[multiple_choice_questions] = response[
+            multiple_choice_questions
+        ].notnull()
+
+        self.response = response
 
     def plot(self, question, kind: str = None, **kwargs):
         # Find corresponding question or question group,
