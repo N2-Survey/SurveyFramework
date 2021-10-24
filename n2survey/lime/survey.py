@@ -92,26 +92,26 @@ class LimeSurvey:
 
         """
         # Read the CSV file
-        # TODO: pd.read_csv
         response = pd.read_csv(responses_file)
         columns = response.columns.to_list()
         new_columns = [column.replace("[", "_").replace("]", "") for column in columns]
-        response.rename(
+        response = response.rename(
             columns={
                 column: new_column for column, new_column in zip(columns, new_columns)
             }
         )
 
-        # Validate the data structure
-        # Drop empty columns (including text-display "questions")
-        empty_columns = [
-            column for column in response.columns if response[column].isnull().all()
-        ]
-        response.drop(empty_columns, axis=1)
+        # Validate data structure
+        # Drop non-question columns
+        # (text-display "questions" not listed in structure xml file but present in data csv)
+        non_question_columns = ["D8", "F10"]
+        response = response.drop(non_question_columns, axis=1)
 
         # Insert column for Question A2 (missing due to survey error)
         if "A2" not in response.columns:
-            response.insert(response.columns.get_loc("A2_other"), "A2", [])
+            response.insert(
+                response.columns.get_loc("A1") + 1, "A2", ["A1"] * response.shape[0]
+            )
 
         # Check for columns not listed in survey structure df
         first_question = response.columns.get_loc("A00")
@@ -121,12 +121,12 @@ class LimeSurvey:
             for column in response.columns[first_question:last_question]
             if column not in self.questions.index and "other" not in column
         ]
-        if not missing_columns:
+        if missing_columns:
             print(
                 f"There is a mismatch between response structure and survey structure.\n{len(missing_columns)} columns are missing in strucutre df."
             )
 
-        # Pre-process the data
+        # Pre-process data
         # Cast date/time columns to datetime dtype
         response["submitdate"] = pd.to_datetime(
             response["submitdate"], format="%Y-%m-%d %H:%M:%S"
