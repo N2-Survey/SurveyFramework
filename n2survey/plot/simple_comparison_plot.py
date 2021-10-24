@@ -14,6 +14,8 @@ warnings.filterwarnings("error")
 
 """
 NOTICE:
+
+Laushir,
     all content between the two dash line "---" below,
     can be moved to structure or what ever pre-processing part.
     and some examples are provided under the test directory.
@@ -57,7 +59,7 @@ def prepare_df(
          wether need Null data in vertical axis
 
     OUTPUT:
-    p_df: [pandas DataFrame] after preprocess dataframe.
+    p_df [pandas DataFrame]: after preprocess dataframe.
 
     """
 
@@ -146,7 +148,8 @@ def find_correspond_names(
     replace_name_dict: dict = None,
 ) -> list:
     """
-    find the corrsponding names and if neccessary (maybe too long or what ever) replace some of them
+    find the corrsponding names and if neccessary
+    (maybe too long or what ever) replace some of them
 
     INPUT:
 
