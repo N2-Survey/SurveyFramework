@@ -280,6 +280,8 @@ def _parse_question(question: Tag) -> List[Dict]:
                     "label": label,
                     "format": response["format"],
                     "choices": response["choices"],
+                    # Questions with subquestions are of type "array" if not given in "format"
+                    "type": response["format"] or "array",
                 }
             )
 
@@ -290,6 +292,21 @@ def _parse_question(question: Tag) -> List[Dict]:
                 label = response["label"]
             else:
                 label = question_label
+            # Infer question type if none given in "format"
+            if response["format"]:
+                question_type = response["format"]
+            else:
+                # Check whether single-choice or multiple-choice
+                if response["choices"] is not None:
+                    if len(response["choices"]) > 1:
+                        # Questions with more than one option are of type "single_choice"
+                        question_type = "single_choice"
+                    else:
+                        # Questions with only one option are of type "multiple_choice"
+                        question_type = "multiple_choice"
+                else:
+                    # Questions with no answer choices are of type "text"
+                    question_type = "longtext"
             # Add the column
             columns_list.append(
                 {
@@ -297,6 +314,7 @@ def _parse_question(question: Tag) -> List[Dict]:
                     "label": label,
                     "format": response["format"],
                     "choices": response["choices"],
+                    "type": question_type,
                 }
             )
             if contingent is not None:
@@ -325,6 +343,8 @@ def _parse_question(question: Tag) -> List[Dict]:
                         "format": contingent["format"],
                         "contingent_of_name": contingent["contingent_of_name"],
                         "contingent_of_choice": contingent["contingent_of_choice"],
+                        # All contingent questions are of type given in "format", usually "longtext"
+                        "type": contingent["format"],
                     }
                 )
 

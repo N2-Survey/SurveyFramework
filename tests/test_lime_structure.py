@@ -238,6 +238,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "G1Q1",
                     "question_label": 'This is Group 1 Question 1 of type "5 point choice".',
                     "question_description": "Help text for G1Q1",
+                    "type": "single_choice",
                 }
             ],
         )
@@ -309,6 +310,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "A3",
                     "question_label": "My overall work is predominantly",
                     "question_description": "",
+                    "type": "single_choice",
                 },
                 {
                     "name": "A3other",
@@ -319,6 +321,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "A3",
                     "question_label": "My overall work is predominantly",
                     "question_description": "",
+                    "type": "longtext",
                 },
             ],
         )
@@ -368,6 +371,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "Q1",
                     "question_label": "Some cool question",
                     "question_description": "",
+                    "type": "text",
                 },
             ],
         )
@@ -409,6 +413,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "Q1",
                     "question_label": "Some cool question",
                     "question_description": "",
+                    "type": "text",
                 },
                 {
                     "name": "Q1_R2",
@@ -418,6 +423,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "Q1",
                     "question_label": "Some cool question",
                     "question_description": "",
+                    "type": "text",
                 },
             ],
         )
@@ -478,6 +484,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "G2Q8",
                     "question_label": 'This is Group 2 Question 8 of type "array by column".',
                     "question_description": "Help text for G2Q8",
+                    "type": "array",
                 },
                 {
                     "name": "G2Q8_SQ002",
@@ -487,6 +494,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "G2Q8",
                     "question_label": 'This is Group 2 Question 8 of type "array by column".',
                     "question_description": "Help text for G2Q8",
+                    "type": "array",
                 },
             ],
         )
