@@ -230,6 +230,35 @@ def _get_question_group_name(responses: List[Dict]) -> str:
     return question_group_name
 
 
+def _get_question_type(
+    subquestions_count: int, responses_count: int, response: Dict
+) -> str:
+    """Infer question type
+
+    Args:
+        subquestions_count (int): Number of subquestions in parsed question
+        responses_count (int): Number of responses in parsed question
+        response (dict): Parsed response
+
+    Returns:
+        str: Inferred question type
+    """
+    if subquestions_count:
+        question_type = "array"
+    elif (
+        responses_count > 1
+        and "choices" in response
+        and response["choices"] is not None
+    ):
+        question_type = "multiple-choice"
+    elif "choices" not in response or response["choices"] is None:
+        question_type = "free"
+    else:
+        question_type = "single-choice"
+
+    return question_type
+
+
 def _parse_question(question: Tag) -> List[Dict]:
     """Parse single <question> section
 
@@ -272,6 +301,11 @@ def _parse_question(question: Tag) -> List[Dict]:
             " Subquestion with contingent questions are not supported."
         )
 
+        # Get question type
+        question_type = _get_question_type(
+            subquestions_count, responses_count, response
+        )
+
         for name, label in subquestions:
             # Add the column
             columns_list.append(
@@ -280,8 +314,7 @@ def _parse_question(question: Tag) -> List[Dict]:
                     "label": label,
                     "format": response["format"],
                     "choices": response["choices"],
-                    # Questions with subquestions are of type "array" if not given in "format"
-                    "type": response["format"] or "array",
+                    "type": question_type,
                 }
             )
 
@@ -292,21 +325,12 @@ def _parse_question(question: Tag) -> List[Dict]:
                 label = response["label"]
             else:
                 label = question_label
-            # Infer question type if none given in "format"
-            if response["format"]:
-                question_type = response["format"]
-            else:
-                # Check whether single-choice or multiple-choice
-                if response["choices"] is not None:
-                    if len(response["choices"]) > 1:
-                        # Questions with more than one option are of type "single_choice"
-                        question_type = "single_choice"
-                    else:
-                        # Questions with only one option are of type "multiple_choice"
-                        question_type = "multiple_choice"
-                else:
-                    # Questions with no answer choices are of type "text"
-                    question_type = "longtext"
+
+            # Get question type
+            question_type = _get_question_type(
+                subquestions_count, responses_count, response
+            )
+
             # Add the column
             columns_list.append(
                 {
@@ -335,6 +359,12 @@ def _parse_question(question: Tag) -> List[Dict]:
                             ],
                         ]
                     )
+
+                # Get question type
+                question_type = _get_question_type(
+                    subquestions_count, responses_count, contingent
+                )
+
                 # Add the column information
                 columns_list.append(
                     {
@@ -343,8 +373,7 @@ def _parse_question(question: Tag) -> List[Dict]:
                         "format": contingent["format"],
                         "contingent_of_name": contingent["contingent_of_name"],
                         "contingent_of_choice": contingent["contingent_of_choice"],
-                        # All contingent questions are of type given in "format", usually "longtext"
-                        "type": contingent["format"],
+                        "type": question_type,
                     }
                 )
 

@@ -127,6 +127,8 @@ class TestXMLSectionParsing(unittest.TestCase):
 class TestXMLQuestionParsing(unittest.TestCase):
     """Test parsing <question> tags in an XML structure file"""
 
+    maxDiff = None
+
     def test_question_title_parsing(self):
         question = BeautifulSoup(
             """<question>
@@ -238,7 +240,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "G1Q1",
                     "question_label": 'This is Group 1 Question 1 of type "5 point choice".',
                     "question_description": "Help text for G1Q1",
-                    "type": "single_choice",
+                    "type": "single-choice",
                 }
             ],
         )
@@ -310,7 +312,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "A3",
                     "question_label": "My overall work is predominantly",
                     "question_description": "",
-                    "type": "single_choice",
+                    "type": "single-choice",
                 },
                 {
                     "name": "A3other",
@@ -321,7 +323,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "A3",
                     "question_label": "My overall work is predominantly",
                     "question_description": "",
-                    "type": "longtext",
+                    "type": "free",
                 },
             ],
         )
@@ -371,7 +373,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "Q1",
                     "question_label": "Some cool question",
                     "question_description": "",
-                    "type": "text",
+                    "type": "free",
                 },
             ],
         )
@@ -413,7 +415,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "Q1",
                     "question_label": "Some cool question",
                     "question_description": "",
-                    "type": "text",
+                    "type": "free",
                 },
                 {
                     "name": "Q1_R2",
@@ -423,7 +425,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "Q1",
                     "question_label": "Some cool question",
                     "question_description": "",
-                    "type": "text",
+                    "type": "free",
                 },
             ],
         )
