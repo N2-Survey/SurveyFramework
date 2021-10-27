@@ -177,7 +177,7 @@ def _parse_single_question_response(response: Tag) -> Tuple[Dict, Optional[Dict]
             f"Unexpected response format {response}. Unknown response type."
         )
 
-    return (parsed_response, contingent_response)
+    return parsed_response, contingent_response
 
 
 def _parse_question_responses(question: Tag) -> List[Tuple[Dict, Optional[Dict]]]:

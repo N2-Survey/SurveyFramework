@@ -4,7 +4,7 @@ The following is a set of guidelines and instructions for contributing to the :s
 
 # Workflow
 
-1. Take an issue from the [issues list](https://github.com/N2-Survey/SurveyFramework/issues)(or the coordinator of your group will give you one)
+1. Take an issue from the [issues list](https://github.com/N2-Survey/SurveyFramework/issues) (or the coordinator of your group will give you one)
 2. Assign the issue to yourself (or the coordinator of your group will do it)
 3. Work on your issue localy:
 ```bash
