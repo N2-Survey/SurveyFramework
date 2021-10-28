@@ -230,31 +230,31 @@ def _get_question_group_name(responses: List[Dict]) -> str:
     return question_group_name
 
 
-def _get_question_type(
-    subquestions_count: int, responses_count: int, response: Dict
-) -> str:
+def _get_question_type(subquestions: List[Tuple], responses: List[Dict]) -> str:
     """Infer question type
 
     Args:
-        subquestions_count (int): Number of subquestions in parsed question
-        responses_count (int): Number of responses in parsed question
-        response (dict): Parsed response
+        subquestions (list): Parsed subquestions in the question
+        responses (list): Parsed responses in the question
 
     Returns:
         str: Inferred question type
     """
-    if subquestions_count:
+    subquestion_count = len(subquestions)
+    response_count = len(responses)
+
+    if subquestion_count:
         question_type = "array"
-    elif (
-        responses_count > 1
-        and "choices" in response
-        and response["choices"] is not None
-    ):
+    elif response_count > 1 and responses[0][0].get("choices") is not None:
         question_type = "multiple-choice"
-    elif "choices" not in response or response["choices"] is None:
+    elif responses[0][0].get("choices") is not None:
+        question_type = "single-choice"
+    elif responses[0][0].get("choices") is None:
         question_type = "free"
     else:
-        question_type = "single-choice"
+        raise AssertionError(
+            f"Unknown question type encountered when processing {responses[0][0]['name']}"
+        )
 
     return question_type
 
@@ -284,6 +284,9 @@ def _parse_question(question: Tag) -> List[Dict]:
     # Get question responses
     responses = _parse_question_responses(question)
 
+    # Get question type
+    question_type = _get_question_type(subquestions, responses)
+
     # Check assumptions
     subquestions_count = len(subquestions)
     responses_count = len(responses)
@@ -301,11 +304,6 @@ def _parse_question(question: Tag) -> List[Dict]:
             " Subquestion with contingent questions are not supported."
         )
 
-        # Get question type
-        question_type = _get_question_type(
-            subquestions_count, responses_count, response
-        )
-
         for name, label in subquestions:
             # Add the column
             columns_list.append(
@@ -314,7 +312,6 @@ def _parse_question(question: Tag) -> List[Dict]:
                     "label": label,
                     "format": response["format"],
                     "choices": response["choices"],
-                    "type": question_type,
                 }
             )
 
@@ -326,11 +323,6 @@ def _parse_question(question: Tag) -> List[Dict]:
             else:
                 label = question_label
 
-            # Get question type
-            question_type = _get_question_type(
-                subquestions_count, responses_count, response
-            )
-
             # Add the column
             columns_list.append(
                 {
@@ -338,7 +330,6 @@ def _parse_question(question: Tag) -> List[Dict]:
                     "label": label,
                     "format": response["format"],
                     "choices": response["choices"],
-                    "type": question_type,
                 }
             )
             if contingent is not None:
@@ -360,11 +351,6 @@ def _parse_question(question: Tag) -> List[Dict]:
                         ]
                     )
 
-                # Get question type
-                question_type = _get_question_type(
-                    subquestions_count, responses_count, contingent
-                )
-
                 # Add the column information
                 columns_list.append(
                     {
@@ -373,7 +359,6 @@ def _parse_question(question: Tag) -> List[Dict]:
                         "format": contingent["format"],
                         "contingent_of_name": contingent["contingent_of_name"],
                         "contingent_of_choice": contingent["contingent_of_choice"],
-                        "type": question_type,
                     }
                 )
 
@@ -385,6 +370,7 @@ def _parse_question(question: Tag) -> List[Dict]:
             "question_group": question_group_name,
             "question_label": question_label,
             "question_description": question_description,
+            "type": question_type,
         }
         for column in columns_list
     ]

@@ -323,7 +323,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "A3",
                     "question_label": "My overall work is predominantly",
                     "question_description": "",
-                    "type": "free",
+                    "type": "single-choice",
                 },
             ],
         )
