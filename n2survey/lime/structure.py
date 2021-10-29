@@ -230,6 +230,35 @@ def _get_question_group_name(responses: List[Dict]) -> str:
     return question_group_name
 
 
+def _get_question_type(subquestions: List[Tuple], responses: List[Dict]) -> str:
+    """Infer question type
+
+    Args:
+        subquestions (list): Parsed subquestions in the question
+        responses (list): Parsed responses in the question
+
+    Returns:
+        str: Inferred question type
+    """
+    subquestion_count = len(subquestions)
+    response_count = len(responses)
+
+    if subquestion_count:
+        question_type = "array"
+    elif response_count > 1 and responses[0][0].get("choices") is not None:
+        question_type = "multiple-choice"
+    elif responses[0][0].get("choices") is not None:
+        question_type = "single-choice"
+    elif responses[0][0].get("choices") is None:
+        question_type = "free"
+    else:
+        raise AssertionError(
+            f"Unknown question type encountered when processing {responses[0][0]['name']}"
+        )
+
+    return question_type
+
+
 def _parse_question(question: Tag) -> List[Dict]:
     """Parse single <question> section
 
@@ -254,6 +283,9 @@ def _parse_question(question: Tag) -> List[Dict]:
 
     # Get question responses
     responses = _parse_question_responses(question)
+
+    # Get question type
+    question_type = _get_question_type(subquestions, responses)
 
     # Check assumptions
     subquestions_count = len(subquestions)
@@ -290,6 +322,7 @@ def _parse_question(question: Tag) -> List[Dict]:
                 label = response["label"]
             else:
                 label = question_label
+
             # Add the column
             columns_list.append(
                 {
@@ -317,6 +350,7 @@ def _parse_question(question: Tag) -> List[Dict]:
                             ],
                         ]
                     )
+
                 # Add the column information
                 columns_list.append(
                     {
@@ -336,6 +370,7 @@ def _parse_question(question: Tag) -> List[Dict]:
             "question_group": question_group_name,
             "question_label": question_label,
             "question_description": question_description,
+            "type": question_type,
         }
         for column in columns_list
     ]

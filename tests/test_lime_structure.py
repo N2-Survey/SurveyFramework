@@ -127,6 +127,8 @@ class TestXMLSectionParsing(unittest.TestCase):
 class TestXMLQuestionParsing(unittest.TestCase):
     """Test parsing <question> tags in an XML structure file"""
 
+    maxDiff = None
+
     def test_question_title_parsing(self):
         question = BeautifulSoup(
             """<question>
@@ -238,6 +240,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "G1Q1",
                     "question_label": 'This is Group 1 Question 1 of type "5 point choice".',
                     "question_description": "Help text for G1Q1",
+                    "type": "single-choice",
                 }
             ],
         )
@@ -309,6 +312,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "A3",
                     "question_label": "My overall work is predominantly",
                     "question_description": "",
+                    "type": "single-choice",
                 },
                 {
                     "name": "A3other",
@@ -319,6 +323,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "A3",
                     "question_label": "My overall work is predominantly",
                     "question_description": "",
+                    "type": "single-choice",
                 },
             ],
         )
@@ -368,6 +373,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "Q1",
                     "question_label": "Some cool question",
                     "question_description": "",
+                    "type": "free",
                 },
             ],
         )
@@ -409,6 +415,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "Q1",
                     "question_label": "Some cool question",
                     "question_description": "",
+                    "type": "free",
                 },
                 {
                     "name": "Q1_R2",
@@ -418,6 +425,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "Q1",
                     "question_label": "Some cool question",
                     "question_description": "",
+                    "type": "free",
                 },
             ],
         )
@@ -478,6 +486,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "G2Q8",
                     "question_label": 'This is Group 2 Question 8 of type "array by column".',
                     "question_description": "Help text for G2Q8",
+                    "type": "array",
                 },
                 {
                     "name": "G2Q8_SQ002",
@@ -487,6 +496,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     "question_group": "G2Q8",
                     "question_label": 'This is Group 2 Question 8 of type "array by column".',
                     "question_description": "Help text for G2Q8",
+                    "type": "array",
                 },
             ],
         )
