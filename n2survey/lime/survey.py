@@ -1,4 +1,6 @@
 import os
+import re
+import warnings
 from typing import Optional, Tuple
 
 import pandas as pd
@@ -56,19 +58,6 @@ class LimeSurvey:
         section_df = pd.DataFrame(structure_dict["sections"])
         section_df = section_df.set_index("id")
         question_df = pd.DataFrame(structure_dict["questions"])
-
-        # Infer question type from available choices
-        for i in range(question_df.shape[0]):
-            if question_df.loc[i]["format"] is None:
-                if "Y" in question_df.loc[i]["choices"].keys():
-                    question_df.loc[i, ["format"]] = "multiple_choice"
-                elif "SQ" in question_df.loc[i]["name"]:
-                    question_df.loc[i, ["format"]] = "array"
-                else:
-                    question_df.loc[i, ["format"]] = "single_choice"
-
-        # Correct inconsistency in column names and set index column
-        question_df["name"] = question_df["name"].str.replace("T", "_other")
         question_df = question_df.set_index("name")
 
         # Save structure df to attributes
@@ -84,91 +73,114 @@ class LimeSurvey:
         if figsize is not None:
             self.plot_options["figsize"] = figsize
 
-    def read_response(self, responses_file: str) -> None:
-        """Read response CSV file
+    def read_responses(self, responses_file: str) -> None:
+        """Read responses CSV file
 
         Args:
-            response_file (str): Path to the responses CSV file
+            responses_file (str): Path to the responses CSV file
 
         """
-        # Read the CSV file
-        response = pd.read_csv(responses_file)
-        columns = response.columns.to_list()
-        new_columns = [column.replace("[", "_").replace("]", "") for column in columns]
-        response = response.rename(
-            columns={
-                column: new_column for column, new_column in zip(columns, new_columns)
-            }
+        # Read 1st line of the csv file
+        response = pd.read_csv(responses_file, nrows=1)
+
+        # Prepare dtype info
+        columns = response.columns
+        renamed_columns = (
+            columns.str.replace("[", "_", regex=False)
+            .str.replace("]", "", regex=False)
+            .str.replace("_other", "other", regex=False)
         )
+        dtype_dict, datetime_columns = self.get_dtype_info(columns, renamed_columns)
+
+        # Read entire csv with optimal dtypes
+        responses = pd.read_csv(
+            responses_file,
+            dtype=dtype_dict,
+            parse_dates=datetime_columns,
+            infer_datetime_format=True,
+        )
+        responses = responses.rename(columns=dict(zip(columns, renamed_columns)))
+        responses = responses.set_index("id")
+
+        # Identify columns for survey questions
+        first_question = columns.index("A00")
+        last_question = columns.index("M1")
+        question_columns = renamed_columns[first_question : last_question + 1]
+
+        # Split df into question responses and timing info
+        question_responses = responses[question_columns]
+        system_info = responses[list(set(renamed_columns) - set(question_columns))]
+
+        # Add missing "{question_id}T" columns for multiple-choice questions, e.g. "B1T"
+        multiple_choice_questions = list(
+            self.questions[self.questions["type"] == "multiple-choice"][
+                "question_group"
+            ].unique()
+        )
+        for question in multiple_choice_questions:
+            question_responses.insert(
+                question_responses.columns.get_loc(question + "_other"),
+                question + "T",
+                [None] * question_responses.shape[0],
+            )
 
         # Validate data structure
-        # Drop non-question columns
-        # (text-display "questions" not listed in structure xml file but present in data csv)
-        non_question_columns = ["D8", "F10"]
-        response = response.drop(non_question_columns, axis=1)
-
-        # Insert column for Question A2 (missing due to survey error)
-        if "A2" not in response.columns:
-            response.insert(
-                response.columns.get_loc("A1") + 1, "A2", ["A1"] * response.shape[0]
-            )
-
         # Check for columns not listed in survey structure df
-        first_question = response.columns.get_loc("A00")
-        last_question = response.columns.get_loc("M1")
-        missing_columns = [
-            column
-            for column in response.columns[first_question:last_question]
-            if column not in self.questions.index and "other" not in column
-        ]
-        if missing_columns:
-            print(
-                f"There is a mismatch between response structure and survey structure.\n{len(missing_columns)} columns are missing in strucutre df."
+        not_in_structure = list(
+            set(question_responses.columns) - set(self.questions.index)
+        )
+        if not_in_structure:
+            warnings.warn(
+                f"The following columns in the data csv file are not found in the survey structure and are dropped:\n{not_in_structure}"
             )
-
+        # Ceheck for questions not listed in data csv
+        not_in_data = list(
+            set(self.questions.index) - set(self.question_responses.columns)
+        )
+        if not_in_structure:
+            warnings.warn(
+                f"The following questions in the survey structure are not found in the data csv file:\n{not_in_data}"
+            )
         # Pre-process data
-        # Cast date/time columns to datetime dtype
-        response["submitdate"] = pd.to_datetime(
-            response["submitdate"], format="%Y-%m-%d %H:%M:%S"
-        )
-        response["startdate"] = pd.to_datetime(
-            response["startdate"], format="%Y-%m-%d %H:%M:%S"
-        )
-        response["datestamp"] = pd.to_datetime(
-            response["datestamp"], format="%Y-%m-%d %H:%M:%S"
-        )
+        # Fill in "{question_id}T" columns based on "{question_id}other" column data
+        for question in multiple_choice_questions:
+            if question_responses[question + "other"] is not None:
+                question_responses[question + "T"] = "Y"
 
-        # Cast single-choice columns to unordered categorical dtype
-        single_choice_questions = [
-            question
-            for question in self.questions.index
-            if self.questions.loc[question]["format"] == "single_choice"
-        ]
-        response[single_choice_questions] = response[single_choice_questions].astype(
-            "category"
-        )
+        self.responses = question_responses
+        self.sys_info = system_info
 
-        # Cast array columns to ordered categorical dtype
-        array_questions = [
-            question
-            for question in self.questions.index
-            if self.questions.loc[question]["format"] == "array"
-        ]
-        response[array_questions] = response[array_questions].astype("category")
-        for question in array_questions:
-            response[question] = response[question].cat.as_ordered()
+    def get_dtype_info(self, columns, renamed_columns):
+        """Get dtypes for columns in data csv
 
-        # Cast multiple-choice columns to bool dtype
-        multiple_choice_questions = [
-            question
-            for question in self.questions.index
-            if self.questions.loc[question]["format"] == "multiple_choice"
-        ]
-        response[multiple_choice_questions] = response[
-            multiple_choice_questions
-        ].notnull()
+        Args:
+            columns (list): List of column names from data csv
+            renamed_columns (list): List of column names modified to match self.questions entries
 
-        self.response = response
+        Returns:
+            dict: Dictionary of column names and dtypes
+            list: List of datetime columns
+        """
+
+        # Compile dict with dtype for each column and list of datetime columns
+        dtype_dict = {}
+        datetime_columns = []
+        for column, renamed_column in zip(columns, renamed_columns):
+            if renamed_column in self.questions.index:
+                if (
+                    self.questions.loc[renamed_column, "type"]
+                    in ["single-choice", "multiple-choice", "array"]
+                    and self.questions.loc[column, "format"] != "longtext"
+                ):
+                    dtype_dict[column] = "category"
+            if "language" in column:
+                dtype_dict[column] = "category"
+            if re.search("[Tt]ime", column):
+                dtype_dict[column] = "float64"
+            if "date" in column:
+                datetime_columns.append(column)
+
+        return dtype_dict, datetime_columns
 
     def plot(self, question, kind: str = None, **kwargs):
         # Find corresponding question or question group,
