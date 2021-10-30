@@ -59,8 +59,6 @@ class LimeSurvey:
         section_df = section_df.set_index("id")
         question_df = pd.DataFrame(structure_dict["questions"])
         question_df = question_df.set_index("name")
-
-        # Save structure df to attributes
         self.sections = section_df
         self.questions = question_df
 
