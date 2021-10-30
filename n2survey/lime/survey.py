@@ -81,7 +81,7 @@ class LimeSurvey:
 
         """
         # Read 1st line of the csv file
-        response = pd.read_csv(responses_file, nrows=1)
+        response = pd.read_csv(responses_file, nrows=1, index_col=0)
 
         # Prepare dtype info
         columns = response.columns
@@ -90,38 +90,48 @@ class LimeSurvey:
             .str.replace("]", "", regex=False)
             .str.replace("_other", "other", regex=False)
         )
-        dtype_dict, datetime_columns = self.get_dtype_info(columns, renamed_columns)
+        dtype_dict, datetime_columns = self._get_dtype_info(columns, renamed_columns)
 
         # Read entire csv with optimal dtypes
         responses = pd.read_csv(
             responses_file,
+            index_col=0,
             dtype=dtype_dict,
             parse_dates=datetime_columns,
             infer_datetime_format=True,
         )
         responses = responses.rename(columns=dict(zip(columns, renamed_columns)))
-        responses = responses.set_index("id")
 
         # Identify columns for survey questions
-        first_question = columns.index("A00")
-        last_question = columns.index("M1")
+        first_question = columns.get_loc("A00")
+        last_question = columns.get_loc("M1")
         question_columns = renamed_columns[first_question : last_question + 1]
 
         # Split df into question responses and timing info
-        question_responses = responses[question_columns]
-        system_info = responses[list(set(renamed_columns) - set(question_columns))]
+        question_responses = responses[question_columns].copy()
+        system_info = responses[
+            [column for column in renamed_columns if column not in question_columns]
+        ].copy()
 
         # Add missing "{question_id}T" columns for multiple-choice questions, e.g. "B1T"
         multiple_choice_questions = list(
-            self.questions[self.questions["type"] == "multiple-choice"][
-                "question_group"
+            self.questions.loc[
+                (self.questions["type"] == "multiple-choice")
+                & (self.questions["format"] == "longtext"),
+                "question_group",
             ].unique()
         )
         for question in multiple_choice_questions:
+            other_column = question + "other"
             question_responses.insert(
-                question_responses.columns.get_loc(question + "_other"),
+                question_responses.columns.get_loc(other_column),
                 question + "T",
-                [None] * question_responses.shape[0],
+                # Fill in new column based on "{question_id}other" column data
+                pd.Categorical(
+                    question_responses[other_column].where(
+                        question_responses[other_column].isnull(), "Y"
+                    )
+                ),
             )
 
         # Validate data structure
@@ -133,24 +143,18 @@ class LimeSurvey:
             warnings.warn(
                 f"The following columns in the data csv file are not found in the survey structure and are dropped:\n{not_in_structure}"
             )
+            question_responses = question_responses.drop(not_in_structure, axis=1)
         # Ceheck for questions not listed in data csv
-        not_in_data = list(
-            set(self.questions.index) - set(self.question_responses.columns)
-        )
+        not_in_data = list(set(self.questions.index) - set(question_responses.columns))
         if not_in_structure:
             warnings.warn(
                 f"The following questions in the survey structure are not found in the data csv file:\n{not_in_data}"
             )
-        # Pre-process data
-        # Fill in "{question_id}T" columns based on "{question_id}other" column data
-        for question in multiple_choice_questions:
-            if question_responses[question + "other"] is not None:
-                question_responses[question + "T"] = "Y"
 
         self.responses = question_responses
         self.sys_info = system_info
 
-    def get_dtype_info(self, columns, renamed_columns):
+    def _get_dtype_info(self, columns, renamed_columns):
         """Get dtypes for columns in data csv
 
         Args:
@@ -170,7 +174,7 @@ class LimeSurvey:
                 if (
                     self.questions.loc[renamed_column, "type"]
                     in ["single-choice", "multiple-choice", "array"]
-                    and self.questions.loc[column, "format"] != "longtext"
+                    and self.questions.loc[renamed_column, "format"] is None
                 ):
                     dtype_dict[column] = "category"
             if "language" in column:
