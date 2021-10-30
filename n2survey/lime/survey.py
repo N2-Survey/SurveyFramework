@@ -58,19 +58,6 @@ class LimeSurvey:
         section_df = pd.DataFrame(structure_dict["sections"])
         section_df = section_df.set_index("id")
         question_df = pd.DataFrame(structure_dict["questions"])
-
-        # Infer question type from available choices
-        for i in range(question_df.shape[0]):
-            if question_df.loc[i]["format"] is None:
-                if "Y" in question_df.loc[i]["choices"].keys():
-                    question_df.loc[i, ["format"]] = "multiple_choice"
-                elif "SQ" in question_df.loc[i]["name"]:
-                    question_df.loc[i, ["format"]] = "array"
-                else:
-                    question_df.loc[i, ["format"]] = "single_choice"
-
-        # Correct inconsistency in column names and set index column
-        question_df["name"] = question_df["name"].str.replace("T", "_other")
         question_df = question_df.set_index("name")
 
         # Save structure df to attributes
@@ -86,11 +73,11 @@ class LimeSurvey:
         if figsize is not None:
             self.plot_options["figsize"] = figsize
 
-    def read_responses(self, responses_file: str) -> None:
-        """Read responses CSV file
+    def read_response(self, responses_file: str) -> None:
+        """Read response CSV file
 
         Args:
-            responses_file (str): Path to the responses CSV file
+            response_file (str): Path to the responses CSV file
 
         """
 
