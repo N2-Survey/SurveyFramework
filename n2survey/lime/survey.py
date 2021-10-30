@@ -103,7 +103,6 @@ class LimeSurvey:
             columns.str.replace("[", "_", regex=False)
             .str.replace("]", "", regex=False)
             .str.replace("_other", "other", regex=False)
-
         )
         dtype_dict, datetime_columns = self._get_dtype_info(columns, renamed_columns)
 
