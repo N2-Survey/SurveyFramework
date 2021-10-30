@@ -86,11 +86,11 @@ class LimeSurvey:
         if figsize is not None:
             self.plot_options["figsize"] = figsize
 
-    def read_response(self, responses_file: str) -> None:
-        """Read response CSV file
+    def read_responses(self, responses_file: str) -> None:
+        """Read responses CSV file
 
         Args:
-            response_file (str): Path to the responses CSV file
+            responses_file (str): Path to the responses CSV file
 
         """
 
