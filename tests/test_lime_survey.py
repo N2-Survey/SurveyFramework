@@ -1,5 +1,6 @@
 """Test functions related to Survey class"""
 import os
+import re
 import unittest
 
 import pandas as pd
@@ -41,15 +42,6 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
         section_df = pd.DataFrame(structure_dict["sections"])
         section_df = section_df.set_index("id")
         question_df = pd.DataFrame(structure_dict["questions"])
-        for i in range(question_df.shape[0]):
-            if question_df.loc[i]["format"] is None:
-                if "Y" in question_df.loc[i]["choices"].keys():
-                    question_df.loc[i, ["format"]] = "multiple_choice"
-                elif "SQ" in question_df.loc[i]["name"]:
-                    question_df.loc[i, ["format"]] = "array"
-                else:
-                    question_df.loc[i, ["format"]] = "single_choice"
-        question_df["name"] = question_df["name"].str.replace("T", "_other")
         question_df = question_df.set_index("name")
 
         self.assertEqual(
@@ -129,86 +121,95 @@ class TestLimeSurveyReadResponse(unittest.TestCase):
         """Test reading response from dummy data csv"""
 
         survey = LimeSurvey(structure_file=structure_file)
-        survey.read_response(responses_file=response_file)
+        survey.read_responses(responses_file=response_file)
 
-        first_question = survey.response.columns.get_loc("A00")
-        last_question = survey.response.columns.get_loc("M1")
-        missing_columns = [
-            column
-            for column in survey.response.columns[first_question:last_question]
-            if column not in survey.questions.index and "other" not in column
-        ]
+        not_in_structure = list(
+            set(survey.responses.columns) - set(survey.questions.index)
+        )
 
-        self.assertEqual(bool(missing_columns), False)
+        self.assertEqual(bool(not_in_structure), False)
 
     def test_single_choice_dtype(self):
         """Test data for single choice questions is unordered categorical dtype"""
 
         survey = LimeSurvey(structure_file=structure_file)
-        survey.read_response(responses_file=response_file)
+        survey.read_responses(responses_file=response_file)
 
-        single_choice_questions = [
-            question
-            for question in survey.questions.index
-            if survey.questions.loc[question]["format"] == "single_choice"
+        single_choice_columns = [
+            column
+            for column in survey.responses.columns
+            if survey.questions.loc[column, "type"] == "single-choice"
+            and survey.questions.loc[column, "format"] is None
         ]
 
         self.assertEqual(
-            (survey.response[single_choice_questions].dtypes == "category").all(),
+            (survey.responses[single_choice_columns].dtypes == "category").all(),
             True,
-        )
-        self.assertEqual(
-            bool(
-                [
-                    column
-                    for column in single_choice_questions
-                    if survey.response[column].cat.ordered
-                ]
-            ),
-            False,
         )
 
     def test_array_dtype(self):
         """Test data for array questions is ordered categorical dtype"""
 
         survey = LimeSurvey(structure_file=structure_file)
-        survey.read_response(responses_file=response_file)
+        survey.read_responses(responses_file=response_file)
 
-        array_questions = [
-            question
-            for question in survey.questions.index
-            if survey.questions.loc[question]["format"] == "array"
+        array_columns = [
+            column
+            for column in survey.responses.columns
+            if survey.questions.loc[column, "type"] == "array"
+            and survey.questions.loc[column, "format"] is None
         ]
 
         self.assertEqual(
-            (survey.response[array_questions].dtypes == "category").all(),
+            (survey.responses[array_columns].dtypes == "category").all(),
             True,
-        )
-        self.assertEqual(
-            bool(
-                [
-                    column
-                    for column in array_questions
-                    if not survey.response[column].cat.ordered
-                ]
-            ),
-            False,
         )
 
     def test_multiple_choice_dtype(self):
         """Test data for multiple choice questions is bool dtype"""
 
         survey = LimeSurvey(structure_file=structure_file)
-        survey.read_response(responses_file=response_file)
+        survey.read_responses(responses_file=response_file)
 
-        multiple_choice_questions = [
-            question
-            for question in survey.questions.index
-            if survey.questions.loc[question]["format"] == "multiple_choice"
+        multiple_choice_columns = [
+            column
+            for column in survey.responses.columns
+            if survey.questions.loc[column, "type"] == "multiple-choice"
+            and survey.questions.loc[column, "format"] is None
         ]
 
         self.assertEqual(
-            (survey.response[multiple_choice_questions].dtypes == "bool").all(),
+            (survey.responses[multiple_choice_columns].dtypes == "category").all(),
+            True,
+        )
+
+    def test_sys_info_dtypes(self):
+        """Test data in sys_info has correct dtypes"""
+
+        survey = LimeSurvey(structure_file=structure_file)
+        survey.read_responses(responses_file=response_file)
+
+        datetime_columns = []
+        float_columns = []
+        categorical_columns = []
+        for column in survey.sys_info.columns:
+            if re.search("[Tt]ime", column):
+                float_columns.append(column)
+            if "date" in column:
+                datetime_columns.append(column)
+            if "language" in column:
+                categorical_columns.append(column)
+
+        self.assertEqual(
+            (survey.sys_info[datetime_columns].dtypes == "datetime64[ns]").all(),
+            True,
+        )
+        self.assertEqual(
+            (survey.sys_info[float_columns].dtypes == "float64").all(),
+            True,
+        )
+        self.assertEqual(
+            (survey.sys_info[categorical_columns].dtypes == "category").all(),
             True,
         )
 
