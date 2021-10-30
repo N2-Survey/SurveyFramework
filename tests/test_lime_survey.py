@@ -42,15 +42,6 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
         section_df = pd.DataFrame(structure_dict["sections"])
         section_df = section_df.set_index("id")
         question_df = pd.DataFrame(structure_dict["questions"])
-        for i in range(question_df.shape[0]):
-            if question_df.loc[i]["format"] is None:
-                if "Y" in question_df.loc[i]["choices"].keys():
-                    question_df.loc[i, ["format"]] = "multiple_choice"
-                elif "SQ" in question_df.loc[i]["name"]:
-                    question_df.loc[i, ["format"]] = "array"
-                else:
-                    question_df.loc[i, ["format"]] = "single_choice"
-        question_df["name"] = question_df["name"].str.replace("T", "_other")
         question_df = question_df.set_index("name")
 
         self.assertEqual(
