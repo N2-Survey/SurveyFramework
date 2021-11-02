@@ -8,8 +8,8 @@ from pandas._testing import assert_frame_equal
 
 from n2survey.lime import LimeSurvey, read_lime_questionnaire_structure
 
-structure_file = "data/survey_structure_2021.xml"
-response_file = "data/dummy_data_2021_codeonly.csv"
+STRUCTURE_FILE = "data/survey_structure_2021.xml"
+RESPONSES_FILE = "data/dummy_data_2021_codeonly.csv"
 
 
 class TestLimeSurveyInitialisation(unittest.TestCase):
@@ -34,11 +34,9 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
     def test_simple_init(self):
         """Test simple initialisation"""
 
-        survey = LimeSurvey(
-            structure_file=structure_file,
-        )
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
 
-        structure_dict = read_lime_questionnaire_structure(structure_file)
+        structure_dict = read_lime_questionnaire_structure(STRUCTURE_FILE)
         section_df = pd.DataFrame(structure_dict["sections"])
         section_df = section_df.set_index("id")
         question_df = pd.DataFrame(structure_dict["questions"])
@@ -66,7 +64,7 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
 
         cmap = "Reds"
         survey = LimeSurvey(
-            structure_file=structure_file,
+            structure_file=STRUCTURE_FILE,
             cmap=cmap,
         )
 
@@ -87,7 +85,7 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
 
         output_dir = "plot/"
         survey = LimeSurvey(
-            structure_file=structure_file,
+            structure_file=STRUCTURE_FILE,
             output_folder=output_dir,
         )
 
@@ -104,7 +102,7 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
         """Test initialisation with default figsize option for plotting"""
 
         figsize = (10, 15)
-        survey = LimeSurvey(structure_file=structure_file, figsize=figsize)
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE, figsize=figsize)
 
         self.assertEqual(survey.plot_options["figsize"], figsize)
         self.assertEqual(survey.plot_options["cmap"], self.default_plot_options["cmap"])
@@ -120,8 +118,8 @@ class TestLimeSurveyReadResponse(unittest.TestCase):
     def test_read_response(self):
         """Test reading response from dummy data csv"""
 
-        survey = LimeSurvey(structure_file=structure_file)
-        survey.read_responses(responses_file=response_file)
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+        survey.read_responses(responses_file=RESPONSES_FILE)
 
         not_in_structure = list(
             set(survey.responses.columns) - set(survey.questions.index)
@@ -132,8 +130,8 @@ class TestLimeSurveyReadResponse(unittest.TestCase):
     def test_single_choice_dtype(self):
         """Test data for single choice questions is unordered categorical dtype"""
 
-        survey = LimeSurvey(structure_file=structure_file)
-        survey.read_responses(responses_file=response_file)
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+        survey.read_responses(responses_file=RESPONSES_FILE)
 
         single_choice_columns = [
             column
@@ -150,8 +148,8 @@ class TestLimeSurveyReadResponse(unittest.TestCase):
     def test_array_dtype(self):
         """Test data for array questions is ordered categorical dtype"""
 
-        survey = LimeSurvey(structure_file=structure_file)
-        survey.read_responses(responses_file=response_file)
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+        survey.read_responses(responses_file=RESPONSES_FILE)
 
         array_columns = [
             column
@@ -168,8 +166,8 @@ class TestLimeSurveyReadResponse(unittest.TestCase):
     def test_multiple_choice_dtype(self):
         """Test data for multiple choice questions is bool dtype"""
 
-        survey = LimeSurvey(structure_file=structure_file)
-        survey.read_responses(responses_file=response_file)
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+        survey.read_responses(responses_file=RESPONSES_FILE)
 
         multiple_choice_columns = [
             column
@@ -186,8 +184,8 @@ class TestLimeSurveyReadResponse(unittest.TestCase):
     def test_lime_system_info_dtypes(self):
         """Test data in lime_system_info has correct dtypes"""
 
-        survey = LimeSurvey(structure_file=structure_file)
-        survey.read_responses(responses_file=response_file)
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+        survey.read_responses(responses_file=RESPONSES_FILE)
 
         datetime_columns = []
         float_columns = []

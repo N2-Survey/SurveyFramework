@@ -116,12 +116,12 @@ class LimeSurvey:
         # <fixed>
         #  <category>
         #    <label>Other</label>
-         #   <value>Y</value>
-         #   <contingentQuestion varName="B1other">
-         #    <text>Other</text>
-         #     ...
-         # For some reason, LimeSurvey does not export values for the parent <response> (B1T in this case).
-         # So, here we add those columns artificially based on the contingent question values.
+        #   <value>Y</value>
+        #   <contingentQuestion varName="B1other">
+        #    <text>Other</text>
+        #     ...
+        # For some reason, LimeSurvey does not export values for the parent <response> (B1T in this case).
+        # So, here we add those columns artificially based on the contingent question values.
         multiple_choice_questions = self.questions.index[
             (self.questions["type"] == "multiple-choice")
             & self.questions["contingent_of_name"].notnull()
