@@ -102,33 +102,27 @@ class LimeSurvey:
         responses = responses.rename(columns=dict(zip(columns, renamed_columns)))
 
         # Identify columns for survey questions
-        first_question = columns.get_loc("A00")
-        last_question = columns.get_loc("M1")
+        first_question = columns.get_loc("datestamp") + 1
+        last_question = columns.get_loc("interviewtime") - 1
         question_columns = renamed_columns[first_question : last_question + 1]
 
         # Split df into question responses and timing info
-        question_responses = responses[question_columns].copy()
-        system_info = responses[
-            [column for column in renamed_columns if column not in question_columns]
-        ].copy()
+        question_responses = responses[question_columns]
+        system_info = responses.iloc[:, ~renamed_columns.isin(question_columns)]
 
         # Add missing "{question_id}T" columns for multiple-choice questions, e.g. "B1T"
-        multiple_choice_questions = list(
-            self.questions.loc[
-                (self.questions["type"] == "multiple-choice")
-                & (self.questions["format"] == "longtext"),
-                "question_group",
-            ].unique()
-        )
+        multiple_choice_questions = self.questions.index[
+            (self.questions["type"] == "multiple-choice")
+            & self.questions["contingent_of_name"].notnull()
+        ]
         for question in multiple_choice_questions:
-            other_column = question + "other"
             question_responses.insert(
-                question_responses.columns.get_loc(other_column),
-                question + "T",
+                question_responses.columns.get_loc(question),
+                self.questions.loc[question, "contingent_of_name"],
                 # Fill in new column based on "{question_id}other" column data
                 pd.Categorical(
-                    question_responses[other_column].where(
-                        question_responses[other_column].isnull(), "Y"
+                    question_responses[question].where(
+                        question_responses[question].isnull(), "Y"
                     )
                 ),
             )
@@ -151,7 +145,7 @@ class LimeSurvey:
             )
 
         self.responses = question_responses
-        self.sys_info = system_info
+        self.lime_system_info = system_info
 
     def _get_dtype_info(self, columns, renamed_columns):
         """Get dtypes for columns in data csv
@@ -165,21 +159,26 @@ class LimeSurvey:
             list: List of datetime columns
         """
 
-        # Compile dict with dtype for each column and list of datetime columns
+        # Compile dict with dtype for each column
         dtype_dict = {}
+        # Compile list of datetime columns (because pd.read_csv takes this as separate arg)
         datetime_columns = []
+
         for column, renamed_column in zip(columns, renamed_columns):
+            # Categorical dtype for all questions with answer options
             if renamed_column in self.questions.index:
-                if (
-                    self.questions.loc[renamed_column, "type"]
-                    in ["single-choice", "multiple-choice", "array"]
-                    and self.questions.loc[renamed_column, "format"] is None
-                ):
+                if pd.notnull(self.questions.loc[renamed_column, "choices"]):
                     dtype_dict[column] = "category"
+
+            # Categorical dtype for "startlanguage"
             if "language" in column:
                 dtype_dict[column] = "category"
+
+            # Float for all timing info
             if re.search("[Tt]ime", column):
                 dtype_dict[column] = "float64"
+
+            # Datetime for all time stamps
             if "date" in column:
                 datetime_columns.append(column)
 

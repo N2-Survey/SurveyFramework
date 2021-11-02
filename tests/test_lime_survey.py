@@ -183,8 +183,8 @@ class TestLimeSurveyReadResponse(unittest.TestCase):
             True,
         )
 
-    def test_sys_info_dtypes(self):
-        """Test data in sys_info has correct dtypes"""
+    def test_lime_system_info_dtypes(self):
+        """Test data in lime_system_info has correct dtypes"""
 
         survey = LimeSurvey(structure_file=structure_file)
         survey.read_responses(responses_file=response_file)
@@ -192,7 +192,7 @@ class TestLimeSurveyReadResponse(unittest.TestCase):
         datetime_columns = []
         float_columns = []
         categorical_columns = []
-        for column in survey.sys_info.columns:
+        for column in survey.lime_system_info.columns:
             if re.search("[Tt]ime", column):
                 float_columns.append(column)
             if "date" in column:
@@ -201,15 +201,17 @@ class TestLimeSurveyReadResponse(unittest.TestCase):
                 categorical_columns.append(column)
 
         self.assertEqual(
-            (survey.sys_info[datetime_columns].dtypes == "datetime64[ns]").all(),
+            (
+                survey.lime_system_info[datetime_columns].dtypes == "datetime64[ns]"
+            ).all(),
             True,
         )
         self.assertEqual(
-            (survey.sys_info[float_columns].dtypes == "float64").all(),
+            (survey.lime_system_info[float_columns].dtypes == "float64").all(),
             True,
         )
         self.assertEqual(
-            (survey.sys_info[categorical_columns].dtypes == "category").all(),
+            (survey.lime_system_info[categorical_columns].dtypes == "category").all(),
             True,
         )
 
