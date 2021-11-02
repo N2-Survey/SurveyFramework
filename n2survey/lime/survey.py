@@ -110,7 +110,18 @@ class LimeSurvey:
         question_responses = responses[question_columns]
         system_info = responses.iloc[:, ~renamed_columns.isin(question_columns)]
 
-        # Add missing "{question_id}T" columns for multiple-choice questions, e.g. "B1T"
+        # Add missing columns for multiple-choice questions with contingent question
+        # A contingent question of a multiple-choice question typically looks like this:
+        # <response varName="B1T">
+        # <fixed>
+        #  <category>
+        #    <label>Other</label>
+         #   <value>Y</value>
+         #   <contingentQuestion varName="B1other">
+         #    <text>Other</text>
+         #     ...
+         # For some reason, LimeSurvey does not export values for the parent <response> (B1T in this case).
+         # So, here we add those columns artificially based on the contingent question values.
         multiple_choice_questions = self.questions.index[
             (self.questions["type"] == "multiple-choice")
             & self.questions["contingent_of_name"].notnull()
