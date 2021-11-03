@@ -219,9 +219,50 @@ class LimeSurvey:
         raise NotImplementedError()
 
     def get_label(self, question: str) -> str:
-        """Get label for the corresponding column or group of colums"""
-        raise NotImplementedError()
+        """Get label for the corresponding column or group of colums
+
+        Args:
+            question (str): id of question to retrieve
+
+        Returns:
+            dict: dict of label mappings
+        """
+
+        question_group = self.questions[self.questions["question_group"] == question]
+        if question_group.iloc[0]["type"] == "array":
+            # Collect labels from all subquestions if "array" type
+            label_dict = {
+                index: label
+                for index, label in zip(question_group.index, question_group["label"])
+            }
+            label_dict["question_label"] = question_group.iloc[0]["question_label"]
+        else:
+            # Collect labels from only first in the group if "single-choice" or "multiple-choice" type
+            label_dict = {question: question_group.iloc[0]["label"]}
+
+        return label_dict
 
     def get_choices(self, question: str) -> str:
-        """Get choices for the corresponding column or group of colums"""
-        raise NotImplementedError()
+        """Get choices for the corresponding column or group of colums
+
+        Args:
+            question (str): id of question to retrieve
+
+        Returns:
+            dict: dict of choices mappings
+        """
+
+        question_group = self.questions[self.questions["question_group"] == question]
+        if question_group.iloc[0]["type"] == "multiple-choice":
+            # Collect choices from all subquestions if "multiple-choice" type
+            choices_dict = {
+                index: choices
+                for index, choices in zip(
+                    question_group.index, question_group["choices"]
+                )
+            }
+        else:
+            # Collect choices from only first in the group if "single-choice" or "array" type
+            choices_dict = {question: question_group.iloc[0]["choices"]}
+
+        return choices_dict
