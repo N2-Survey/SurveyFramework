@@ -112,11 +112,11 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
         )
 
 
-class TestLimeSurveyReadResponse(unittest.TestCase):
-    """Test LimeSurvey reading response"""
+class TestLimeSurveyReadResponses(unittest.TestCase):
+    """Test LimeSurvey reading responses"""
 
-    def test_read_response(self):
-        """Test reading response from dummy data csv"""
+    def test_read_responses(self):
+        """Test reading responses from dummy data csv"""
 
         survey = LimeSurvey(structure_file=STRUCTURE_FILE)
         survey.read_responses(responses_file=RESPONSES_FILE)
@@ -211,6 +211,127 @@ class TestLimeSurveyReadResponse(unittest.TestCase):
         self.assertEqual(
             (survey.lime_system_info[categorical_columns].dtypes == "category").all(),
             True,
+        )
+
+
+class TestLimeSurveyGetLabels(unittest.TestCase):
+    """Test LimeSurvey get_label"""
+
+    def test_single_choice_label(self):
+        """Test getting label for single-choice question"""
+
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+
+        single_choice_questions = survey.questions.loc[
+            survey.questions["type"] == "single-choice", "question_group"
+        ].unique()
+        test_question = single_choice_questions[3]
+        label = survey.get_label(test_question)
+
+        self.assertDictEqual(
+            label,
+            {test_question: survey.questions.loc[test_question, "label"]},
+        )
+
+    def test_multiple_choice_label(self):
+        """Test getting label for multiple-choice question"""
+
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+
+        multiple_choice_questions = survey.questions.loc[
+            survey.questions["type"] == "multiple-choice", "question_group"
+        ].unique()
+        test_question = multiple_choice_questions[3]
+        label = survey.get_label(test_question)
+
+        self.assertDictEqual(
+            label,
+            {test_question: survey.questions.loc[test_question + "_SQ001", "label"]},
+        )
+
+    def test_array_label(self):
+        """Test getting label for array question"""
+
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+
+        array_questions = survey.questions.loc[
+            survey.questions["type"] == "array", "question_group"
+        ].unique()
+        test_question = array_questions[3]
+        label = survey.get_label(test_question)
+
+        question_group = survey.questions[
+            survey.questions["question_group"] == test_question
+        ]
+        label_dict = {
+            index: label
+            for index, label in zip(question_group.index, question_group["label"])
+        }
+        label_dict["question_label"] = question_group.iloc[0]["question_label"]
+
+        self.assertDictEqual(
+            label,
+            label_dict,
+        )
+
+
+class TestLimeSurveyGetChoices(unittest.TestCase):
+    """Test LimeSurvey get_choices"""
+
+    def test_single_choice_choices(self):
+        """Test getting choices for single-choice question"""
+
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+
+        single_choice_questions = survey.questions.loc[
+            survey.questions["type"] == "single-choice", "question_group"
+        ].unique()
+        test_question = single_choice_questions[3]
+        choices = survey.get_choices(test_question)
+
+        self.assertDictEqual(
+            choices,
+            {test_question: survey.questions.loc[test_question, "choices"]},
+        )
+
+    def test_array_choices(self):
+        """Test getting choices for array question"""
+
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+
+        array_questions = survey.questions.loc[
+            survey.questions["type"] == "array", "question_group"
+        ].unique()
+        test_question = array_questions[3]
+        choices = survey.get_choices(test_question)
+
+        self.assertDictEqual(
+            choices,
+            {test_question: survey.questions.loc[test_question + "_SQ001", "choices"]},
+        )
+
+    def test_multiple_choice_choices(self):
+        """Test getting choices for multiple-choice question"""
+
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+
+        multiple_choice_questions = survey.questions.loc[
+            survey.questions["type"] == "multiple-choice", "question_group"
+        ].unique()
+        test_question = multiple_choice_questions[3]
+        choices = survey.get_choices(test_question)
+
+        question_group = survey.questions[
+            survey.questions["question_group"] == test_question
+        ]
+        choices_dict = {
+            index: choices
+            for index, choices in zip(question_group.index, question_group["choices"])
+        }
+
+        self.assertDictEqual(
+            choices,
+            choices_dict,
         )
 
 
