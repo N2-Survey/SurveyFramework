@@ -92,3 +92,9 @@ pre-commit install
 
 ## MacOS
 TBD
+  
+# Default questions for testing:
+
+Single choice: A6
+Multiple choice: C3
+Array: B6
