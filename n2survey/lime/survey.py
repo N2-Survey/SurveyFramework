@@ -242,7 +242,7 @@ class LimeSurvey:
 
         return label
 
-    def get_choices(self, question: str) -> str:
+    def get_choices(self, question: str) -> dict:
         """Get choices for the corresponding column or group of colums
 
         Args:
