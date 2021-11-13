@@ -250,6 +250,13 @@ class LimeSurvey:
 
         Returns:
             dict: dict of choices mappings
+
+        For single-choice, format is {"A1": "Woman", "A3": "Man", ...}
+        For individual subquestion, format is {"Y": "I do not like scientific work."}
+        For multiple-choice group, format is {"C3_SQ001": "I do not like scientific work.", "C3_SQ002": ...}
+        For array group, format is {"B6_SQ001": "More time needed to complete PhD project", "B6_SQ002": ...}
+        To get shared choices for array group, e.g. {"A1": "Yes", "A2": "No",...},
+        use individual subquestion id as arg, e.g. "B6_SQ001"
         """
 
         # If single-choice, free, or individual subquestion
@@ -264,14 +271,12 @@ class LimeSurvey:
                 & (self.questions["contingent_of_name"].isnull())
             ]
             # Collect choices from all subquestions
-            # For multiple-choice, format is {"C3_SQ001": "I do not like scientific work.", ...}
-            # For array, format is {"B6_SQ001": "More time needed to complete PhD project",...}
-            # For array, to get shared options, e.g. {"A1": "Yes", "A2": "No",...},
-            # use individual subquestion id as arg, e.g. "B6_SQ001"
             choices_dict = {
                 index: (
+                    # Flatten nested dict and get choice text directly for multiple-choice
                     choices["Y"]
                     if question_group.iloc[0]["type"] == "multiple-choice"
+                    # Use subquestion label as choice text for array
                     else question_group.loc[index, "label"]
                 )
                 for index, choices in zip(
