@@ -225,22 +225,22 @@ class LimeSurvey:
             question (str): id of question to retrieve
 
         Returns:
-            dict: dict of label mappings
+            str: question label/title
         """
 
-        question_group = self.questions[self.questions["question_group"] == question]
-        if question_group.iloc[0]["type"] == "array":
-            # Collect labels from all subquestions if "array" type
-            label_dict = {
-                index: label
-                for index, label in zip(question_group.index, question_group["label"])
-            }
-            label_dict["question_label"] = question_group.iloc[0]["question_label"]
+        # If single-choice, free, or individual subquestion
+        if question in self.questions.index:
+            label = self.questions.loc[question, "label"]
+        # If question group for multiple-choice or array
+        elif not self.questions[self.questions["question_group"] == question].empty:
+            label = self.questions[self.questions["question_group"] == question].iloc[
+                0
+            ]["question_label"]
+        # If not found in survey structure
         else:
-            # Collect labels from only first in the group if "single-choice" or "multiple-choice" type
-            label_dict = {question: question_group.iloc[0]["label"]}
+            raise KeyError()
 
-        return label_dict
+        return label
 
     def get_choices(self, question: str) -> str:
         """Get choices for the corresponding column or group of colums
@@ -252,17 +252,35 @@ class LimeSurvey:
             dict: dict of choices mappings
         """
 
-        question_group = self.questions[self.questions["question_group"] == question]
-        if question_group.iloc[0]["type"] == "multiple-choice":
-            # Collect choices from all subquestions if "multiple-choice" type
+        # If single-choice, free, or individual subquestion
+        if question in self.questions.index:
+            # Return "choices" directly
+            choices_dict = self.questions.loc[question, "choices"]
+
+        # If question group for multiple-choice or array
+        elif not self.questions[self.questions["question_group"] == question].empty:
+            question_group = self.questions.loc[
+                (self.questions["question_group"] == question)
+                & (self.questions["contingent_of_name"].isnull())
+            ]
+            # Collect choices from all subquestions
+            # For multiple-choice, format is {"C3_SQ001": "I do not like scientific work.", ...}
+            # For array, format is {"B6_SQ001": "More time needed to complete PhD project",...}
+            # For array, to get shared options, e.g. {"A1": "Yes", "A2": "No",...},
+            # use individual subquestion id as arg, e.g. "B6_SQ001"
             choices_dict = {
-                index: choices
+                index: (
+                    choices["Y"]
+                    if question_group.iloc[0]["type"] == "multiple-choice"
+                    else question_group.loc[index, "label"]
+                )
                 for index, choices in zip(
                     question_group.index, question_group["choices"]
                 )
             }
+
+        # If not found in survey structure
         else:
-            # Collect choices from only first in the group if "single-choice" or "array" type
-            choices_dict = {question: question_group.iloc[0]["choices"]}
+            raise KeyError()
 
         return choices_dict

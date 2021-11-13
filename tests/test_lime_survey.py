@@ -11,6 +11,13 @@ from n2survey.lime import LimeSurvey, read_lime_questionnaire_structure
 STRUCTURE_FILE = "data/survey_structure_2021.xml"
 RESPONSES_FILE = "data/dummy_data_2021_codeonly.csv"
 
+default_test_questions = {
+    "single-choice": "A6",
+    "multiple-choice": "C3",
+    "array": "B6",
+    "free": "A8",
+}
+
 
 class TestLimeSurveyInitialisation(unittest.TestCase):
     """Test LimeSurvey class initialisation"""
@@ -214,64 +221,79 @@ class TestLimeSurveyReadResponses(unittest.TestCase):
         )
 
 
-class TestLimeSurveyGetLabels(unittest.TestCase):
+class TestLimeSurveyGetLabel(unittest.TestCase):
     """Test LimeSurvey get_label"""
 
     def test_single_choice_label(self):
-        """Test getting label for single-choice question"""
+        """Test getting label for single-choice question with question id"""
 
         survey = LimeSurvey(structure_file=STRUCTURE_FILE)
 
-        single_choice_questions = survey.questions.loc[
-            survey.questions["type"] == "single-choice", "question_group"
-        ].unique()
-        test_question = single_choice_questions[3]
-        label = survey.get_label(test_question)
+        label = survey.get_label(default_test_questions["single-choice"])
 
-        self.assertDictEqual(
+        self.assertEqual(
             label,
-            {test_question: survey.questions.loc[test_question, "label"]},
+            "To which gender do you identify most?",
         )
 
-    def test_multiple_choice_label(self):
-        """Test getting label for multiple-choice question"""
+    def test_multiple_choice_label_by_group(self):
+        """Test getting label for multiple-choice question with question group id"""
 
         survey = LimeSurvey(structure_file=STRUCTURE_FILE)
 
-        multiple_choice_questions = survey.questions.loc[
-            survey.questions["type"] == "multiple-choice", "question_group"
-        ].unique()
-        test_question = multiple_choice_questions[3]
-        label = survey.get_label(test_question)
+        label = survey.get_label(default_test_questions["multiple-choice"])
 
-        self.assertDictEqual(
+        self.assertEqual(
             label,
-            {test_question: survey.questions.loc[test_question + "_SQ001", "label"]},
+            "What was/were the reason(s) for considering to quit your PhD?",
         )
 
-    def test_array_label(self):
+    def test_multiple_choice_label_by_subquestion(self):
+        """Test getting label for multiple-choice question with subquestion id"""
+
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+
+        label = survey.get_label(default_test_questions["multiple-choice"] + "_SQ001")
+
+        self.assertEqual(
+            label,
+            "What was/were the reason(s) for considering to quit your PhD?",
+        )
+
+    def test_array_label_by_group(self):
         """Test getting label for array question"""
 
         survey = LimeSurvey(structure_file=STRUCTURE_FILE)
 
-        array_questions = survey.questions.loc[
-            survey.questions["type"] == "array", "question_group"
-        ].unique()
-        test_question = array_questions[3]
-        label = survey.get_label(test_question)
+        label = survey.get_label(default_test_questions["array"])
 
-        question_group = survey.questions[
-            survey.questions["question_group"] == test_question
-        ]
-        label_dict = {
-            index: label
-            for index, label in zip(question_group.index, question_group["label"])
-        }
-        label_dict["question_label"] = question_group.iloc[0]["question_label"]
-
-        self.assertDictEqual(
+        self.assertEqual(
             label,
-            label_dict,
+            "Would it be possible for you to extend your current contract/stipend for the following reasons?",
+        )
+
+    def test_array_label_by_subquestion(self):
+        """Test getting label for array question with subquestion id"""
+
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+
+        label = survey.get_label(default_test_questions["array"] + "_SQ001")
+
+        self.assertEqual(
+            label,
+            "More time needed to complete PhD project",
+        )
+
+    def test_free_label(self):
+        """Test getting label for free input question"""
+
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+
+        label = survey.get_label(default_test_questions["free"])
+
+        self.assertEqual(
+            label,
+            "When did you start your PhD?",
         )
 
 
@@ -283,55 +305,110 @@ class TestLimeSurveyGetChoices(unittest.TestCase):
 
         survey = LimeSurvey(structure_file=STRUCTURE_FILE)
 
-        single_choice_questions = survey.questions.loc[
-            survey.questions["type"] == "single-choice", "question_group"
-        ].unique()
-        test_question = single_choice_questions[3]
-        choices = survey.get_choices(test_question)
+        choices = survey.get_choices(default_test_questions["single-choice"])
 
         self.assertDictEqual(
             choices,
-            {test_question: survey.questions.loc[test_question, "choices"]},
+            {
+                "A1": "Woman",
+                "A3": "Man",
+                "A4": "Gender diverse (Gender-fluid)",
+                "A5": "Non-binary",
+                "A2": "I don't want to answer this question",
+                "-oth-": "Other gender representations:",
+            },
         )
 
-    def test_array_choices(self):
+    def test_multiple_choice_choices_by_group(self):
+        """Test getting choices for multiple-choice question with question group id"""
+
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+
+        choices = survey.get_choices(default_test_questions["multiple-choice"])
+
+        self.assertDictEqual(
+            choices,
+            {
+                "C3_SQ001": "I do not like scientific work.",
+                "C3_SQ002": "I do not like my topic.",
+                "C3_SQ003": "I have problems getting by financially.",
+                "C3_SQ004": "I do not like my working conditions.",
+                "C3_SQ005": "I have work related difficulties with my supervisor.",
+                "C3_SQ006": "I don’t like the social environment at my workplace.",
+                "C3_SQ007": "I have personal difficulties with my supervisor.",
+                "C3_SQ008": "I find my career prospective unattractive.",
+                "C3_SQ009": "I have personal reasons.",
+                "C3_SQ010": "I do not feel qualified enough.",
+                "C3_SQ011": "I have no or poor academic results.",
+                "C3_SQ012": "I find other jobs more interesting.",
+                "C3_SQ013": "I can’t cope with the high workload.",
+                "C3_SQ014": "My academic life is not compatible with my family responsibilities.",
+                "C3_SQ015": "My project is not funded anymore.",
+                "C3_SQ016": "I have administrative problems.",
+                "C3_SQ020": "My health.",
+                "C3_SQ017": "I don't want to answer this question.",
+                "C3_SQ018": "I don't know.",
+                "C3T": "Other, please specify",
+            },
+        )
+
+    def test_multiple_choice_choices_by_subquestion(self):
+        """Test getting choices for multiple-choice question with subquestion id"""
+
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+
+        choices = survey.get_choices(
+            default_test_questions["multiple-choice"] + "_SQ001"
+        )
+
+        self.assertDictEqual(
+            choices,
+            {"Y": "I do not like scientific work."},
+        )
+
+    def test_array_choices_by_group(self):
         """Test getting choices for array question"""
 
         survey = LimeSurvey(structure_file=STRUCTURE_FILE)
 
-        array_questions = survey.questions.loc[
-            survey.questions["type"] == "array", "question_group"
-        ].unique()
-        test_question = array_questions[3]
-        choices = survey.get_choices(test_question)
+        choices = survey.get_choices(default_test_questions["array"])
 
         self.assertDictEqual(
             choices,
-            {test_question: survey.questions.loc[test_question + "_SQ001", "choices"]},
+            {
+                "B6_SQ001": "More time needed to complete PhD project",
+                "B6_SQ002": "Parental leave",
+                "B6_SQ003": "Wrap-up phase after completion of the PhD project",
+            },
         )
 
-    def test_multiple_choice_choices(self):
-        """Test getting choices for multiple-choice question"""
+    def test_array_choices_by_subquestion(self):
+        """Test getting choices for array question with subquestion id"""
 
         survey = LimeSurvey(structure_file=STRUCTURE_FILE)
 
-        multiple_choice_questions = survey.questions.loc[
-            survey.questions["type"] == "multiple-choice", "question_group"
-        ].unique()
-        test_question = multiple_choice_questions[3]
-        choices = survey.get_choices(test_question)
-
-        question_group = survey.questions[
-            survey.questions["question_group"] == test_question
-        ]
-        choices_dict = {
-            index: choices
-            for index, choices in zip(question_group.index, question_group["choices"])
-        }
+        choices = survey.get_choices(default_test_questions["array"] + "_SQ001")
 
         self.assertDictEqual(
             choices,
-            choices_dict,
+            {
+                "A1": "Yes",
+                "A2": "No",
+                "A3": "I don't know",
+                "A4": "I don't want to answer this question",
+            },
+        )
+
+    def test_free_choices(self):
+        """Test getting choices for free input question"""
+
+        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+
+        label = survey.get_choices(default_test_questions["free"])
+
+        self.assertEqual(
+            label,
+            None,
         )
 
 
