@@ -100,3 +100,5 @@ Single choice: A6
 Multiple choice: C3
   
 Array: B6
+
+Free: A8
