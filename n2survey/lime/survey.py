@@ -59,6 +59,7 @@ class LimeSurvey:
         section_df = section_df.set_index("id")
         question_df = pd.DataFrame(structure_dict["questions"])
         question_df = question_df.set_index("name")
+        question_df["is_contingent"] = question_df.contingent_of_name.notnull()
         self.sections = section_df
         self.questions = question_df
 
@@ -218,10 +219,76 @@ class LimeSurvey:
 
         raise NotImplementedError()
 
-    def get_label(self, question: str) -> str:
-        """Get label for the corresponding column or group of colums"""
-        raise NotImplementedError()
+    def get_question(self, question: str) -> pd.DataFrame:
+        """Get question structure (i.e. subset from self.questions)
 
-    def get_choices(self, question: str) -> str:
-        """Get choices for the corresponding column or group of colums"""
-        raise NotImplementedError()
+        Args:
+            question (str): Name of question or subquestion
+
+        Raises:
+            ValueError: There is no such question or subquestion
+
+        Returns:
+            pd.DataFrame: Subset from `self.questions` with corresponding rows
+        """
+
+        questions_subdf = self.questions[
+            (self.questions["question_group"] == question)
+            | (self.questions.index == question)
+        ]
+
+        if questions_subdf.empty:
+            raise ValueError(f"Unexpected question code '{question}'")
+
+        return questions_subdf
+
+    def get_label(self, question: str) -> str:
+        """Get label for the corresponding column or group of colums
+
+        Args:
+            question (str): Name of question or subquestion
+
+        Returns:
+            str: question label/title
+        """
+
+        question_info = self.get_question(question)
+
+        if question_info.shape[0] > 1:
+            label = question_info.question_label[0]
+        else:
+            label = question_info.label[0]
+
+        return label
+
+    def get_choices(self, question: str) -> dict:
+        """Get choices of a question
+
+        * For multiple-choice group, format is `<subquestion code: subquestion title>`,
+        for example, {"C3_SQ001": "I do not like scientific work.", "C3_SQ002": ...}
+        * For all other fixed questions (i.e. array, single choice, subquestion), returns
+          choices of that question or column
+        * For free and contingent, returns None
+
+        Args:
+            question (str): Name of question or subquestion to retrieve
+
+        Returns:
+            dict: dict of choices mappings
+        """
+
+        question_info = self.get_question(question)
+        question_info = question_info[~question_info.is_contingent]
+        question_type = question_info.type[0]
+
+        # If set of multiple-choice questions
+        if (question_info.shape[0] > 1) and (question_type == "multiple-choice"):
+            # Flatten nested dict and get choice text directly for multiple-choice
+            choices_dict = {
+                index: row.choices["Y"] for index, row in question_info.iterrows()
+            }
+        # If single-choice, free, individual subquestion, or array
+        else:
+            choices_dict = question_info.choices[0]
+
+        return choices_dict
