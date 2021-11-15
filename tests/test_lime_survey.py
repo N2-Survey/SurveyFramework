@@ -8,15 +8,7 @@ from pandas._testing import assert_frame_equal
 
 from n2survey.lime import LimeSurvey, read_lime_questionnaire_structure
 
-STRUCTURE_FILE = "data/survey_structure_2021.xml"
-RESPONSES_FILE = "data/dummy_data_2021_codeonly.csv"
-
-default_test_questions = {
-    "single-choice": "A6",
-    "multiple-choice": "C3",
-    "array": "B6",
-    "free": "A8",
-}
+from .common import BaseTestLimeSurvey2021Case
 
 
 class TestLimeSurveyInitialisation(unittest.TestCase):
@@ -37,13 +29,14 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
 
     def setUp(self):
         self.addTypeEqualityFunc(pd.DataFrame, self.assert_df_equal)
+        self.structure_file = "data/survey_structure_2021.xml"
 
     def test_simple_init(self):
         """Test simple initialisation"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
+        survey = LimeSurvey(structure_file=self.structure_file)
 
-        structure_dict = read_lime_questionnaire_structure(STRUCTURE_FILE)
+        structure_dict = read_lime_questionnaire_structure(self.structure_file)
         section_df = pd.DataFrame(structure_dict["sections"])
         section_df = section_df.set_index("id")
         question_df = pd.DataFrame(structure_dict["questions"])
@@ -71,7 +64,7 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
 
         cmap = "Reds"
         survey = LimeSurvey(
-            structure_file=STRUCTURE_FILE,
+            structure_file=self.structure_file,
             cmap=cmap,
         )
 
@@ -92,7 +85,7 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
 
         output_dir = "plot/"
         survey = LimeSurvey(
-            structure_file=STRUCTURE_FILE,
+            structure_file=self.structure_file,
             output_folder=output_dir,
         )
 
@@ -109,7 +102,7 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
         """Test initialisation with default figsize option for plotting"""
 
         figsize = (10, 15)
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE, figsize=figsize)
+        survey = LimeSurvey(structure_file=self.structure_file, figsize=figsize)
 
         self.assertEqual(survey.plot_options["figsize"], figsize)
         self.assertEqual(survey.plot_options["cmap"], self.default_plot_options["cmap"])
@@ -119,17 +112,20 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
         )
 
 
-class TestLimeSurveyReadResponses(unittest.TestCase):
+class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021Case):
     """Test LimeSurvey reading responses"""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """Get common data for all tests"""
+        super().setUpClass()
+        cls.survey.read_responses(responses_file=cls.responses_file)
 
     def test_read_responses(self):
         """Test reading responses from dummy data csv"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-        survey.read_responses(responses_file=RESPONSES_FILE)
-
         not_in_structure = list(
-            set(survey.responses.columns) - set(survey.questions.index)
+            set(self.survey.responses.columns) - set(self.survey.questions.index)
         )
 
         self.assertEqual(bool(not_in_structure), False)
@@ -137,67 +133,55 @@ class TestLimeSurveyReadResponses(unittest.TestCase):
     def test_single_choice_dtype(self):
         """Test data for single choice questions is unordered categorical dtype"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-        survey.read_responses(responses_file=RESPONSES_FILE)
-
         single_choice_columns = [
             column
-            for column in survey.responses.columns
-            if survey.questions.loc[column, "type"] == "single-choice"
-            and survey.questions.loc[column, "format"] is None
+            for column in self.survey.responses.columns
+            if self.survey.questions.loc[column, "type"] == "single-choice"
+            and self.survey.questions.loc[column, "format"] is None
         ]
 
         self.assertEqual(
-            (survey.responses[single_choice_columns].dtypes == "category").all(),
+            (self.survey.responses[single_choice_columns].dtypes == "category").all(),
             True,
         )
 
     def test_array_dtype(self):
         """Test data for array questions is ordered categorical dtype"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-        survey.read_responses(responses_file=RESPONSES_FILE)
-
         array_columns = [
             column
-            for column in survey.responses.columns
-            if survey.questions.loc[column, "type"] == "array"
-            and survey.questions.loc[column, "format"] is None
+            for column in self.survey.responses.columns
+            if self.survey.questions.loc[column, "type"] == "array"
+            and self.survey.questions.loc[column, "format"] is None
         ]
 
         self.assertEqual(
-            (survey.responses[array_columns].dtypes == "category").all(),
+            (self.survey.responses[array_columns].dtypes == "category").all(),
             True,
         )
 
     def test_multiple_choice_dtype(self):
         """Test data for multiple choice questions is bool dtype"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-        survey.read_responses(responses_file=RESPONSES_FILE)
-
         multiple_choice_columns = [
             column
-            for column in survey.responses.columns
-            if survey.questions.loc[column, "type"] == "multiple-choice"
-            and survey.questions.loc[column, "format"] is None
+            for column in self.survey.responses.columns
+            if self.survey.questions.loc[column, "type"] == "multiple-choice"
+            and self.survey.questions.loc[column, "format"] is None
         ]
 
         self.assertEqual(
-            (survey.responses[multiple_choice_columns].dtypes == "category").all(),
+            (self.survey.responses[multiple_choice_columns].dtypes == "category").all(),
             True,
         )
 
     def test_lime_system_info_dtypes(self):
         """Test data in lime_system_info has correct dtypes"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-        survey.read_responses(responses_file=RESPONSES_FILE)
-
         datetime_columns = []
         float_columns = []
         categorical_columns = []
-        for column in survey.lime_system_info.columns:
+        for column in self.survey.lime_system_info.columns:
             if re.search("[Tt]ime", column):
                 float_columns.append(column)
             if "date" in column:
@@ -207,29 +191,30 @@ class TestLimeSurveyReadResponses(unittest.TestCase):
 
         self.assertEqual(
             (
-                survey.lime_system_info[datetime_columns].dtypes == "datetime64[ns]"
+                self.survey.lime_system_info[datetime_columns].dtypes
+                == "datetime64[ns]"
             ).all(),
             True,
         )
         self.assertEqual(
-            (survey.lime_system_info[float_columns].dtypes == "float64").all(),
+            (self.survey.lime_system_info[float_columns].dtypes == "float64").all(),
             True,
         )
         self.assertEqual(
-            (survey.lime_system_info[categorical_columns].dtypes == "category").all(),
+            (
+                self.survey.lime_system_info[categorical_columns].dtypes == "category"
+            ).all(),
             True,
         )
 
 
-class TestLimeSurveyGetLabel(unittest.TestCase):
+class TestLimeSurveyGetLabel(BaseTestLimeSurvey2021Case):
     """Test LimeSurvey get_label"""
 
     def test_single_choice_label(self):
         """Test getting label for single-choice question with question id"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-
-        label = survey.get_label(default_test_questions["single-choice"])
+        label = self.survey.get_label(self.single_choice_column)
 
         self.assertEqual(
             label,
@@ -239,9 +224,7 @@ class TestLimeSurveyGetLabel(unittest.TestCase):
     def test_multiple_choice_label_by_group(self):
         """Test getting label for multiple-choice question with question group id"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-
-        label = survey.get_label(default_test_questions["multiple-choice"])
+        label = self.survey.get_label(self.multiple_choice_column)
 
         self.assertEqual(
             label,
@@ -251,9 +234,7 @@ class TestLimeSurveyGetLabel(unittest.TestCase):
     def test_multiple_choice_label_by_subquestion(self):
         """Test getting label for multiple-choice question with subquestion id"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-
-        label = survey.get_label(default_test_questions["multiple-choice"] + "_SQ001")
+        label = self.survey.get_label(self.multiple_choice_column + "_SQ001")
 
         self.assertEqual(
             label,
@@ -263,9 +244,7 @@ class TestLimeSurveyGetLabel(unittest.TestCase):
     def test_array_label_by_group(self):
         """Test getting label for array question"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-
-        label = survey.get_label(default_test_questions["array"])
+        label = self.survey.get_label(self.array_column)
 
         self.assertEqual(
             label,
@@ -275,9 +254,7 @@ class TestLimeSurveyGetLabel(unittest.TestCase):
     def test_array_label_by_subquestion(self):
         """Test getting label for array question with subquestion id"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-
-        label = survey.get_label(default_test_questions["array"] + "_SQ001")
+        label = self.survey.get_label(self.array_column + "_SQ001")
 
         self.assertEqual(
             label,
@@ -287,9 +264,7 @@ class TestLimeSurveyGetLabel(unittest.TestCase):
     def test_free_label(self):
         """Test getting label for free input question"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-
-        label = survey.get_label(default_test_questions["free"])
+        label = self.survey.get_label(self.free_column)
 
         self.assertEqual(
             label,
@@ -297,15 +272,13 @@ class TestLimeSurveyGetLabel(unittest.TestCase):
         )
 
 
-class TestLimeSurveyGetChoices(unittest.TestCase):
+class TestLimeSurveyGetChoices(BaseTestLimeSurvey2021Case):
     """Test LimeSurvey get_choices"""
 
     def test_single_choice_choices(self):
         """Test getting choices for single-choice question"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-
-        choices = survey.get_choices(default_test_questions["single-choice"])
+        choices = self.survey.get_choices(self.single_choice_column)
 
         self.assertDictEqual(
             choices,
@@ -322,9 +295,7 @@ class TestLimeSurveyGetChoices(unittest.TestCase):
     def test_multiple_choice_choices_by_group(self):
         """Test getting choices for multiple-choice question with question group id"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-
-        choices = survey.get_choices(default_test_questions["multiple-choice"])
+        choices = self.survey.get_choices(self.multiple_choice_column)
 
         self.assertDictEqual(
             choices,
@@ -355,11 +326,7 @@ class TestLimeSurveyGetChoices(unittest.TestCase):
     def test_multiple_choice_choices_by_subquestion(self):
         """Test getting choices for multiple-choice question with subquestion id"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-
-        choices = survey.get_choices(
-            default_test_questions["multiple-choice"] + "_SQ001"
-        )
+        choices = self.survey.get_choices(self.multiple_choice_column + "_SQ001")
 
         self.assertDictEqual(
             choices,
@@ -369,9 +336,7 @@ class TestLimeSurveyGetChoices(unittest.TestCase):
     def test_array_choices_by_group(self):
         """Test getting choices for array question"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-
-        choices = survey.get_choices(default_test_questions["array"])
+        choices = self.survey.get_choices(self.array_column)
 
         self.assertDictEqual(
             choices,
@@ -385,9 +350,7 @@ class TestLimeSurveyGetChoices(unittest.TestCase):
     def test_array_choices_by_subquestion(self):
         """Test getting choices for array question with subquestion id"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-
-        choices = survey.get_choices(default_test_questions["array"] + "_SQ001")
+        choices = self.survey.get_choices(self.array_column + "_SQ001")
 
         self.assertDictEqual(
             choices,
@@ -402,9 +365,7 @@ class TestLimeSurveyGetChoices(unittest.TestCase):
     def test_free_choices(self):
         """Test getting choices for free input question"""
 
-        survey = LimeSurvey(structure_file=STRUCTURE_FILE)
-
-        label = survey.get_choices(default_test_questions["free"])
+        label = self.survey.get_choices(self.free_column)
 
         self.assertEqual(
             label,
