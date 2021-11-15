@@ -3,6 +3,7 @@ import re
 import warnings
 from typing import Optional, Tuple
 
+import numpy as np
 import pandas as pd
 
 from n2survey.lime.structure import read_lime_questionnaire_structure
@@ -158,6 +159,76 @@ class LimeSurvey:
 
         self.responses = question_responses
         self.lime_system_info = system_info
+
+    def get_responses(self, question: str, labels: bool = False) -> pd.DataFrame:
+        """Get responses for a given question with or without labels
+
+        Args:
+            question (str): Question to get the responses for.
+            labels (bool, optional): If the response consists of labels or not (default False).
+
+        Raises:
+            ValueError: Unconsistent question types within question groups.
+            ValueError: Unknown question types.
+
+        Returns:
+            [pd.DataFrame]: The response for the selected question.
+        """
+        question_group = self.questions[self.questions.question_group == question]
+        question_types = np.unique(question_group.type)
+        question_responses = self.responses.loc[:, question_group.index]
+        if len(question_types) > 1:
+            raise ValueError(f'Question {question} has multiple types {question_types}.')
+        else:
+            question_type = question_types[0]
+
+        if question_type == 'single-choice':
+            # ASSUME: question_responses consists only one column
+            #         in result question_group also consists of only one item
+            # create a DataFrame because questions_response is only a Series
+            response = pd.DataFrame()
+            response[question] = question_responses[question_responses.columns[0]]
+            if labels:
+                # rename column and the column entries
+                response = response.rename(columns=dict(question_group.label))
+                for col_idx in range(len(response.columns)):
+                    response.iloc[:, col_idx] = response.iloc[:, col_idx] \
+                        .cat.rename_categories(question_group.choices[col_idx])
+        elif question_type == 'multiple-choice':
+            # ASSUME: question response consists of multiple columns with
+            #         'Y' or NaN as entries.
+            response = question_responses.notnull()
+            if labels:
+                # WARNING: If choice has no possible mapping, it will be skipped.
+                # rename columns only because entries are True or False
+                response = response.rename(
+                    columns=dict(
+                        [(x, y['Y']) for x, y in question_group.choices.items()
+                         if y is not np.nan]
+                    )
+                )
+        elif question_type == 'free':
+            # ASSUME: question_responses consists of only one column with
+            #         unlimited options of answers.
+            response = question_responses
+            if labels:
+                # rename only columns because entries are not categorical
+                response = response.rename(columns=dict(question_group.label))
+        elif question_type == 'array':
+            # ASSUME: question_responses consists of multiple columns with
+            #         each column has the same set of possible choices
+            response = question_responses
+            if labels:
+                # rename all columns and their entries
+                response = response.rename(columns=dict(question_group.label))
+                for col_idx in range(len(response.columns)):
+                    response.iloc[:, col_idx] = response.iloc[:, col_idx] \
+                        .cat.rename_categories(question_group.choices[col_idx])
+        else:
+            # raise error for unimplemented question types
+            raise ValueError(f'Unkown question type {question_type}.')
+
+        return response
 
     def _get_dtype_info(self, columns, renamed_columns):
         """Get dtypes for columns in data csv
