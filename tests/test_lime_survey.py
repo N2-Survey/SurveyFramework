@@ -41,6 +41,7 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
         section_df = section_df.set_index("id")
         question_df = pd.DataFrame(structure_dict["questions"])
         question_df = question_df.set_index("name")
+        question_df["is_contingent"] = question_df.contingent_of_name.notnull()
 
         self.assertEqual(
             survey.sections,
@@ -333,27 +334,14 @@ class TestLimeSurveyGetChoices(BaseTestLimeSurvey2021Case):
             {"Y": "I do not like scientific work."},
         )
 
-    def test_array_choices_by_group(self):
-        """Test getting choices for array question"""
+    def test_array_choices(self):
+        """Test getting choices for array question and sub-question"""
 
-        choices = self.survey.get_choices(self.array_column)
-
-        self.assertDictEqual(
-            choices,
-            {
-                "B6_SQ001": "More time needed to complete PhD project",
-                "B6_SQ002": "Parental leave",
-                "B6_SQ003": "Wrap-up phase after completion of the PhD project",
-            },
-        )
-
-    def test_array_choices_by_subquestion(self):
-        """Test getting choices for array question with subquestion id"""
-
-        choices = self.survey.get_choices(self.array_column + "_SQ001")
+        question_choices = self.survey.get_choices(self.array_column)
+        subquestion_choices = self.survey.get_choices(self.array_column + "_SQ001")
 
         self.assertDictEqual(
-            choices,
+            question_choices,
             {
                 "A1": "Yes",
                 "A2": "No",
@@ -361,6 +349,7 @@ class TestLimeSurveyGetChoices(BaseTestLimeSurvey2021Case):
                 "A4": "I don't want to answer this question",
             },
         )
+        self.assertDictEqual(question_choices, subquestion_choices)
 
     def test_free_choices(self):
         """Test getting choices for free input question"""
