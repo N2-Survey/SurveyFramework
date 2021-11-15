@@ -177,7 +177,9 @@ class LimeSurvey:
         question_group = self.questions[self.questions.question_group == question]
         question_types = np.unique(question_group.type)
         question_responses = self.responses.loc[:, question_group.index]
-        if len(question_types) > 1:
+        if len(question_types) == 0:
+            raise KeyError(f'No question {question} found.')
+        elif len(question_types) > 1:
             raise ValueError(f'Question {question} has multiple types {question_types}.')
         else:
             question_type = question_types[0]
