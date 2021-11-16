@@ -174,12 +174,10 @@ class LimeSurvey:
         Returns:
             [pd.DataFrame]: The response for the selected question.
         """
-        question_group = self.questions[self.questions.question_group == question]
+        question_group = self.get_question(question)
         question_types = np.unique(question_group.type)
         question_responses = self.responses.loc[:, question_group.index]
-        if len(question_types) == 0:
-            raise KeyError(f'No question {question} found.')
-        elif len(question_types) > 1:
+        if len(question_types) > 1:
             raise ValueError(f'Question {question} has multiple types {question_types}.')
         else:
             question_type = question_types[0]
@@ -214,16 +212,11 @@ class LimeSurvey:
                 response = response.rename(columns=dict(question_group.label))
                 for col_idx in range(len(response.columns)):
                     response.iloc[:, col_idx] = response.iloc[:, col_idx] \
-                        .cat.rename_categories(question_group.choices[col_idx])
+                        .cat.rename_categories(self.get_choices(question))
             elif question_type == 'multiple-choice':
                 # WARNING: If choice has no possible mapping, it will be skipped.
                 # rename columns only because entries are True or False
-                response = response.rename(
-                    columns=dict(
-                        [(x, y['Y']) for x, y in question_group.choices.items()
-                         if y is not np.nan]
-                    )
-                )
+                response = response.rename(columns=self.get_choices(question))
             elif question_type == 'free':
                 # rename only columns because entries are not categorical
                 response = response.rename(columns=dict(question_group.label))
@@ -232,7 +225,7 @@ class LimeSurvey:
                 response = response.rename(columns=dict(question_group.label))
                 for col_idx in range(len(response.columns)):
                     response.iloc[:, col_idx] = response.iloc[:, col_idx] \
-                        .cat.rename_categories(question_group.choices[col_idx])
+                        .cat.rename_categories(self.get_choices(question))
             else:
                 # raise error for unimplemented question types
                 raise ValueError(f'Unkown question type {question_type}.')
