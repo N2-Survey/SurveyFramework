@@ -184,23 +184,38 @@ class LimeSurvey:
         else:
             question_type = question_types[0]
 
+        # get actual question response
         if question_type == 'single-choice':
             # ASSUME: question_responses consists only one column
             #         in result question_group also consists of only one item
             # create a DataFrame because questions_response is only a Series
             response = pd.DataFrame()
             response[question] = question_responses[question_responses.columns[0]]
-            if labels:
+        elif question_type == 'multiple-choice':
+            # ASSUME: question response consists of multiple columns with
+            #         'Y' or NaN as entries.
+            response = question_responses.notnull()
+        elif question_type == 'free':
+            # ASSUME: question_responses consists of only one column with
+            #         unlimited options of answers.
+            response = question_responses
+        elif question_type == 'array':
+            # ASSUME: question_responses consists of multiple columns with
+            #         each column has the same set of possible choices
+            response = question_responses
+        else:
+            # raise error for unimplemented question types
+            raise ValueError(f'Unkown question type {question_type}.')
+
+        # replace labels
+        if labels:
+            if question_type == 'single-choice':
                 # rename column and the column entries
                 response = response.rename(columns=dict(question_group.label))
                 for col_idx in range(len(response.columns)):
                     response.iloc[:, col_idx] = response.iloc[:, col_idx] \
                         .cat.rename_categories(question_group.choices[col_idx])
-        elif question_type == 'multiple-choice':
-            # ASSUME: question response consists of multiple columns with
-            #         'Y' or NaN as entries.
-            response = question_responses.notnull()
-            if labels:
+            elif question_type == 'multiple-choice':
                 # WARNING: If choice has no possible mapping, it will be skipped.
                 # rename columns only because entries are True or False
                 response = response.rename(
@@ -209,26 +224,18 @@ class LimeSurvey:
                          if y is not np.nan]
                     )
                 )
-        elif question_type == 'free':
-            # ASSUME: question_responses consists of only one column with
-            #         unlimited options of answers.
-            response = question_responses
-            if labels:
+            elif question_type == 'free':
                 # rename only columns because entries are not categorical
                 response = response.rename(columns=dict(question_group.label))
-        elif question_type == 'array':
-            # ASSUME: question_responses consists of multiple columns with
-            #         each column has the same set of possible choices
-            response = question_responses
-            if labels:
+            elif question_type == 'array':
                 # rename all columns and their entries
                 response = response.rename(columns=dict(question_group.label))
                 for col_idx in range(len(response.columns)):
                     response.iloc[:, col_idx] = response.iloc[:, col_idx] \
                         .cat.rename_categories(question_group.choices[col_idx])
-        else:
-            # raise error for unimplemented question types
-            raise ValueError(f'Unkown question type {question_type}.')
+            else:
+                # raise error for unimplemented question types
+                raise ValueError(f'Unkown question type {question_type}.')
 
         return response
 
