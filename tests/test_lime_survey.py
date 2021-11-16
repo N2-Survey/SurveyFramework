@@ -212,8 +212,8 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021Case):
 class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021Case):
     """Test LimeSurvey get response"""
 
-    def setUp(self) -> None:
-        """Read responses before each test."""
+    def setUpClass(self) -> None:
+        """Read responses before all tests"""
         self.survey.read_responses(responses_file=self.responses_file)
 
     def test_get_response(self):
@@ -240,8 +240,8 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021Case):
     def test_get_response_single_choice(self):
         """Test get response for single choice question type"""
         expected_response = [
-            'A1', 'A1', 'A3', 'A2', 'nan',
-            'A1', 'A1', 'A1', 'A1', 'A1'
+            'A1', 'nan', 'A1', 'nan', 'A3',
+            'nan', 'A2', 'nan', 'nan', 'nan'
         ]
         response = self.survey.get_responses(self.single_choice_column, labels=False)
         np.testing.assert_array_equal(
@@ -250,8 +250,10 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021Case):
         )
 
         expected_response = [
-            'Woman', 'Woman', 'Man', "I don't want to answer this question",
-            'nan', 'Woman', 'Woman', 'Woman', 'Woman', 'Woman'
+            'Woman', 'nan', 'Woman',
+            'nan', 'Man', 'nan',
+            'I don\'t want to answer this question',
+            'nan', 'nan', 'nan'
         ]
         response = self.survey.get_responses(self.single_choice_column, labels=True)
         np.testing.assert_array_equal(
