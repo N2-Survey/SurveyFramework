@@ -17,6 +17,7 @@ class BaseTestLimeSurvey2021Case(unittest.TestCase):
         cls.free_column = "A8"
         # Read lime survey
         cls.survey = LimeSurvey(structure_file=cls.structure_file)
+        cls.survey.read_responses(responses_file=cls.responses_file)
 
     @classmethod
     def tearDownClass(cls):
