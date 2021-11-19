@@ -212,9 +212,11 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021Case):
 class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021Case):
     """Test LimeSurvey get response"""
 
-    def setUpClass(self) -> None:
+    @classmethod
+    def setUpClass(cls) -> None:
         """Read responses before all tests"""
-        self.survey.read_responses(responses_file=self.responses_file)
+        super().setUpClass()
+        cls.survey.read_responses(responses_file=cls.responses_file)
 
     def test_get_response(self):
         """Test basic get response functionality for valid and invalid input"""
@@ -240,73 +242,102 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021Case):
     def test_get_response_single_choice(self):
         """Test get response for single choice question type"""
         expected_response = [
-            'A1', 'nan', 'A1', 'nan', 'A3',
-            'nan', 'A2', 'nan', 'nan', 'nan'
+            ['A1', 'nan'],
+            ['A1', 'nan'],
+            ['A3', 'nan'],
+            ['A2', 'nan'],
+            ['nan', 'nan']
         ]
         response = self.survey.get_responses(self.single_choice_column, labels=False)
         np.testing.assert_array_equal(
             expected_response,
-            response.values.flatten().astype(str)[:10]
+            response.values.astype(str)[:5]
         )
 
         expected_response = [
-            'Woman', 'nan', 'Woman',
-            'nan', 'Man', 'nan',
-            'I don\'t want to answer this question',
-            'nan', 'nan', 'nan'
+            ['Woman', 'nan'],
+            ['Woman', 'nan'],
+            ['Man', 'nan'],
+            ['I don\'t want to answer this question', 'nan'],
+            ['nan', 'nan']
         ]
         response = self.survey.get_responses(self.single_choice_column, labels=True)
-        np.testing.assert_array_equal(
-            expected_response,
-            response.values.flatten().astype(str)[:10]
-        )
+        expected_columns = [
+            'To which gender do you identify most?',
+            'To which gender do you identify most? / Other gender representations:'
+        ]
+        np.testing.assert_array_equal(expected_columns, response.columns)
+        np.testing.assert_array_equal(expected_response,response.values.astype(str)[:5])
 
     def test_get_response_multiple_choice(self):
         """Test get response for multiple choice question type"""
         expected_response = [
-            False, False, False, False, False,
-            False, False, False, False, False
+            [False, False, False, False, False, False, False,
+             False, False, False, False, False, False, False,
+             False, False, False, False, True, False, False],
+            [False, False, False, False, False, False, False,
+             False, False, False, False, False, True, False,
+             False, False, False, False, False, False, False]
         ]
         response = self.survey.get_responses(self.multiple_choice_column, labels=False)
-        np.testing.assert_array_equal(expected_response, response.values.flatten()[:10])
+        np.testing.assert_array_equal(expected_response, response.values[:2])
+
+        expected_columns = [
+            'I do not like scientific work.',
+            'I do not like my topic.',
+            'I have problems getting by financially.',
+            'I do not like my working conditions.'
+        ]
         response = self.survey.get_responses(self.multiple_choice_column, labels=True)
-        np.testing.assert_array_equal(expected_response, response.values.flatten()[:10])
+        np.testing.assert_array_equal(expected_columns, response.columns[:4])
+        np.testing.assert_array_equal(expected_response, response.values[:2])
 
     def test_get_response_free(self):
         """Test get response for free question type"""
         expected_response = [
-            '2017-01-01 00:00:00', '2020-06-01 00:00:00',
-            '2019-08-01 00:00:00', '2017-05-01 00:00:00',
-            'nan', '2017-08-01 00:00:00',
-            '2018-01-01 00:00:00', '2020-09-01 00:00:00',
-            '2017-08-01 00:00:00', '2019-12-01 00:00:00'
+            ['2017-01-01 00:00:00'], ['2020-06-01 00:00:00'],
+            ['2019-08-01 00:00:00'], ['2017-05-01 00:00:00'],
+            ['nan'], ['2017-08-01 00:00:00'],
+            ['2018-01-01 00:00:00'], ['2020-09-01 00:00:00'],
+            ['2017-08-01 00:00:00'], ['2019-12-01 00:00:00']
         ]
         response = self.survey.get_responses(self.free_column, labels=False)
-        np.testing.assert_array_equal(
-            expected_response,
-            response.values.flatten().astype(str)[:10]
-        )
+        np.testing.assert_array_equal(expected_response,response.values.astype(str)[:10])
+
+        expected_columns = [
+            'When did you start your PhD?'
+        ]
         response = self.survey.get_responses(self.free_column, labels=True)
-        np.testing.assert_array_equal(
-            expected_response,
-            response.values.flatten().astype(str)[:10]
-        )
+        np.testing.assert_array_equal(expected_columns, response.columns)
+        np.testing.assert_array_equal(expected_response,response.values.astype(str)[:10])
 
     def test_get_response_array(self):
         """Test get response for array question type"""
         expected_response = [
-            'A1', 'A1', 'A2', 'A1', 'A1',
-            'A1', 'A1', 'A1', 'A3', 'A1'
+            ['A1', 'A1', 'A2'],
+            ['A1', 'A1', 'A1'],
+            ['A1', 'A1', 'A3'],
+            ['A1', 'A1', 'A1'],
+            ['nan', 'nan', 'nan']
         ]
         response = self.survey.get_responses(self.array_column, labels=False)
-        np.testing.assert_array_equal(expected_response, response.values.flatten()[:10])
+        np.testing.assert_array_equal(expected_response, response.values[:5].astype(str))
 
         expected_response = [
-            'Yes', 'Yes', 'No', 'Yes', 'Yes',
-            'Yes', 'Yes', 'Yes', 'I don\'t know', 'Yes'
+            ['Yes', 'Yes', 'No'],
+            ['Yes', 'Yes', 'Yes'],
+            ['Yes', 'Yes', "I don't know"],
+            ['Yes', 'Yes', 'Yes'],
+            ['nan', 'nan', 'nan']
+        ]
+        expected_columns = [
+            'More time needed to complete PhD project',
+            'Parental leave',
+            'Wrap-up phase after completion of the PhD project'
         ]
         response = self.survey.get_responses(self.array_column, labels=True)
-        np.testing.assert_array_equal(expected_response, response.values.flatten()[:10])
+        np.testing.assert_array_equal(expected_columns, response.columns)
+        np.testing.assert_array_equal(expected_response, response.values[:5].astype(str))
 
 
 class TestLimeSurveyGetLabel(BaseTestLimeSurvey2021Case):
