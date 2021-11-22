@@ -3,18 +3,24 @@ import re
 import warnings
 from typing import Optional, Tuple
 
-import numpy as np
 import pandas as pd
 
 from n2survey.lime.structure import read_lime_questionnaire_structure
 
 __all__ = ["LimeSurvey"]
 
-default_plot_options = {
+DEFAULT_PLOT_OPTIONS = {
     "cmap": "Blues",
     "output_folder": os.path.abspath(os.curdir),
     "figsize": (6, 8),
 }
+
+QUESTION_TYPES = (
+    "free",
+    "array",
+    "single-choice",
+    "multiple-choice",
+)
 
 
 def _get_default_plot_kind(survey: "LimeSurvey", question: str) -> str:
@@ -65,7 +71,7 @@ class LimeSurvey:
         self.questions = question_df
 
         # Update default plotting options
-        self.plot_options = default_plot_options.copy()
+        self.plot_options = DEFAULT_PLOT_OPTIONS.copy()
         if cmap is not None:
             self.plot_options["cmap"] = cmap
         if output_folder is not None:
@@ -175,39 +181,35 @@ class LimeSurvey:
             [pd.DataFrame]: The response for the selected question.
         """
         question_group = self.get_question(question)
-        question_types = np.unique(question_group.type)
+        question_type = self.get_question_type(question)
         responses = self.responses.loc[:, question_group.index]
-        if len(question_types) > 1:
-            raise ValueError(f'Question {question} has multiple types {question_types}.')
-        else:
-            question_type = question_types[0]
 
         # convert multiple-choice responses
-        if question_type == 'multiple-choice':
+        if question_type == "multiple-choice":
             # ASSUME: question response consists of multiple columns with
             #         'Y' or NaN as entries.
             responses = responses.notnull()
 
         # replace labels
         if labels:
-            if question_type == 'single-choice':
+            if question_type == "single-choice":
                 # rename column and the column entries
                 responses = responses.rename(columns=dict(question_group.label))
                 responses = responses.replace(self.get_choices(question))
-            elif question_type == 'multiple-choice':
+            elif question_type == "multiple-choice":
                 # WARNING: If choice has no possible mapping, it will be skipped.
                 # rename columns only because entries are True or False
                 responses = responses.rename(columns=self.get_choices(question))
-            elif question_type == 'free':
+            elif question_type == "free":
                 # rename only columns because entries are not categorical
                 responses = responses.rename(columns=dict(question_group.label))
-            elif question_type == 'array':
+            elif question_type == "array":
                 # rename all columns and their entries
                 responses = responses.rename(columns=dict(question_group.label))
                 responses = responses.replace(self.get_choices(question))
             else:
                 # raise error for unimplemented question types
-                raise ValueError(f'Unkown question type {question_type}.')
+                raise ValueError(f"Unkown question type {question_type}.")
 
         return responses
 
@@ -261,9 +263,9 @@ class LimeSurvey:
             # TODO: ...
             pass
 
-        # Update **kwargs with default_plot_options, i.e.
+        # Update **kwargs with DEFAULT_PLOT_OPTIONS, i.e.
         # if the value is not provided in **kwargs, then
-        # take it from default_plot_options
+        # take it from DEFAULT_PLOT_OPTIONS
         # TODO: ...
 
         # Call the corresponding plot function
@@ -293,6 +295,34 @@ class LimeSurvey:
             raise ValueError(f"Unexpected question code '{question}'")
 
         return questions_subdf
+
+    def get_question_type(self, question: str) -> str:
+        """Get question type and validate it
+
+        Args:
+            question (str): question or column code
+
+        Raises:
+            AssertionError: Unconsistent question types within question
+            AssertionError: Unexpected question type
+
+        Returns:
+            str: Question type like "single-choice", "array", etc.
+        """
+
+        question_group = self.get_question(question)
+        question_types = question_group.type.unique()
+
+        if len(question_types) > 1:
+            raise AssertionError(
+                f"Question {question} has multiple types {list(question_types)}."
+            )
+
+        question_type = question_types[0]
+        if question_type not in QUESTION_TYPES:
+            raise AssertionError(f"Unexpected question type {question_type}.")
+
+        return question_type
 
     def get_label(self, question: str) -> str:
         """Get label for the corresponding column or group of colums
@@ -331,7 +361,7 @@ class LimeSurvey:
 
         question_info = self.get_question(question)
         question_info = question_info[~question_info.is_contingent]
-        question_type = question_info.type[0]
+        question_type = self.get_question_type(question)
 
         # If set of multiple-choice questions
         if (question_info.shape[0] > 1) and (question_type == "multiple-choice"):
