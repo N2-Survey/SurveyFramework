@@ -26,16 +26,15 @@ def create_bar_plot(
         wrap_text (bool): Whether to wrap text labels if they are too long for a single line
     """
 
-    # Create figure
+    # Set up parameters
     default_fontsize = 15
     bar_height = bar_thickness / (2 * bar_spacing)
     max_data = max(data_df.iloc[:, 0])
     min_data = min(data_df.iloc[:, 0])
-
     total = get_total(data_df)
-
     is_percentage = data_df.dtypes[0] == "float64"
 
+    # Create figure
     if fig_dim is None:
         fig_dim = (8, max(bar_spacing * data_df.shape[0] * 0.8, 8))
     fig = plt.figure(figsize=fig_dim)
@@ -80,9 +79,9 @@ def create_bar_plot(
     bottom_text = f"Total: {total}\n'{wrapped_bottom}'"
     if is_percentage:
         bottom_text = bottom_text + " Relative response rates."
-
     plt.title(bottom_text, fontsize=default_fontsize * 0.9 / bar_spacing, y=-0.1)
 
+    # Adjust margins
     plt.subplots_adjust(left=0.25, right=0.9, top=0.8, bottom=0.1)
 
     plt.show()
