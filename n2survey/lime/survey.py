@@ -267,8 +267,6 @@ class LimeSurvey:
               and one additional row. Both called "Total" and contains totals or, if
               total count contains misleading data, NA
         """
-        # TODO: Test + Test labels
-        # TODO: Test drop_other
         question_type = self.get_question_type(question)
         responses = self.get_responses(question, labels=labels, drop_other=True)
 

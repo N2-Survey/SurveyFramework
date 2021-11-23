@@ -368,6 +368,7 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
 
+# TODO:
 # class TestLimeSurveyCount(BaseTestLimeSurvey2021WithResponsesCase):
 #     """Test `count` method"""
 #
