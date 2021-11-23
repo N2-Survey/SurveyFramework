@@ -10,11 +10,18 @@ from n2survey.lime.structure import read_lime_questionnaire_structure
 
 __all__ = ["LimeSurvey"]
 
-default_plot_options = {
+DEFAULT_PLOT_OPTIONS = {
     "cmap": "Blues",
     "output_folder": os.path.abspath(os.curdir),
     "figsize": (6, 8),
 }
+
+QUESTION_TYPES = (
+    "free",
+    "array",
+    "single-choice",
+    "multiple-choice",
+)
 
 
 def _get_default_plot_kind(survey: "LimeSurvey", question: str) -> str:
@@ -33,6 +40,8 @@ def _get_default_plot_kind(survey: "LimeSurvey", question: str) -> str:
 
 class LimeSurvey:
     """Base LimeSurvey class"""
+
+    na_label = "No Answer"
 
     def __init__(
         self,
@@ -65,7 +74,7 @@ class LimeSurvey:
         self.questions = question_df
 
         # Update default plotting options
-        self.plot_options = default_plot_options.copy()
+        self.plot_options = DEFAULT_PLOT_OPTIONS.copy()
         if cmap is not None:
             self.plot_options["cmap"] = cmap
         if output_folder is not None:
@@ -109,8 +118,19 @@ class LimeSurvey:
         question_columns = renamed_columns[first_question : last_question + 1]
 
         # Split df into question responses and timing info
-        question_responses = responses[question_columns]
+        question_responses = responses.loc[:, question_columns]
         system_info = responses.iloc[:, ~renamed_columns.isin(question_columns)]
+
+        # Set correct categories for categorical fields
+        for column in self.questions.index:
+            choices = self.questions.loc[column, "choices"]
+            if (column in question_responses.columns) and pd.notnull(choices):
+                question_responses.loc[:, column] = (
+                    question_responses.loc[:, column]
+                    # We expect all categorical column to be category dtype already
+                    # .astype("category")
+                    .cat.set_categories(choices.keys())
+                )
 
         # Add missing columns for multiple-choice questions with contingent question
         # A contingent question of a multiple-choice question typically looks like this:
@@ -160,12 +180,18 @@ class LimeSurvey:
         self.responses = question_responses
         self.lime_system_info = system_info
 
-    def get_responses(self, question: str, labels: bool = False) -> pd.DataFrame:
+    def get_responses(
+        self,
+        question: str,
+        labels: bool = False,
+        drop_other: bool = False,
+    ) -> pd.DataFrame:
         """Get responses for a given question with or without labels
 
         Args:
             question (str): Question to get the responses for.
             labels (bool, optional): If the response consists of labels or not (default False).
+            drop_other (bool, optional): Whether to exclude contingent question (i.e. "other")
 
         Raises:
             ValueError: Unconsistent question types within question groups.
@@ -174,42 +200,132 @@ class LimeSurvey:
         Returns:
             [pd.DataFrame]: The response for the selected question.
         """
-        question_group = self.get_question(question)
-        question_types = np.unique(question_group.type)
+        question_group = self.get_question(question, drop_other=drop_other)
+        question_type = self.get_question_type(question)
         responses = self.responses.loc[:, question_group.index]
-        if len(question_types) > 1:
-            raise ValueError(f'Question {question} has multiple types {question_types}.')
-        else:
-            question_type = question_types[0]
 
         # convert multiple-choice responses
-        if question_type == 'multiple-choice':
+        if question_type == "multiple-choice":
             # ASSUME: question response consists of multiple columns with
             #         'Y' or NaN as entries.
             responses = responses.notnull()
 
         # replace labels
         if labels:
-            if question_type == 'single-choice':
-                # rename column and the column entries
-                responses = responses.rename(columns=dict(question_group.label))
-                responses = responses.replace(self.get_choices(question))
-            elif question_type == 'multiple-choice':
-                # WARNING: If choice has no possible mapping, it will be skipped.
-                # rename columns only because entries are True or False
+            if question_type == "multiple-choice":
+                # Rename column names
                 responses = responses.rename(columns=self.get_choices(question))
-            elif question_type == 'free':
-                # rename only columns because entries are not categorical
-                responses = responses.rename(columns=dict(question_group.label))
-            elif question_type == 'array':
-                # rename all columns and their entries
-                responses = responses.rename(columns=dict(question_group.label))
-                responses = responses.replace(self.get_choices(question))
             else:
-                # raise error for unimplemented question types
-                raise ValueError(f'Unkown question type {question_type}.')
+                # Rename category values and replace NA by self.na_label
+                for column in responses.columns:
+                    choices = question_group.loc[column, "choices"]
+                    if pd.notnull(choices):
+                        responses.loc[:, column] = (
+                            responses.loc[:, column]
+                            .cat.rename_categories(choices)
+                            .cat.add_categories(self.na_label)
+                            .fillna(self.na_label)
+                        )
+                # Rename column names
+                responses = responses.rename(columns=dict(question_group.label))
 
         return responses
+
+    def count(
+        self,
+        question: str,
+        labels: bool = False,
+        dropna: bool = False,
+        add_totals: bool = False,
+        percents: bool = False,
+    ) -> pd.DataFrame:
+        """Get counts for a question or a single column
+
+        Args:
+            question (str): Name of a question group or a sinlge column
+            labels (bool, optional): Use labels instead of codes. Defaults to False.
+            dropna (bool, optional): Do not count empty values. Defaults to False.
+            add_totals (bool, optional): Add a column and a row with totals. Values
+              set to NA if they do not make sense. For example, sums by row for
+              multiple choice field. Defaults to False.
+            percents (bool, optional): Output percents instead of counts.
+              Calculted with respent to the total number of repondents.
+              Defaults to False.
+
+        Raises:
+            AssertionError: Unexpected question type
+
+        Returns:
+            pd.DataFrame: Counts for a given question/column.
+              * For question with choices, counts are ordered accordingly and
+              catigories that did not occur it responses added with 0 count.
+              * For an array question, it is an 2D counts where values are presented
+              in the row index and sub_questions are presented in columns.
+              * For a multiple-choice question, for each choice, number of respondents
+              that chose the correspoinding choise is counted.
+              * If `add_totals` is true, then the data frame has one additional column
+              and one additional row. Both called "Total" and contains totals or, if
+              total count contains misleading data, NA
+        """
+        question_type = self.get_question_type(question)
+        responses = self.get_responses(question, labels=labels, drop_other=True)
+
+        if responses.shape[1] == 1:
+            # If it consist of only one column, i.e. free, single choice, or
+            # single column
+            counts_df = pd.DataFrame(
+                responses.iloc[:, 0].value_counts(dropna=dropna, sort=False)
+            )
+            # If it is not categorical field, i.e. integer, date, string
+            # then sort by values
+            if responses.iloc[:, 0].dtype.name != "category":
+                counts_df = counts_df.sort_index()
+        else:
+            if question_type == "multiple-choice":
+                counts_df = pd.DataFrame(
+                    responses.sum(axis=0), columns=[self.get_label(question)]
+                )
+            elif question_type == "array":
+                counts_df = responses.apply(
+                    lambda x: x.value_counts(dropna=dropna, sort=False), axis=0
+                )
+            else:
+                # "free" and "single-choice" are supposed to have be handled before
+                # since they consist of only one column
+                raise AssertionError(f"Unexpected question type {question}")
+
+        # Add totals
+        # Adding totals appends one column and one row with totals
+        # per row and per column correspondingly. However, in somecases
+        # this summing does not make a sence. Then, we replace those values
+        # by NA.
+        if add_totals:
+            # Add sums per rows and columns
+            counts_df = counts_df.append(
+                pd.DataFrame(counts_df.sum(axis=0), columns=["Total"]).transpose()
+            )
+            counts_df.insert(counts_df.shape[1], "Total", counts_df.sum(axis=1))
+            # Correct for each question type
+            if question_type == "multiple-choice":
+                # Sums by row should be equal to number of responses
+                counts_df.iloc[:, -1] = responses.shape[0]
+                # Sums by column do not make sense, so we replace them by NA
+                counts_df.iloc[-1, :] = pd.NA
+            elif question_type == "array":
+                # Sums by column do not make sense, so we replace them by NA
+                counts_df.iloc[:, -1] = pd.NA
+            else:
+                # For single column questions we can keeps sums by row and by column
+                pass
+
+        # Convert to percents
+        # We use total number of responses for counting percents
+        # to make it consistent between different question types and
+        # function argument values
+        if percents:
+            counts_df = np.round(100 * counts_df / responses.shape[0], 1)
+
+        return counts_df
 
     def _get_dtype_info(self, columns, renamed_columns):
         """Get dtypes for columns in data csv
@@ -229,22 +345,47 @@ class LimeSurvey:
         datetime_columns = []
 
         for column, renamed_column in zip(columns, renamed_columns):
-            # Categorical dtype for all questions with answer options
+            # First try to infer dtype from XML structure information
             if renamed_column in self.questions.index:
+                response_format = self.questions.loc[renamed_column, "format"]
+                # Categorical dtype for all questions with answer options
                 if pd.notnull(self.questions.loc[renamed_column, "choices"]):
                     dtype_dict[column] = "category"
-
-            # Categorical dtype for "startlanguage"
-            if "language" in column:
-                dtype_dict[column] = "category"
-
-            # Float for all timing info
-            if re.search("[Tt]ime", column):
-                dtype_dict[column] = "float64"
-
-            # Datetime for all time stamps
-            if "date" in column:
-                datetime_columns.append(column)
+                elif response_format == "date":
+                    dtype_dict[column] = "str"
+                    datetime_columns.append(column)
+                elif response_format == "integer":
+                    dtype_dict[column] = pd.Int32Dtype()
+                elif response_format == "longtext":
+                    dtype_dict[column] = "str"
+                else:
+                    # Do not include dtype
+                    pass
+            # Technical fields of limesurvey (Timing, Langueage, etc.)
+            else:
+                if column == "id":
+                    dtype_dict[column] = pd.UInt32Dtype()
+                elif column == "submitdate":
+                    dtype_dict[column] = "str"
+                    datetime_columns.append(column)
+                elif column == "lastpage":
+                    dtype_dict[column] = pd.Int16Dtype()
+                elif column == "startlanguage":
+                    dtype_dict[column] = "category"
+                elif column == "seed":
+                    dtype_dict[column] = pd.UInt32Dtype()
+                elif column == "startdate":
+                    dtype_dict[column] = "str"
+                    datetime_columns.append(column)
+                elif column == "datestamp":
+                    dtype_dict[column] = "str"
+                    datetime_columns.append(column)
+                # Float for all timing info
+                elif re.search("[Tt]ime", column):
+                    dtype_dict[column] = "float64"
+                else:
+                    # Do not include dtype
+                    pass
 
         return dtype_dict, datetime_columns
 
@@ -261,9 +402,9 @@ class LimeSurvey:
             # TODO: ...
             pass
 
-        # Update **kwargs with default_plot_options, i.e.
+        # Update **kwargs with DEFAULT_PLOT_OPTIONS, i.e.
         # if the value is not provided in **kwargs, then
-        # take it from default_plot_options
+        # take it from DEFAULT_PLOT_OPTIONS
         # TODO: ...
 
         # Call the corresponding plot function
@@ -271,12 +412,12 @@ class LimeSurvey:
 
         raise NotImplementedError()
 
-    def get_question(self, question: str) -> pd.DataFrame:
+    def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)
 
         Args:
             question (str): Name of question or subquestion
-
+            drop_other (bool, optional): Whether to exclude contingent question (i.e. "other")
         Raises:
             ValueError: There is no such question or subquestion
 
@@ -292,7 +433,38 @@ class LimeSurvey:
         if questions_subdf.empty:
             raise ValueError(f"Unexpected question code '{question}'")
 
+        if drop_other:
+            questions_subdf = questions_subdf[~questions_subdf.is_contingent]
+
         return questions_subdf
+
+    def get_question_type(self, question: str) -> str:
+        """Get question type and validate it
+
+        Args:
+            question (str): question or column code
+
+        Raises:
+            AssertionError: Unconsistent question types within question
+            AssertionError: Unexpected question type
+
+        Returns:
+            str: Question type like "single-choice", "array", etc.
+        """
+
+        question_group = self.get_question(question)
+        question_types = question_group.type.unique()
+
+        if len(question_types) > 1:
+            raise AssertionError(
+                f"Question {question} has multiple types {list(question_types)}."
+            )
+
+        question_type = question_types[0]
+        if question_type not in QUESTION_TYPES:
+            raise AssertionError(f"Unexpected question type {question_type}.")
+
+        return question_type
 
     def get_label(self, question: str) -> str:
         """Get label for the corresponding column or group of colums
@@ -331,7 +503,7 @@ class LimeSurvey:
 
         question_info = self.get_question(question)
         question_info = question_info[~question_info.is_contingent]
-        question_type = question_info.type[0]
+        question_type = self.get_question_type(question)
 
         # If set of multiple-choice questions
         if (question_info.shape[0] > 1) and (question_type == "multiple-choice"):

@@ -5,14 +5,15 @@ import unittest
 
 import numpy as np
 import pandas as pd
-from pandas._testing import assert_frame_equal
 
 from n2survey.lime import LimeSurvey, read_lime_questionnaire_structure
+from tests.common import (
+    BaseTestLimeSurvey2021Case,
+    BaseTestLimeSurvey2021WithResponsesCase,
+)
 
-from tests.common import BaseTestLimeSurvey2021Case
 
-
-class TestLimeSurveyInitialisation(unittest.TestCase):
+class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
     """Test LimeSurvey class initialisation"""
 
     default_plot_options = {
@@ -20,17 +21,6 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
         "output_folder": os.path.abspath(os.curdir),
         "figsize": (6, 8),
     }
-
-    def assert_df_equal(self, df1, df2, msg):
-        """DataFrame equality test from pandas"""
-        try:
-            assert_frame_equal(df1, df2)
-        except AssertionError:
-            raise self.failureException(msg)
-
-    def setUp(self):
-        self.addTypeEqualityFunc(pd.DataFrame, self.assert_df_equal)
-        self.structure_file = "data/survey_structure_2021.xml"
 
     def test_simple_init(self):
         """Test simple initialisation"""
@@ -114,14 +104,8 @@ class TestLimeSurveyInitialisation(unittest.TestCase):
         )
 
 
-class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021Case):
+class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
     """Test LimeSurvey reading responses"""
-
-    @classmethod
-    def setUpClass(cls) -> None:
-        """Get common data for all tests"""
-        super().setUpClass()
-        cls.survey.read_responses(responses_file=cls.responses_file)
 
     def test_read_responses(self):
         """Test reading responses from dummy data csv"""
@@ -209,84 +193,114 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021Case):
             True,
         )
 
-class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021Case):
-    """Test LimeSurvey get response"""
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        """Read responses before all tests"""
-        super().setUpClass()
-        cls.survey.read_responses(responses_file=cls.responses_file)
+class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test LimeSurvey get response"""
 
     def test_get_response(self):
         """Test basic get response functionality for valid and invalid input"""
-        try:
-            questions = [
-                'A1', 'A3', 'A4', 'A5', 'A10',
-                'A14', 'B6', 'D2', 'E5a', 'E9'
-            ]
-            for question in questions:
-                self.survey.get_responses(question, labels=False)
-                self.survey.get_responses(question, labels=True)
-        except:
-            self.fail('No assertion expected for valid input.')
+        questions = ["A1", "A3", "A4", "A5", "A10", "A14", "B6", "D2", "E5a", "E9"]
+        for question in questions:
+            self.survey.get_responses(question, labels=False)
+            self.survey.get_responses(question, labels=True)
 
         # assume exception raised after invalid question name
-        self.assertRaises(ValueError, self.survey.get_responses, 'X2', labels=False)
-        self.assertRaises(ValueError, self.survey.get_responses, 'X2', labels=True)
+        self.assertRaises(ValueError, self.survey.get_responses, "X2", labels=False)
+        self.assertRaises(ValueError, self.survey.get_responses, "X2", labels=True)
 
         # assume exception is thrown after A2 missing in responses
-        self.assertRaises(KeyError, self.survey.get_responses, 'A2', labels=False)
-        self.assertRaises(KeyError, self.survey.get_responses, 'A2', labels=True)
+        self.assertRaises(KeyError, self.survey.get_responses, "A2", labels=False)
+        self.assertRaises(KeyError, self.survey.get_responses, "A2", labels=True)
 
     def test_get_response_single_choice(self):
         """Test get response for single choice question type"""
         expected_response = [
-            ['A1', 'nan'],
-            ['A1', 'nan'],
-            ['A3', 'nan'],
-            ['A2', 'nan'],
-            ['nan', 'nan']
+            ["A1", "nan"],
+            ["A1", "nan"],
+            ["A3", "nan"],
+            ["A2", "nan"],
+            ["nan", "nan"],
         ]
         response = self.survey.get_responses(self.single_choice_column, labels=False)
         np.testing.assert_array_equal(
-            expected_response,
-            response.values.astype(str)[:5]
+            expected_response, response.values.astype(str)[:5]
         )
 
         expected_response = [
-            ['Woman', 'nan'],
-            ['Woman', 'nan'],
-            ['Man', 'nan'],
-            ['I don\'t want to answer this question', 'nan'],
-            ['nan', 'nan']
+            ["Woman", "nan"],
+            ["Woman", "nan"],
+            ["Man", "nan"],
+            ["I don't want to answer this question", "nan"],
+            ["No Answer", "nan"],
         ]
         response = self.survey.get_responses(self.single_choice_column, labels=True)
         expected_columns = [
-            'To which gender do you identify most?',
-            'To which gender do you identify most? / Other gender representations:'
+            "To which gender do you identify most?",
+            "To which gender do you identify most? / Other gender representations:",
         ]
         np.testing.assert_array_equal(expected_columns, response.columns)
-        np.testing.assert_array_equal(expected_response,response.values.astype(str)[:5])
+        np.testing.assert_array_equal(
+            expected_response, response.values.astype(str)[:5]
+        )
 
     def test_get_response_multiple_choice(self):
         """Test get response for multiple choice question type"""
         expected_response = [
-            [False, False, False, False, False, False, False,
-             False, False, False, False, False, False, False,
-             False, False, False, False, True, False, False],
-            [False, False, False, False, False, False, False,
-             False, False, False, False, False, True, False,
-             False, False, False, False, False, False, False]
+            [
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                True,
+                False,
+                False,
+            ],
+            [
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                True,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+            ],
         ]
         response = self.survey.get_responses(self.multiple_choice_column, labels=False)
         np.testing.assert_array_equal(expected_response, response.values[:2])
 
         expected_columns = [
-            'I do not like scientific work.',
-            'I do not like my topic.',
-            'I have problems getting by financially.',
-            'I do not like my working conditions.'
+            "I do not like scientific work.",
+            "I do not like my topic.",
+            "I have problems getting by financially.",
+            "I do not like my working conditions.",
         ]
         response = self.survey.get_responses(self.multiple_choice_column, labels=True)
         np.testing.assert_array_equal(expected_columns, response.columns[:4])
@@ -294,50 +308,115 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021Case):
 
     def test_get_response_free(self):
         """Test get response for free question type"""
-        expected_response = [
-            ['2017-01-01 00:00:00'], ['2020-06-01 00:00:00'],
-            ['2019-08-01 00:00:00'], ['2017-05-01 00:00:00'],
-            ['nan'], ['2017-08-01 00:00:00'],
-            ['2018-01-01 00:00:00'], ['2020-09-01 00:00:00'],
-            ['2017-08-01 00:00:00'], ['2019-12-01 00:00:00']
-        ]
+        expected_response = pd.to_datetime(
+            [
+                "2017-01-01 00:00:00",
+                "2020-06-01 00:00:00",
+                "2019-08-01 00:00:00",
+                "2017-05-01 00:00:00",
+                "",
+                "2017-08-01 00:00:00",
+                "2018-01-01 00:00:00",
+                "2020-09-01 00:00:00",
+                "2017-08-01 00:00:00",
+                "2019-12-01 00:00:00",
+            ]
+        )
         response = self.survey.get_responses(self.free_column, labels=False)
-        np.testing.assert_array_equal(expected_response,response.values.astype(str)[:10])
+        self.assertEqual(response.shape[1], 1)
+        np.testing.assert_array_equal(
+            expected_response.values, response.iloc[:10, 0].values
+        )
 
-        expected_columns = [
-            'When did you start your PhD?'
-        ]
+        expected_columns = ["When did you start your PhD?"]
         response = self.survey.get_responses(self.free_column, labels=True)
         np.testing.assert_array_equal(expected_columns, response.columns)
-        np.testing.assert_array_equal(expected_response,response.values.astype(str)[:10])
+        np.testing.assert_array_equal(
+            expected_response.values, response.iloc[:10, 0].values
+        )
 
     def test_get_response_array(self):
         """Test get response for array question type"""
         expected_response = [
-            ['A1', 'A1', 'A2'],
-            ['A1', 'A1', 'A1'],
-            ['A1', 'A1', 'A3'],
-            ['A1', 'A1', 'A1'],
-            ['nan', 'nan', 'nan']
+            ["A1", "A1", "A2"],
+            ["A1", "A1", "A1"],
+            ["A1", "A1", "A3"],
+            ["A1", "A1", "A1"],
+            ["nan", "nan", "nan"],
         ]
         response = self.survey.get_responses(self.array_column, labels=False)
-        np.testing.assert_array_equal(expected_response, response.values[:5].astype(str))
+        np.testing.assert_array_equal(
+            expected_response, response.values[:5].astype(str)
+        )
 
         expected_response = [
-            ['Yes', 'Yes', 'No'],
-            ['Yes', 'Yes', 'Yes'],
-            ['Yes', 'Yes', "I don't know"],
-            ['Yes', 'Yes', 'Yes'],
-            ['nan', 'nan', 'nan']
+            ["Yes", "Yes", "No"],
+            ["Yes", "Yes", "Yes"],
+            ["Yes", "Yes", "I don't know"],
+            ["Yes", "Yes", "Yes"],
+            ["No Answer", "No Answer", "No Answer"],
         ]
         expected_columns = [
-            'More time needed to complete PhD project',
-            'Parental leave',
-            'Wrap-up phase after completion of the PhD project'
+            "More time needed to complete PhD project",
+            "Parental leave",
+            "Wrap-up phase after completion of the PhD project",
         ]
         response = self.survey.get_responses(self.array_column, labels=True)
         np.testing.assert_array_equal(expected_columns, response.columns)
-        np.testing.assert_array_equal(expected_response, response.values[:5].astype(str))
+        np.testing.assert_array_equal(
+            expected_response, response.values[:5].astype(str)
+        )
+
+
+# TODO:
+# class TestLimeSurveyCount(BaseTestLimeSurvey2021WithResponsesCase):
+#     """Test `count` method"""
+#
+#     def test_single_choice(self):
+#         pass
+#
+#     def test_free(self):
+#         pass
+#
+#     def test_array(self):
+#         pass
+#
+#     def test_multiple_choice(self):
+#         pass
+#
+#     def test_single_column(self):
+#         pass
+
+
+class TestLimeSurveyGetQuestionType(BaseTestLimeSurvey2021Case):
+    """Test LimeSurvey get_question_type method"""
+
+    def test_basic_question_types(self):
+        self.assertEqual(
+            "single-choice", self.survey.get_question_type(self.single_choice_column)
+        )
+        self.assertEqual(
+            "multiple-choice",
+            self.survey.get_question_type(self.multiple_choice_column),
+        )
+        self.assertEqual("array", self.survey.get_question_type(self.array_column))
+        self.assertEqual("free", self.survey.get_question_type(self.free_column))
+
+    def test_unexpected_type(self):
+        self.survey.questions.loc[self.free_column, "type"] = "newtype"
+        self.assertRaises(
+            AssertionError, self.survey.get_question_type, self.free_column
+        )
+
+    def test_inconsistent_types(self):
+        columns = self.survey.questions.index[
+            self.survey.questions.question_group == self.array_column
+        ]
+        columns = list(columns)
+        self.survey.questions.loc[columns[0], "type"] = "newtype"
+        self.assertRaises(
+            AssertionError, self.survey.get_question_type, self.array_column
+        )
 
 
 class TestLimeSurveyGetLabel(BaseTestLimeSurvey2021Case):
