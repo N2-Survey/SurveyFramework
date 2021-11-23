@@ -12,13 +12,13 @@ class TestMultipleChoicePlots(BaseTestLimeSurvey2021Case):
         """Test bar plot"""
 
         data_df = self.survey.count(
-            self.multiple_choice_column, labels=False, add_totals=False, percents=False
+            self.multiple_choice_column, labels=True, add_totals=True, percents=True
         )
 
         plot_multiple_choice.make_bar_plot_for_multiple_choice_question(
             data_df,
             sort="descending",
-            display_title=False,
+            display_title=True,
             bar_spacing=1.2,
         )
 
