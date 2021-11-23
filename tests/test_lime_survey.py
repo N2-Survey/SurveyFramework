@@ -231,7 +231,7 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
             ["Woman", "nan"],
             ["Man", "nan"],
             ["I don't want to answer this question", "nan"],
-            ["nan", "nan"],
+            ["No Answer", "nan"],
         ]
         response = self.survey.get_responses(self.single_choice_column, labels=True)
         expected_columns = [
@@ -308,28 +308,31 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
 
     def test_get_response_free(self):
         """Test get response for free question type"""
-        expected_response = [
-            ["2017-01-01 00:00:00"],
-            ["2020-06-01 00:00:00"],
-            ["2019-08-01 00:00:00"],
-            ["2017-05-01 00:00:00"],
-            ["nan"],
-            ["2017-08-01 00:00:00"],
-            ["2018-01-01 00:00:00"],
-            ["2020-09-01 00:00:00"],
-            ["2017-08-01 00:00:00"],
-            ["2019-12-01 00:00:00"],
-        ]
+        expected_response = pd.to_datetime(
+            [
+                "2017-01-01 00:00:00",
+                "2020-06-01 00:00:00",
+                "2019-08-01 00:00:00",
+                "2017-05-01 00:00:00",
+                "",
+                "2017-08-01 00:00:00",
+                "2018-01-01 00:00:00",
+                "2020-09-01 00:00:00",
+                "2017-08-01 00:00:00",
+                "2019-12-01 00:00:00",
+            ]
+        )
         response = self.survey.get_responses(self.free_column, labels=False)
+        self.assertEqual(response.shape[1], 1)
         np.testing.assert_array_equal(
-            expected_response, response.values.astype(str)[:10]
+            expected_response.values, response.iloc[:10, 0].values
         )
 
         expected_columns = ["When did you start your PhD?"]
         response = self.survey.get_responses(self.free_column, labels=True)
         np.testing.assert_array_equal(expected_columns, response.columns)
         np.testing.assert_array_equal(
-            expected_response, response.values.astype(str)[:10]
+            expected_response.values, response.iloc[:10, 0].values
         )
 
     def test_get_response_array(self):
@@ -351,7 +354,7 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
             ["Yes", "Yes", "Yes"],
             ["Yes", "Yes", "I don't know"],
             ["Yes", "Yes", "Yes"],
-            ["nan", "nan", "nan"],
+            ["No Answer", "No Answer", "No Answer"],
         ]
         expected_columns = [
             "More time needed to complete PhD project",
@@ -363,6 +366,25 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
         np.testing.assert_array_equal(
             expected_response, response.values[:5].astype(str)
         )
+
+
+# class TestLimeSurveyCount(BaseTestLimeSurvey2021WithResponsesCase):
+#     """Test `count` method"""
+#
+#     def test_single_choice(self):
+#         pass
+#
+#     def test_free(self):
+#         pass
+#
+#     def test_array(self):
+#         pass
+#
+#     def test_multiple_choice(self):
+#         pass
+#
+#     def test_single_column(self):
+#         pass
 
 
 class TestLimeSurveyGetQuestionType(BaseTestLimeSurvey2021Case):

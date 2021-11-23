@@ -1,7 +1,8 @@
 import unittest
+import warnings
 
 import pandas as pd
-from pandas._testing import assert_frame_equal
+from pandas._testing import assert_frame_equal, assert_series_equal
 
 from n2survey.lime import LimeSurvey
 
@@ -16,8 +17,16 @@ class BaseTestCase(unittest.TestCase):
         except AssertionError:
             raise self.failureException(msg)
 
+    def assert_series_equal(self, s1, s2, msg):
+        """Series equality test from pandas"""
+        try:
+            assert_series_equal(s1, s2)
+        except AssertionError:
+            raise self.failureException(msg)
+
     def setUp(self) -> None:
         self.addTypeEqualityFunc(pd.DataFrame, self.assert_df_equal)
+        self.addTypeEqualityFunc(pd.Series, self.assert_series_equal)
 
 
 class BaseTestLimeSurvey2021Case(BaseTestCase):
@@ -44,4 +53,6 @@ class BaseTestLimeSurvey2021WithResponsesCase(BaseTestLimeSurvey2021Case):
     def setUpClass(cls) -> None:
         super().setUpClass()
         # Read responses
-        cls.survey.read_responses(responses_file=cls.responses_file)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            cls.survey.read_responses(responses_file=cls.responses_file)
