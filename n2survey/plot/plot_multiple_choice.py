@@ -3,11 +3,13 @@ from textwrap import wrap
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+__all__ = ["multiple_choice_bar_plot"]
+
 
 def create_bar_plot(
     data_df,
     tick_labels,
-    color_scheme,
+    palette,
     display_title,
     fig_dim,
     bar_thickness,
@@ -30,7 +32,6 @@ def create_bar_plot(
     default_fontsize = 15
     bar_height = bar_thickness / (2 * bar_spacing)
     max_data = max(data_df.iloc[:, 0])
-    min_data = min(data_df.iloc[:, 0])
     total = get_total(data_df)
     is_percentage = data_df.dtypes[0] == "float64"
 
@@ -40,9 +41,7 @@ def create_bar_plot(
     fig = plt.figure(figsize=fig_dim)
 
     # Create bar plot
-    ax = sns.barplot(
-        x=data_df.iloc[:, 0], y=data_df.index, palette=color_scheme, orient="h"
-    )
+    ax = sns.barplot(x=data_df.iloc[:, 0], y=data_df.index, palette=palette, orient="h")
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.spines["bottom"].set_visible(False)
@@ -51,7 +50,7 @@ def create_bar_plot(
     ax.set_yticklabels(tick_labels, fontsize=default_fontsize / bar_spacing - 5)
     plt.xlabel("")
     plt.ylabel("")
-    plt.xlim(max(0, min_data - 0), min(100, max_data + 0))
+    plt.xlim(0, max_data)
 
     # Create data annotation for each bar
     for bar in ax.patches:
@@ -84,9 +83,7 @@ def create_bar_plot(
     # Adjust margins
     plt.subplots_adjust(left=0.25, right=0.9, top=0.8, bottom=0.1)
 
-    plt.show()
-
-    return fig
+    return fig, ax
 
 
 def get_total(data_df):
@@ -160,17 +157,15 @@ def sort_data(data_df, sort):
     return data_df
 
 
-def make_bar_plot_for_multiple_choice_question(
+def multiple_choice_bar_plot(
     data_df,
+    theme=None,
     sort=None,
-    color_scheme="Blues_d",
     display_title=False,
-    fig_dim=None,
     bar_thickness=1,
     bar_spacing=1,
     display_threshold=0,
     wrap_text=True,
-    save_fig_file=False,
 ):
     """
     Plot the response to a multiple choice question as a horizontal barplot
@@ -178,13 +173,16 @@ def make_bar_plot_for_multiple_choice_question(
     Args:
         data_df (df): dataframe of counts and percentages
         sort (str, optional): 'ascending' or 'descending' order to sort in. If value other than these two, the df remains unchanged. Default is None.
-        color_scheme (str, optional): Color scheme of the plot
         display_title (bool, optional): Whether to display the question title or not
-        fig_dim (tuple of int, optional): Dimensions of the plot. If int, it will be (fig_dim, fig_dim). If none is given, default is (10, number of options * 2)
         display_threshold (float, optional): Threshold of the category to be included in the plot. Can be either count or percentage.
         wrap_text (bool, optional): Whether to wrap text labels if they are too long for a single line
-        save_fig_file (bool, optional): Whether to save the figure to png file
     """
+    palette = None
+    fig_dim = None
+    if theme is not None:
+        sns.set_theme(**theme)
+        palette = theme.get("palette", "Blues_d")
+        fig_dim = theme.get("rc", None).get("figure.figsize", None)
 
     filtered_data_df = filter_categories_below_threshold(data_df, display_threshold)
 
@@ -193,16 +191,14 @@ def make_bar_plot_for_multiple_choice_question(
 
     tick_labels = make_tick_labels(filtered_data_df, wrap_text)
 
-    fig = create_bar_plot(
+    fig, ax = create_bar_plot(
         filtered_data_df,
         tick_labels,
-        color_scheme,
+        palette,
         display_title,
         fig_dim,
         bar_thickness,
         bar_spacing,
     )
 
-    # Save figure to file
-    if save_fig_file:
-        fig.savefig("multiple_choice_bar_plot.png")
+    return fig, ax
