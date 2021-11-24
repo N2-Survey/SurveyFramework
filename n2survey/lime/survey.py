@@ -1,19 +1,27 @@
 import os
 import re
+import string
 import warnings
-from typing import Optional, Tuple
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 
 from n2survey.lime.structure import read_lime_questionnaire_structure
+from n2survey.plot.bar import single_choice_bar_plot
 
-__all__ = ["LimeSurvey"]
+__all__ = ["LimeSurvey", "DEFAULT_THEME", "QUESTION_TYPES"]
 
-DEFAULT_PLOT_OPTIONS = {
-    "cmap": "Blues",
-    "output_folder": os.path.abspath(os.curdir),
-    "figsize": (6, 8),
+DEFAULT_THEME = {
+    "context": "notebook",
+    "style": "darkgrid",
+    "palette": "Blues",
+    "font": "sans-serif",
+    "font_scale": 1,
+    "color_codes": True,
+    "rc": {
+        "figure.figsize": (12, 12),
+    },
 }
 
 QUESTION_TYPES = (
@@ -24,31 +32,25 @@ QUESTION_TYPES = (
 )
 
 
-def _get_default_plot_kind(survey: "LimeSurvey", question: str) -> str:
-    """Get default plot kind for a column or a group of columns
-
-    Args:
-        survey (LimeSurvey): LimeSurvey object
-        question (str): Name of the responses column or group of questions
-
-    Returns:
-        str: String with plot kind, like "bar", etc.
-    """
-
-    raise NotImplementedError()
+def _clean_file_name(filename: str) -> str:
+    """Clean a file name from forbiden characters"""
+    # "-_.() abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
+    return "".join(c for c in filename if c in valid_chars)
 
 
 class LimeSurvey:
     """Base LimeSurvey class"""
 
-    na_label = "No Answer"
+    na_label: str = "No Answer"
+    theme: dict = None
+    output_folder: str = None
 
     def __init__(
         self,
         structure_file: str,
-        cmap=None,
+        theme: Optional[dict] = None,
         output_folder: Optional[str] = None,
-        figsize: Optional[Tuple[int, int]] = None,
     ) -> None:
         """Get an instance of the Survey
 
@@ -74,13 +76,12 @@ class LimeSurvey:
         self.questions = question_df
 
         # Update default plotting options
-        self.plot_options = DEFAULT_PLOT_OPTIONS.copy()
-        if cmap is not None:
-            self.plot_options["cmap"] = cmap
-        if output_folder is not None:
-            self.plot_options["output_folder"] = output_folder
-        if figsize is not None:
-            self.plot_options["figsize"] = figsize
+        self.theme = DEFAULT_THEME.copy()
+        if theme:
+            self.theme.update(theme)
+
+        # Set a folder for output results
+        self.output_folder = output_folder or os.path.abspath(os.curdir)
 
     def read_responses(self, responses_file: str) -> None:
         """Read responses CSV file
@@ -389,28 +390,51 @@ class LimeSurvey:
 
         return dtype_dict, datetime_columns
 
-    def plot(self, question, kind: str = None, **kwargs):
-        # Find corresponding question or question group,
-        # i.e. column or group of columns
-        # TODO: ...
+    def plot(
+        self, question, kind: str = None, save: Union[str, bool] = False, **kwargs
+    ):
+        if kind is not None:
+            raise NotImplementedError(
+                "Forced plot type is not supported yet."
+                f"Please use matplotlib directly with"
+                f"`servey.get_responses({question})` or `servey.count({question})`"
+            )
 
-        if kind is None:
-            kind = _get_default_plot_kind(self, question)
+        # Set up plot options
+        theme = self.theme.copy()
+        theme.update(kwargs)
+
+        question_type = self.get_question_type(question)
+
+        if question_type == "single-choice":
+            counts_df = self.count(question, labels=True)
+            fig, ax = single_choice_bar_plot(
+                x=counts_df.index.values,
+                y=pd.Series(counts_df.iloc[:, 0], name="Number of Responses"),
+                title=counts_df.columns[0],
+                theme=theme,
+            )
+        elif question_type == "multiple-choice":
+            raise NotImplementedError()
         else:
-            # Check is the chosen plot kind is available
-            # for the chosen question
-            # TODO: ...
-            pass
+            raise NotImplementedError(
+                "Only single choice fields are available."
+                f"Please use matplotlib directly with"
+                f"`servey.get_responses({question})` or `servey.count({question})`"
+            )
 
-        # Update **kwargs with DEFAULT_PLOT_OPTIONS, i.e.
-        # if the value is not provided in **kwargs, then
-        # take it from DEFAULT_PLOT_OPTIONS
-        # TODO: ...
+        # Save to a file
+        if save:
+            filename = f"{counts_df.columns[0]}.png"
+            if isinstance(save, str):
+                filename = save
+            # Make a valid file name
+            filename = _clean_file_name(filename)
+            fullpath = os.path.join(self.output_folder, filename)
+            fig.savefig(fullpath)
+            print(f"Saved plot to {fullpath}")
 
-        # Call the corresponding plot function
-        # TODO: ...
-
-        raise NotImplementedError()
+        fig.show()
 
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)
