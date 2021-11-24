@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from n2survey.lime.structure import read_lime_questionnaire_structure
-from n2survey.plot.bar import single_choice_bar_plot
+from n2survey.plot import multiple_choice_bar_plot, single_choice_bar_plot
 
 __all__ = ["LimeSurvey", "DEFAULT_THEME", "QUESTION_TYPES"]
 
@@ -415,7 +415,19 @@ class LimeSurvey:
                 theme=theme,
             )
         elif question_type == "multiple-choice":
-            raise NotImplementedError()
+            counts_df = self.count(
+                question, labels=True, percents=True, add_totals=True
+            )
+            counts_df.loc[:, "Total"] = self.responses.shape[0]
+            counts_df.iloc[-1, :] = np.nan
+            counts_df.iloc[:, 0] = counts_df.iloc[:, 0].astype("float64")
+            fig, ax = multiple_choice_bar_plot(
+                counts_df,
+                theme=theme,
+                display_title=True,
+                sort="descending",
+                bar_spacing=1.2,
+            )
         else:
             raise NotImplementedError(
                 "Only single choice fields are available."

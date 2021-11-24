@@ -3,6 +3,8 @@ from textwrap import wrap
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+__all__ = ["multiple_choice_bar_plot"]
+
 
 def create_bar_plot(
     data_df,
@@ -155,7 +157,7 @@ def sort_data(data_df, sort):
     return data_df
 
 
-def make_bar_plot_for_multiple_choice_question(
+def multiple_choice_bar_plot(
     data_df,
     theme=None,
     sort=None,
