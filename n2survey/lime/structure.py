@@ -446,7 +446,7 @@ def read_lime_questionnaire_structure(filepath: str) -> dict[str, list[dict]]:
     """
 
     # Read the structure file
-    with open(filepath, "r") as fp:
+    with open(filepath, "r", encoding="utf8") as fp:
         soup = BeautifulSoup(fp, "xml")
 
     # Parse sections and questions
