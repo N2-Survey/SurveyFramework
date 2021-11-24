@@ -56,12 +56,12 @@ class LimeSurvey:
 
         Args:
             structure_file (str): Path to the structure XML file
-            cmap ([type], optional): Default color map to use in plots.
-              Defaults to None.
-            output_folder (str, optional): Default folder to use for saving outputs
-              like images, etc. Defaults to current active directory.
-            figsize (Tuple[int, int], optional): Default figure size to use in plots.
-              Defaults to (6, 8).
+            theme (Optional[dict], optional): seaborn theme parameters.
+              See `seaborn.set_theme` for the details. By default,
+              `n2survey.DEFAULT_THEME` is used.
+            output_folder (Optional[str], optional): A path to a folder where outputs,
+            i.e. plots, repotrs, etc. will be saved. By default, current woring
+            directory is used.
         """
         # Parse XML structure file
         structure_dict = read_lime_questionnaire_structure(structure_file)

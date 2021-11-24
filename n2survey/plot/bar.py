@@ -1,5 +1,6 @@
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Tuple, Union
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -15,8 +16,23 @@ def single_choice_bar_plot(
     show_percents: bool = True,
     show_total: bool = True,
     theme: Optional[Dict] = None,
-):
-    """Do a bar plot for a single choice question"""
+) -> Tuple[mpl.figure.Figure, mpl.axes.Axes]:
+    """Do a bar plot for a single choice question
+
+    Args:
+        x ([type]): X values for the bar plot. See `seaborn.barplot`
+        y ([type]): Y values for the bar plot. See `seaborn.barplot`
+        total (Union[int, float, None], optional): Total number to calculate percentage
+          and to show on the figure. By default, sum of Y values is used.
+        title (Optional[str], optional): Title of the axes. Defaults to None.
+        show_percents (bool, optional): Show percents on top of boxes. Defaults to True.
+        show_total (bool, optional): Show total number on the figure. Defaults to True.
+        theme (Optional[Dict], optional): seaborn theme parameters.
+          See `seaborn.set_theme` for the details. Defaults to None.
+
+    Returns:
+        tuple[mpl.figure.Figure, mpl.axes.Axes]: tuple (fig, ax) of the plot
+    """
     # Additional parameters to provide in `sns.barplot`
     additional_params = {}
 
