@@ -175,7 +175,7 @@ def make_bar_plot_for_multiple_choice_question(
         display_threshold (float, optional): Threshold of the category to be included in the plot. Can be either count or percentage.
         wrap_text (bool, optional): Whether to wrap text labels if they are too long for a single line
     """
-    palette = "Blues_d"
+    palette = None
     fig_dim = None
     if theme is not None:
         sns.set_theme(**theme)
