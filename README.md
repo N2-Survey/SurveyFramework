@@ -6,13 +6,17 @@ Python framework to analyze the N2 Network surveys.
 
 1. Create virtual env (python 3.9) <br /> 
    For example use anaconda:
-      - install anaconda. Instruction for installations can be found here: https://docs.anaconda.com/anaconda/install/
+      - install anaconda. Instruction for installations can be found here: https://docs.anaconda.com/anaconda/install  <br /> 
+        Please install the full anaconda version and not the miniconda
       - create a conda environment: ```conda create -n n2survey python=3.9```
       - activate your conda environment: ```conda activate n2survey```
+      - Install git: ```conda install git```
       - Follow the step below
 2. Install the package: `python -m pip install git+https://github.com/N2-Survey/SurveyFramework`
 
 # Usage 
+
+Alternative to instructions below: Use the jupyter-notebook described here: https://docs.google.com/document/d/1HkuJMsaKj77H-GgjQmFrUXJ0El93ksDBSWYVJnH98lw/edit?usp=sharing
 
 ```python
 # Imports
