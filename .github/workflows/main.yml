@@ -1,0 +1,52 @@
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "lint_and_test"
+  lint_and_test:
+    # The type of runner that the job will run on
+    runs-on: ${{ matrix.config.os }} # we run many different builds
+
+    strategy:
+      # Matrix of OS and Python versions to test
+      matrix:
+        config:
+          - os: ubuntu-latest
+          - os: macos-latest
+          - os: windows-latest
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v1
+        with:
+          python-version: 3.9
+      - uses: Gr1N/setup-poetry@v7
+        with:
+          poetry-version: 1.1.7
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+      - run: poetry --version
+        name: "Check poetry"
+      - run: poetry install
+        name: "Install dependencies"
+      - run: poetry run pre-commit install
+        name: "Install pre-commit hooks"
+      - run: poetry run pre-commit run --all-files
+        name: "Run pre-commit hooks"
+      - run: poetry run pytest .
+        name: "Run tests"
+        
