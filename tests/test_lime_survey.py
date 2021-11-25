@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from n2survey.lime import LimeSurvey, read_lime_questionnaire_structure
+from n2survey.lime import DEFAULT_THEME, LimeSurvey, read_lime_questionnaire_structure
 from tests.common import (
     BaseTestLimeSurvey2021Case,
     BaseTestLimeSurvey2021WithResponsesCase,
@@ -15,12 +15,6 @@ from tests.common import (
 
 class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
     """Test LimeSurvey class initialisation"""
-
-    default_plot_options = {
-        "cmap": "Blues",
-        "output_folder": os.path.abspath(os.curdir),
-        "figsize": (6, 8),
-    }
 
     def test_simple_init(self):
         """Test simple initialisation"""
@@ -34,74 +28,23 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
         question_df = question_df.set_index("name")
         question_df["is_contingent"] = question_df.contingent_of_name.notnull()
 
-        self.assertEqual(
-            survey.sections,
-            section_df,
-        )
-        self.assertEqual(
-            survey.questions,
-            question_df,
-        )
-        self.assertEqual(survey.plot_options["cmap"], self.default_plot_options["cmap"])
-        self.assertEqual(
-            survey.plot_options["output_folder"],
-            self.default_plot_options["output_folder"],
-        )
-        self.assertEqual(
-            survey.plot_options["figsize"], self.default_plot_options["figsize"]
-        )
+        self.assertEqual(survey.sections, section_df)
+        self.assertEqual(survey.questions, question_df)
+        self.assertEqual(survey.theme, DEFAULT_THEME)
+        self.assertEqual(survey.output_folder, os.path.abspath(os.curdir))
 
-    def test_init_cmap(self):
+    def test_init_params(self):
         """Test initialisation with default cmap option for plotting"""
 
-        cmap = "Reds"
         survey = LimeSurvey(
             structure_file=self.structure_file,
-            cmap=cmap,
+            theme={"palette": "Reds"},
+            output_folder="somefolder",
         )
-
-        self.assertEqual(
-            survey.plot_options["cmap"],
-            cmap,
-        )
-        self.assertEqual(
-            survey.plot_options["output_folder"],
-            self.default_plot_options["output_folder"],
-        )
-        self.assertEqual(
-            survey.plot_options["figsize"], self.default_plot_options["figsize"]
-        )
-
-    def test_init_output_folder(self):
-        """Test initialisation with output folder option for plotting"""
-
-        output_dir = "plot/"
-        survey = LimeSurvey(
-            structure_file=self.structure_file,
-            output_folder=output_dir,
-        )
-
-        self.assertEqual(
-            survey.plot_options["output_folder"],
-            output_dir,
-        )
-        self.assertEqual(survey.plot_options["cmap"], self.default_plot_options["cmap"])
-        self.assertEqual(
-            survey.plot_options["figsize"], self.default_plot_options["figsize"]
-        )
-
-    def test_init_figsize(self):
-        """Test initialisation with default figsize option for plotting"""
-
-        figsize = (10, 15)
-        survey = LimeSurvey(structure_file=self.structure_file, figsize=figsize)
-
-        self.assertEqual(survey.plot_options["figsize"], figsize)
-        self.assertEqual(survey.plot_options["cmap"], self.default_plot_options["cmap"])
-        self.assertEqual(
-            survey.plot_options["output_folder"],
-            self.default_plot_options["output_folder"],
-        )
+        expected_theme = DEFAULT_THEME.copy()
+        expected_theme["palette"] = "Reds"
+        self.assertEqual(survey.theme, expected_theme)
+        self.assertEqual(survey.output_folder, "somefolder")
 
 
 class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
