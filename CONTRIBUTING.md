@@ -12,6 +12,9 @@ The following is a set of guidelines and instructions for contributing to the :s
 git checkout main
 git pull
 
+# update venv (i.e. install packages)
+poetry install
+
 # Create a new branch for your issue
 git checkout -b <issue number>-<issue description>
 
