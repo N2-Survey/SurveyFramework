@@ -31,6 +31,13 @@ QUESTION_TYPES = (
     "multiple-choice",
 )
 
+# PLOT_KINDS_ = [
+#     "multiple choice plot",
+#     "likert scale plot",
+#     "simple comparison plot",
+#     "basic bar plot"
+# ]
+
 
 def _clean_file_name(filename: str) -> str:
     """Clean a file name from forbiden characters"""
@@ -437,7 +444,8 @@ class LimeSurvey:
 
         # Save to a file
         if save:
-            filename = f"{counts_df.columns[0]}.png"
+            # default file name is the question-ID, default format is *.png
+            filename = f"{question}.png"
             if isinstance(save, str):
                 filename = save
             # Make a valid file name
