@@ -184,14 +184,14 @@ class LimeSurvey:
     def get_responses(
         self,
         question: str,
-        labels: bool = False,
+        labels: bool = True,
         drop_other: bool = False,
     ) -> pd.DataFrame:
         """Get responses for a given question with or without labels
 
         Args:
             question (str): Question to get the responses for.
-            labels (bool, optional): If the response consists of labels or not (default False).
+            labels (bool, optional): If the response consists of labels or not (default True).
             drop_other (bool, optional): Whether to exclude contingent question (i.e. "other")
 
         Raises:
@@ -235,7 +235,7 @@ class LimeSurvey:
     def count(
         self,
         question: str,
-        labels: bool = False,
+        labels: bool = True,
         dropna: bool = False,
         add_totals: bool = False,
         percents: bool = False,
@@ -244,7 +244,7 @@ class LimeSurvey:
 
         Args:
             question (str): Name of a question group or a sinlge column
-            labels (bool, optional): Use labels instead of codes. Defaults to False.
+            labels (bool, optional): Use labels instead of codes. Defaults to True.
             dropna (bool, optional): Do not count empty values. Defaults to False.
             add_totals (bool, optional): Add a column and a row with totals. Values
               set to NA if they do not make sense. For example, sums by row for
