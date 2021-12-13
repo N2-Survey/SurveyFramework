@@ -130,6 +130,7 @@ dmypy.json
 
 # IDE
 .vscode/settings.json
+.idea/
 
 # Ignore images
 *.png
