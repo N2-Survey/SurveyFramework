@@ -3,11 +3,12 @@ import os
 import re
 import unittest
 
+
 import numpy as np
 import pandas as pd
 
-from n2survey.lime import DEFAULT_THEME, LimeSurvey, \
-    read_lime_questionnaire_structure
+
+from n2survey.lime import DEFAULT_THEME, LimeSurvey, read_lime_questionnaire_structure
 from tests.common import (
     BaseTestLimeSurvey2021Case,
     BaseTestLimeSurvey2021WithResponsesCase,
@@ -55,8 +56,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         """Test reading responses from dummy data csv"""
 
         not_in_structure = list(
-            set(self.survey.responses.columns) - set(
-                self.survey.questions.index)
+            set(self.survey.responses.columns) - set(self.survey.questions.index)
         )
 
         self.assertEqual(bool(not_in_structure), False)
@@ -68,12 +68,11 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
             column
             for column in self.survey.responses.columns
             if self.survey.questions.loc[column, "type"] == "single-choice"
-               and self.survey.questions.loc[column, "format"] is None
+            and self.survey.questions.loc[column, "format"] is None
         ]
 
         self.assertEqual(
-            (self.survey.responses[
-                 single_choice_columns].dtypes == "category").all(),
+            (self.survey.responses[single_choice_columns].dtypes == "category").all(),
             True,
         )
 
@@ -84,7 +83,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
             column
             for column in self.survey.responses.columns
             if self.survey.questions.loc[column, "type"] == "array"
-               and self.survey.questions.loc[column, "format"] is None
+            and self.survey.questions.loc[column, "format"] is None
         ]
 
         self.assertEqual(
@@ -99,12 +98,11 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
             column
             for column in self.survey.responses.columns
             if self.survey.questions.loc[column, "type"] == "multiple-choice"
-               and self.survey.questions.loc[column, "format"] is None
+            and self.survey.questions.loc[column, "format"] is None
         ]
 
         self.assertEqual(
-            (self.survey.responses[
-                 multiple_choice_columns].dtypes == "category").all(),
+            (self.survey.responses[multiple_choice_columns].dtypes == "category").all(),
             True,
         )
 
@@ -124,20 +122,18 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
 
         self.assertEqual(
             (
-                    self.survey.lime_system_info[datetime_columns].dtypes
-                    == "datetime64[ns]"
+                self.survey.lime_system_info[datetime_columns].dtypes
+                == "datetime64[ns]"
             ).all(),
             True,
         )
         self.assertEqual(
-            (self.survey.lime_system_info[
-                 float_columns].dtypes == "float64").all(),
+            (self.survey.lime_system_info[float_columns].dtypes == "float64").all(),
             True,
         )
         self.assertEqual(
             (
-                    self.survey.lime_system_info[
-                        categorical_columns].dtypes == "category"
+                self.survey.lime_system_info[categorical_columns].dtypes == "category"
             ).all(),
             True,
         )
@@ -148,23 +144,18 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
 
     def test_get_response(self):
         """Test basic get response functionality for valid and invalid input"""
-        questions = ["A1", "A3", "A4", "A5", "A10", "A14", "B6", "D2", "E5a",
-                     "E9"]
+        questions = ["A1", "A3", "A4", "A5", "A10", "A14", "B6", "D2", "E5a", "E9"]
         for question in questions:
             self.survey.get_responses(question, labels=False)
             self.survey.get_responses(question, labels=True)
 
         # assume exception raised after invalid question name
-        self.assertRaises(ValueError, self.survey.get_responses, "X2",
-                          labels=False)
-        self.assertRaises(ValueError, self.survey.get_responses, "X2",
-                          labels=True)
+        self.assertRaises(ValueError, self.survey.get_responses, "X2", labels=False)
+        self.assertRaises(ValueError, self.survey.get_responses, "X2", labels=True)
 
         # assume exception is thrown after A2 missing in responses
-        self.assertRaises(KeyError, self.survey.get_responses, "A2",
-                          labels=False)
-        self.assertRaises(KeyError, self.survey.get_responses, "A2",
-                          labels=True)
+        self.assertRaises(KeyError, self.survey.get_responses, "A2", labels=False)
+        self.assertRaises(KeyError, self.survey.get_responses, "A2", labels=True)
 
     def test_get_response_single_choice(self):
         """Test get response for single choice question type"""
@@ -175,8 +166,7 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
             ["A2", "nan"],
             ["nan", "nan"],
         ]
-        response = self.survey.get_responses(self.single_choice_column,
-                                             labels=False)
+        response = self.survey.get_responses(self.single_choice_column, labels=False)
         np.testing.assert_array_equal(
             expected_response, response.values.astype(str)[:5]
         )
@@ -188,8 +178,7 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
             ["I don't want to answer this question", "nan"],
             ["No Answer", "nan"],
         ]
-        response = self.survey.get_responses(self.single_choice_column,
-                                             labels=True)
+        response = self.survey.get_responses(self.single_choice_column, labels=True)
         expected_columns = [
             "To which gender do you identify most?",
             "To which gender do you identify most? / Other gender representations:",
@@ -249,8 +238,7 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
                 False,
             ],
         ]
-        response = self.survey.get_responses(self.multiple_choice_column,
-                                             labels=False)
+        response = self.survey.get_responses(self.multiple_choice_column, labels=False)
         np.testing.assert_array_equal(expected_response, response.values[:2])
 
         expected_columns = [
@@ -259,8 +247,7 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
             "I have problems getting by financially.",
             "I do not like my working conditions.",
         ]
-        response = self.survey.get_responses(self.multiple_choice_column,
-                                             labels=True)
+        response = self.survey.get_responses(self.multiple_choice_column, labels=True)
         np.testing.assert_array_equal(expected_columns, response.columns[:4])
         np.testing.assert_array_equal(expected_response, response.values[:2])
 
@@ -351,17 +338,14 @@ class TestLimeSurveyGetQuestionType(BaseTestLimeSurvey2021Case):
 
     def test_basic_question_types(self):
         self.assertEqual(
-            "single-choice",
-            self.survey.get_question_type(self.single_choice_column)
+            "single-choice", self.survey.get_question_type(self.single_choice_column)
         )
         self.assertEqual(
             "multiple-choice",
             self.survey.get_question_type(self.multiple_choice_column),
         )
-        self.assertEqual("array",
-                         self.survey.get_question_type(self.array_column))
-        self.assertEqual("free",
-                         self.survey.get_question_type(self.free_column))
+        self.assertEqual("array", self.survey.get_question_type(self.array_column))
+        self.assertEqual("free", self.survey.get_question_type(self.free_column))
 
     def test_unexpected_type(self):
         self.survey.questions.loc[self.free_column, "type"] = "newtype"
@@ -372,7 +356,7 @@ class TestLimeSurveyGetQuestionType(BaseTestLimeSurvey2021Case):
     def test_inconsistent_types(self):
         columns = self.survey.questions.index[
             self.survey.questions.question_group == self.array_column
-            ]
+        ]
         columns = list(columns)
         self.survey.questions.loc[columns[0], "type"] = "newtype"
         self.assertRaises(
@@ -498,8 +482,7 @@ class TestLimeSurveyGetChoices(BaseTestLimeSurvey2021Case):
     def test_multiple_choice_choices_by_subquestion(self):
         """Test getting choices for multiple-choice question with subquestion id"""
 
-        choices = self.survey.get_choices(
-            self.multiple_choice_column + "_SQ001")
+        choices = self.survey.get_choices(self.multiple_choice_column + "_SQ001")
 
         self.assertDictEqual(
             choices,
@@ -510,8 +493,7 @@ class TestLimeSurveyGetChoices(BaseTestLimeSurvey2021Case):
         """Test getting choices for array question and sub-question"""
 
         question_choices = self.survey.get_choices(self.array_column)
-        subquestion_choices = self.survey.get_choices(
-            self.array_column + "_SQ001")
+        subquestion_choices = self.survey.get_choices(self.array_column + "_SQ001")
 
         self.assertDictEqual(
             question_choices,
@@ -538,12 +520,20 @@ class TestLimeSurveyGetChoices(BaseTestLimeSurvey2021Case):
 class TestLimeSurveyplot(BaseTestLimeSurvey2021WithResponsesCase):
     def test_single_choice_question(self):
         # Todo implement test using mocking or matplotlib.testing
-        self.survey.plot(self.single_choice_column,
-                         palette='colorblind')
-        self.survey.plot(self.multiple_choice_column)
-        with self.assertRaises(KeyError):
-            self.survey.plot(self.single_choice_column,
-                             kw='test')
+        # mock_plot = create_autospec(LimeSurvey.plot)
+        # plot_call_multi = mock_plot()
+
+        self.survey.plot(
+            self.multiple_choice_column,
+            rc={"font.sans-serif": "Tahoma"},
+            display_title=True,
+        )
+
+        self.survey.plot(
+            self.single_choice_column,
+            rc={"font.sans-serif": "Tahoma"},
+            palette="colorblind",
+        )
 
 
 if __name__ == "__main__":

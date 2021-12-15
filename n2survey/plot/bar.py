@@ -11,11 +11,11 @@ __all__ = ["single_choice_bar_plot"]
 def single_choice_bar_plot(
     x,
     y,
+    theme: Optional[Dict] = None,
     total: Union[int, float, None] = None,
     title: Optional[str] = None,
     show_percents: bool = True,
     show_total: bool = True,
-    theme: Optional[Dict] = None,
 ) -> Tuple[mpl.figure.Figure, mpl.axes.Axes]:
     """Do a bar plot for a single choice question
 

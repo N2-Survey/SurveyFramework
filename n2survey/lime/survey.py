@@ -55,10 +55,10 @@ class LimeSurvey:
     output_folder: str = None
 
     def __init__(
-            self,
-            structure_file: str,
-            theme: Optional[dict] = None,
-            output_folder: Optional[str] = None,
+        self,
+        structure_file: str,
+        theme: Optional[dict] = None,
+        output_folder: Optional[str] = None,
     ) -> None:
         """Get an instance of the Survey
 
@@ -106,11 +106,10 @@ class LimeSurvey:
         columns = response.columns
         renamed_columns = (
             columns.str.replace("[", "_", regex=False)
-                .str.replace("]", "", regex=False)
-                .str.replace("_other", "other", regex=False)
+            .str.replace("]", "", regex=False)
+            .str.replace("_other", "other", regex=False)
         )
-        dtype_dict, datetime_columns = self._get_dtype_info(columns,
-                                                            renamed_columns)
+        dtype_dict, datetime_columns = self._get_dtype_info(columns, renamed_columns)
 
         # Read entire csv with optimal dtypes
         responses = pd.read_csv(
@@ -120,18 +119,16 @@ class LimeSurvey:
             parse_dates=datetime_columns,
             infer_datetime_format=True,
         )
-        responses = responses.rename(
-            columns=dict(zip(columns, renamed_columns)))
+        responses = responses.rename(columns=dict(zip(columns, renamed_columns)))
 
         # Identify columns for survey questions
         first_question = columns.get_loc("datestamp") + 1
         last_question = columns.get_loc("interviewtime") - 1
-        question_columns = renamed_columns[first_question: last_question + 1]
+        question_columns = renamed_columns[first_question : last_question + 1]
 
         # Split df into question responses and timing info
         question_responses = responses.loc[:, question_columns]
-        system_info = responses.iloc[:,
-                      ~renamed_columns.isin(question_columns)]
+        system_info = responses.iloc[:, ~renamed_columns.isin(question_columns)]
 
         # Set correct categories for categorical fields
         for column in self.questions.index:
@@ -139,9 +136,9 @@ class LimeSurvey:
             if (column in question_responses.columns) and pd.notnull(choices):
                 question_responses.loc[:, column] = (
                     question_responses.loc[:, column]
-                        # We expect all categorical column to be category dtype already
-                        # .astype("category")
-                        .cat.set_categories(choices.keys())
+                    # We expect all categorical column to be category dtype already
+                    # .astype("category")
+                    .cat.set_categories(choices.keys())
                 )
 
         # Add missing columns for multiple-choice questions with contingent question
@@ -159,7 +156,7 @@ class LimeSurvey:
         multiple_choice_questions = self.questions.index[
             (self.questions["type"] == "multiple-choice")
             & self.questions["contingent_of_name"].notnull()
-            ]
+        ]
         for question in multiple_choice_questions:
             question_responses.insert(
                 question_responses.columns.get_loc(question),
@@ -181,11 +178,9 @@ class LimeSurvey:
             warnings.warn(
                 f"The following columns in the data csv file are not found in the survey structure and are dropped:\n{not_in_structure}"
             )
-            question_responses = question_responses.drop(not_in_structure,
-                                                         axis=1)
+            question_responses = question_responses.drop(not_in_structure, axis=1)
         # Ceheck for questions not listed in data csv
-        not_in_data = list(
-            set(self.questions.index) - set(question_responses.columns))
+        not_in_data = list(set(self.questions.index) - set(question_responses.columns))
         if not_in_structure:
             warnings.warn(
                 f"The following questions in the survey structure are not found in the data csv file:\n{not_in_data}"
@@ -195,10 +190,10 @@ class LimeSurvey:
         self.lime_system_info = system_info
 
     def get_responses(
-            self,
-            question: str,
-            labels: bool = False,
-            drop_other: bool = False,
+        self,
+        question: str,
+        labels: bool = False,
+        drop_other: bool = False,
     ) -> pd.DataFrame:
         """Get responses for a given question with or without labels
 
@@ -228,8 +223,7 @@ class LimeSurvey:
         if labels:
             if question_type == "multiple-choice":
                 # Rename column names
-                responses = responses.rename(
-                    columns=self.get_choices(question))
+                responses = responses.rename(columns=self.get_choices(question))
             else:
                 # Rename category values and replace NA by self.na_label
                 for column in responses.columns:
@@ -237,23 +231,22 @@ class LimeSurvey:
                     if pd.notnull(choices):
                         responses.loc[:, column] = (
                             responses.loc[:, column]
-                                .cat.rename_categories(choices)
-                                .cat.add_categories(self.na_label)
-                                .fillna(self.na_label)
+                            .cat.rename_categories(choices)
+                            .cat.add_categories(self.na_label)
+                            .fillna(self.na_label)
                         )
                 # Rename column names
-                responses = responses.rename(
-                    columns=dict(question_group.label))
+                responses = responses.rename(columns=dict(question_group.label))
 
         return responses
 
     def count(
-            self,
-            question: str,
-            labels: bool = False,
-            dropna: bool = False,
-            add_totals: bool = False,
-            percents: bool = False,
+        self,
+        question: str,
+        labels: bool = False,
+        dropna: bool = False,
+        add_totals: bool = False,
+        percents: bool = False,
     ) -> pd.DataFrame:
         """Get counts for a question or a single column
 
@@ -284,8 +277,7 @@ class LimeSurvey:
               total count contains misleading data, NA
         """
         question_type = self.get_question_type(question)
-        responses = self.get_responses(question, labels=labels,
-                                       drop_other=True)
+        responses = self.get_responses(question, labels=labels, drop_other=True)
 
         if responses.shape[1] == 1:
             # If it consist of only one column, i.e. free, single choice, or
@@ -319,11 +311,9 @@ class LimeSurvey:
         if add_totals:
             # Add sums per rows and columns
             counts_df = counts_df.append(
-                pd.DataFrame(counts_df.sum(axis=0),
-                             columns=["Total"]).transpose()
+                pd.DataFrame(counts_df.sum(axis=0), columns=["Total"]).transpose()
             )
-            counts_df.insert(counts_df.shape[1], "Total",
-                             counts_df.sum(axis=1))
+            counts_df.insert(counts_df.shape[1], "Total", counts_df.sum(axis=1))
             # Correct for each question type
             if question_type == "multiple-choice":
                 # Sums by row should be equal to number of responses
@@ -409,8 +399,7 @@ class LimeSurvey:
         return dtype_dict, datetime_columns
 
     def plot(
-            self, question, kind: str = None, save: Union[str, bool] = False,
-            **kwargs
+        self, question, kind: str = None, save: Union[str, bool] = False, **kwargs
     ):
         if kind is not None:
             raise NotImplementedError(
@@ -423,27 +412,36 @@ class LimeSurvey:
         theme = self.theme.copy()
 
         if kwargs:
-            # check if there are keywords that are not keys of theme
+            # initialize non_theme_kwargs as a copy of kwargs
             non_theme_kwargs = kwargs.copy()
-            for element in theme.keys():
-                if element in non_theme_kwargs:
-                    non_theme_kwargs.pop(element)
-            # non theme-related keywords are not yet supported
-            if non_theme_kwargs:
-                raise KeyError('the following provided kwargs are not supported:'
-                               + str(non_theme_kwargs))
-            # update the theme if there are theme-related keywords
+            for t_element in theme.keys():
+                # remove element if it is theme argument from non_theme_kwargs
+                if t_element in non_theme_kwargs:
+                    non_theme_kwargs.pop(t_element)
+                # if element is the "rc" parameter update theme and remove it from kwargs
+                elif t_element == "rc":
+                    theme["rc"].update(kwargs["rc"])
+                    kwargs.pop("rc")
+            # remove keywords from kwargs, that are not element of theme
+            for kw_element in kwargs.copy().keys():
+                if kw_element not in theme:
+                    kwargs.pop(kw_element)
+
             theme.update(kwargs)
 
         question_type = self.get_question_type(question)
 
         if question_type == "single-choice":
             counts_df = self.count(question, labels=True)
+
+            if "title" not in non_theme_kwargs:
+                non_theme_kwargs.update({"title": counts_df.columns[0]})
+
             fig, ax = single_choice_bar_plot(
                 x=counts_df.index.values,
                 y=pd.Series(counts_df.iloc[:, 0], name="Number of Responses"),
-                title=counts_df.columns[0],
                 theme=theme,
+                **non_theme_kwargs,
             )
         elif question_type == "multiple-choice":
             counts_df = self.count(
@@ -453,11 +451,7 @@ class LimeSurvey:
             counts_df.iloc[-1, :] = np.nan
             counts_df.iloc[:, 0] = counts_df.iloc[:, 0].astype("float64")
             fig, ax = multiple_choice_bar_plot(
-                counts_df,
-                theme=theme,
-                display_title=True,
-                sort="descending",
-                bar_spacing=1.2,
+                counts_df, theme=theme, **non_theme_kwargs
             )
         else:
             raise NotImplementedError(
@@ -480,8 +474,7 @@ class LimeSurvey:
 
         fig.show()
 
-    def get_question(self, question: str,
-                     drop_other: bool = False) -> pd.DataFrame:
+    def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)
 
         Args:
@@ -497,7 +490,7 @@ class LimeSurvey:
         questions_subdf = self.questions[
             (self.questions["question_group"] == question)
             | (self.questions.index == question)
-            ]
+        ]
 
         if questions_subdf.empty:
             raise ValueError(f"Unexpected question code '{question}'")
@@ -575,12 +568,10 @@ class LimeSurvey:
         question_type = self.get_question_type(question)
 
         # If set of multiple-choice questions
-        if (question_info.shape[0] > 1) and (
-                question_type == "multiple-choice"):
+        if (question_info.shape[0] > 1) and (question_type == "multiple-choice"):
             # Flatten nested dict and get choice text directly for multiple-choice
             choices_dict = {
-                index: row.choices["Y"] for index, row in
-                question_info.iterrows()
+                index: row.choices["Y"] for index, row in question_info.iterrows()
             }
         # If single-choice, free, individual subquestion, or array
         else:
