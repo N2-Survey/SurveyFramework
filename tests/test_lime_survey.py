@@ -3,10 +3,8 @@ import os
 import re
 import unittest
 
-
 import numpy as np
 import pandas as pd
-
 
 from n2survey.lime import DEFAULT_THEME, LimeSurvey, read_lime_questionnaire_structure
 from tests.common import (
