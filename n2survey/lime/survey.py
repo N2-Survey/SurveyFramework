@@ -483,6 +483,21 @@ class LimeSurvey:
             print(f"Saved plot to {fullpath}")
 
         fig.show()
+    
+    def plot_compare(
+        self,
+        questions,
+        kind: str = None,
+        save: Union[str, bool] = False,
+        **kwargs,
+    ):
+        if type(questions) == str:
+            self.plot(question = questions,
+                      kind = kind,
+                      save = save,
+                      **kwargs)
+        elif type(questions) == list:
+            brakk
 
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)
