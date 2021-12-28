@@ -505,7 +505,6 @@ class LimeSurvey:
                    questions = [[A,B],
                                 [C,D]] --> [[A top left, B top right],
                                               [C bot left, D bot right]]
-        the function for now only works for single choice questions
         '''
         
         if kind is not None:
@@ -548,6 +547,9 @@ class LimeSurvey:
                            moment.
                            '''
                        )
+                    else:
+                        print('currently under construction')
+           
                
                         
                 
