@@ -487,10 +487,31 @@ class LimeSurvey:
     def plot_compare(
         self,
         questions,
+        answer_subset = False,
         kind: str = None,
         save: Union[str, bool] = False,
+        totalbar = True,
+        no_answers = True,
+        hide_titles = False,
+        spacing_bar = False,
+        save = False,
         **kwargs,
     ):
+        '''
+        function to compare plots in the same figure, can be added to the "plot"
+        function above. The function decides from questions input type: 
+            if input is just str it will use the normal plot function, 
+            if input is list type it will plot the entries next to each other
+               depending on the dimension and length of the entries:
+                   questions = [[A1,B1],
+                                [A6,B6]] --> [[A1 top left, B1 top right],
+                                              [A6 bot left, B6 bot right]]
+        '''
+        if any([totalbar,hide_titles,spacing_bar, no_answers, answer_subset]):
+               raise NotImplementedError(
+                   'Not yet implemented'
+               )
+               
         if type(questions) == str:
             self.plot(question = questions,
                       kind = kind,
