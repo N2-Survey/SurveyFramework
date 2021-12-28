@@ -494,31 +494,63 @@ class LimeSurvey:
         no_answers = True,
         hide_titles = False,
         spacing_bar = False,
-        save = False,
         **kwargs,
     ):
         '''
-        function to compare plots in the same figure, can be added to the "plot"
-        function above. The function decides from questions input type: 
+        function to compare plots in the same figure, can be added to the 
+        "plot" function above. The function decides from questions input type: 
             if input is just str it will use the normal plot function, 
             if input is list type it will plot the entries next to each other
                depending on the dimension and length of the entries:
-                   questions = [[A1,B1],
-                                [A6,B6]] --> [[A1 top left, B1 top right],
-                                              [A6 bot left, B6 bot right]]
+                   questions = [[A,B],
+                                [C,D]] --> [[A top left, B top right],
+                                              [C bot left, D bot right]]
+        the function for now only works for single choice questions
         '''
-        if any([totalbar,hide_titles,spacing_bar, no_answers, answer_subset]):
-               raise NotImplementedError(
-                   'Not yet implemented'
-               )
-               
+        
+        if kind is not None:
+            raise NotImplementedError(
+                "Forced plot type is not supported yet."
+            )
+        
+        # switch to plot function if only one question is given --> userfriendly
+        # we can also make this an "use different function" error
         if type(questions) == str:
             self.plot(question = questions,
                       kind = kind,
                       save = save,
                       **kwargs)
         elif type(questions) == list:
-            brakk
+            # stop when options are not yet implemented
+            if any([totalbar,hide_titles,spacing_bar, no_answers,
+                    answer_subset]):
+               raise NotImplementedError(
+                   'Not yet implemented'
+               )
+            # Set up plot options
+            theme = self.theme.copy()
+            theme.update(kwargs)
+               
+            if type(questions[0]) == str:
+                print('''
+                      Assuming plot horizontaly next to each other,
+                      for more control on placement use:
+                          questions = [[A,B,C],
+                                       [D,E,F]]
+                      ''')
+                questions = [questions]
+            for row in questions:
+                # test if question type is supported
+                for question in row:
+                    if self.get_question_type(question) != 'single-choice':
+                       raise NotImplementedError(
+                           '''only single-choice questions implemented at the
+                           moment.
+                           '''
+                       )
+               
+                        
+                
 
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)
