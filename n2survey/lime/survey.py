@@ -490,8 +490,8 @@ class LimeSurvey:
         answer_subset = False,
         kind: str = None,
         save: Union[str, bool] = False,
-        totalbar = True,
-        no_answers = True,
+        totalbar = False,
+        no_answers = False,
         hide_titles = False,
         spacing_bar = False,
         **kwargs,
@@ -510,7 +510,7 @@ class LimeSurvey:
         
         if kind is not None:
             raise NotImplementedError(
-                "Forced plot type is not supported yet."
+                'Forced plot type is not supported yet.'
             )
         
         # switch to plot function if only one question is given --> userfriendly
@@ -525,7 +525,7 @@ class LimeSurvey:
             if any([totalbar,hide_titles,spacing_bar, no_answers,
                     answer_subset]):
                raise NotImplementedError(
-                   'Not yet implemented'
+                   f'option not yet implemented'
                )
             # Set up plot options
             theme = self.theme.copy()
@@ -539,8 +539,8 @@ class LimeSurvey:
                                        [D,E,F]]
                       ''')
                 questions = [questions]
+            # test if question type is supported
             for row in questions:
-                # test if question type is supported
                 for question in row:
                     if self.get_question_type(question) != 'single-choice':
                        raise NotImplementedError(
