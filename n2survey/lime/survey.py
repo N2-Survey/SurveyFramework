@@ -588,3 +588,28 @@ class LimeSurvey:
             choices_dict = question_info.choices[0]
 
         return choices_dict
+
+    def export_to_file(self, question, directory=None):
+        """Export aggregate data for question to file
+
+        Args:
+            question (str): Name of question
+            directory (str): Optional, path to directory in which to save csv file. Default is ./data
+        """
+
+        data = self.count(question)
+        data.to_csv(os.path.join(directory or "./data", question + ".csv"))
+
+    def import_from_file(self, path):
+        """Import aggregate data for question from file
+
+        Args:
+            path (str): Path to csv file.
+
+        Returns:
+            DataFrame: df containing aggregate data for question
+        """
+
+        df = pd.read_csv(path, index_col=0)
+
+        return df
