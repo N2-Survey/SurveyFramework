@@ -483,6 +483,73 @@ class LimeSurvey:
             print(f"Saved plot to {fullpath}")
 
         fig.show()
+        
+    def plot_compare(
+        self,
+        questions,
+        answer_subset = False,
+        kind: str = None,
+        save: Union[str, bool] = False,
+        totalbar = False,
+        no_answers = False,
+        hide_titles = False,
+        spacing_bar = False,
+        **kwargs,
+    ):
+        '''
+        function to compare plots in the same figure, can be added to the 
+        "plot" function above. The function decides from questions input type: 
+            if input is just str it will use the normal plot function, 
+            if input is list type it will plot the entries next to each other
+               depending on the dimension and length of the entries:
+                   questions = [[A,B],
+                                [C,D]] --> [[A top left, B top right],
+                                              [C bot left, D bot right]]
+        '''
+        
+        if kind is not None:
+            raise NotImplementedError(
+                'Forced plot type is not supported yet.'
+            )
+        
+        # switch to plot function if only one question is given --> userfriendly
+        # we can also make this an "use different function" error
+        if type(questions) == str:
+            self.plot(question = questions,
+                      kind = kind,
+                      save = save,
+                      **kwargs)
+        elif type(questions) == list:
+            # stop when options are not yet implemented
+            if any([totalbar,hide_titles,spacing_bar, no_answers,
+                    answer_subset]):
+               raise NotImplementedError(
+                   'option not yet implemented'
+               )
+            # Set up plot options
+            theme = self.theme.copy()
+            theme.update(kwargs)
+               
+            if type(questions[0]) == str:
+                print('''
+                      Assuming plot horizontaly next to each other,
+                      for more control on placement use:
+                          questions = [[A,B,C],
+                                       [D,E,F]]
+                      ''')
+                questions = [questions]
+            # test if question type is supported
+            for row in questions:
+                for question in row:
+                    if self.get_question_type(question) != 'single-choice':
+                       raise NotImplementedError(
+                           '''only single-choice questions implemented at the
+                           moment.
+                           '''
+                       )
+                    else:
+                        print('currently under construction')
+           
 
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)
