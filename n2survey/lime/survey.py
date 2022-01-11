@@ -507,6 +507,8 @@ class LimeSurvey:
                    questions = [[A,B],
                                 [C,D]] --> [[A top left, B top right],
                                               [C bot left, D bot right]]
+           if list entries or questions is tuple:
+               function combines the tuple entries in one barplot
         '''
         
         if kind is not None:
@@ -521,76 +523,77 @@ class LimeSurvey:
                       kind = kind,
                       save = save,
                       **kwargs)
-        elif type(questions) == list:
-            # Set up plot options
-            theme = self.theme.copy()
-            theme.update(kwargs)
-            # stop when options are not yet implemented
+        else:
+            if type(questions) == tuple:
+                questions = [[questions]]
+            if type(questions[0]) == str:
+                print('''
+                      Assuming plot horizontaly next to each other,
+                      for more control on placement use:
+                          questions = [[(A,B),C],
+                                       [D,(E,F)]]
+                      ''')
+                questions = [questions]
             if any([totalbar,hide_titles,spacing_bar, no_answers,
                     answer_supress]):
                raise NotImplementedError(
                    'option not yet implemented'
                )
+            # collect dataframes
+            dfs = []
+            for row in questions:
+                row_dfs = []
+                for question in row:
+                    if type(question) == tuple:
+                        # test questiontype:
+                        for i in question:
+                            if self.get_question_type(i) == 'single-choice':
+                                comparisontype = 'single-choice'
+                            else:
+                                raise NotImplementedError(
+                                    '''
+                                    only single-choice comparison 
+                                    implemented at the moment.
+                                    '''
+                                    )
+                                
+                        row_dfs.append(pd.concat(
+                            [self.get_responses(
+                                question[0],labels=True,drop_other=True
+                                ),
+                                self.get_responses(question[1],
+                                                   labels=True,
+                                                   drop_other=True)], axis=1
+                            ).values)
+                    else:
+                        # test questiontype:
+                        if self.get_question_type(question) == 'single-choice':
+                            comparisontype = 'single-choice'
+                        else:
+                           raise NotImplementedError(
+                               '''
+                               only single-choice comparison 
+                               implemented at the moment.
+                               '''
+                               )
+                        row_dfs.append(self.count(question, labels=True))
+                dfs.append(row_dfs.copy())
+            
             # Set up plot options
             theme = self.theme.copy()
             theme.update(kwargs)
-               
-            if type(questions[0]) == str:
-                print('''
-                      Assuming plot horizontaly next to each other,
-                      for more control on placement use:
-                          questions = [[A,B,C],
-                                       [D,E,F]]
-                      ''')
-                questions = [questions]
-            titles = []
-            xs = []
-            ys = []
-            for row in questions:
-                xrow = []
-                yrow = []
-                titlerow = []
-                for question in row:
-                    counts_df = self.count(question, labels=True)
-                    # test if questiontype is supported
-                    if self.get_question_type(question) == 'single-choice':
-                        comparisontype = 'single-choice'
-                    else:
-                       raise NotImplementedError(
-                           '''only single-choice comparison implemented at the
-                           moment.
-                           '''
-                           )
-                    # add values to xs and ys
-                    xrow.append(
-                            np.array(
-                                counts_df.index.values
-                                )
-                        )
-                    yrow.append(
-                        pd.Series(counts_df.iloc[:, 0], name="Number of Responses")
-                        )
-                    titlerow.append(
-                        counts_df.columns[0]
-                        )
-                xs.append(xrow.copy())
-                ys.append(yrow.copy())
-                titles.append(titlerow.copy())
             
             if comparisontype == 'single-choice':
                 (fig, axs) = simple_comparison_plot(
-                xs=xs,
-                ys=ys,
+                dfs,
                 dimensions = dimensions,
                 answer_supress = answer_supress,
-                titles=titles,
                 theme=theme,
                 totalbar = totalbar,
                 no_answers = no_answers,
                 hide_titles = hide_titles,
                 spacing_bar = spacing_bar
                 )
-                print(ys)
             # Save to a file
             if save:
                 filename = 'comparison'

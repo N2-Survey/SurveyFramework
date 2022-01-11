@@ -8,8 +8,11 @@ import seaborn as sns
 
 __all__ = ["simple_comparison_plot"]
 
-def simple_comparison_plot(xs, 
-                           ys,
+def form_xs_and_ys(data_dfs):
+
+    return xs, ys
+
+def simple_comparison_plot(data_dfs,
                            dimensions = False,
                            answer_supress = False,
                            theme: Optional[Dict] = None,
@@ -43,15 +46,24 @@ def simple_comparison_plot(xs,
         
     # %% create figure
     
-    fig, axs = plt.subplots()
+    fig = plt.figure()
     fig.set_size_inches(width,height)
     
     # %% plotting
     
     for xrow,yrow in zip(xs,ys):
         for (x,y) in zip(xrow,yrow):
+            print(y)
             ax = fig.add_subplot(
                 len(xs), len(xrow), (xs.index(xrow)+1+xrow.index(x)*len(xs))
                 )
             sns.barplot(x=x, y=y, ci=None, ax=ax, **additional_params)
-    return fig, axs
+            # scale
+            #ax.autoscale()
+            #ax.set_autoscale_on(True)
+            plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment='right')
+            
+
+    # figure settings
+    fig.tight_layout()
+    return fig, ax
