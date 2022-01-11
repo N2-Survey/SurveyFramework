@@ -12,6 +12,7 @@ from n2survey.plot import (
     likert_bar_plot,
     multiple_choice_bar_plot,
     single_choice_bar_plot,
+    simple_comparison_plot
 )
 
 __all__ = ["LimeSurvey", "DEFAULT_THEME", "QUESTION_TYPES"]
@@ -487,13 +488,14 @@ class LimeSurvey:
     def plot_compare(
         self,
         questions,
-        answer_subset = False,
+        answer_supress = False,
         kind: str = None,
         save: Union[str, bool] = False,
         totalbar = False,
         no_answers = False,
         hide_titles = False,
         spacing_bar = False,
+        dimensions = False,
         **kwargs,
     ):
         '''
@@ -520,9 +522,12 @@ class LimeSurvey:
                       save = save,
                       **kwargs)
         elif type(questions) == list:
+            # Set up plot options
+            theme = self.theme.copy()
+            theme.update(kwargs)
             # stop when options are not yet implemented
             if any([totalbar,hide_titles,spacing_bar, no_answers,
-                    answer_subset]):
+                    answer_supress]):
                raise NotImplementedError(
                    'option not yet implemented'
                )
@@ -538,17 +543,66 @@ class LimeSurvey:
                                        [D,E,F]]
                       ''')
                 questions = [questions]
-            # test if question type is supported
+            titles = []
+            xs = []
+            ys = []
             for row in questions:
+                xrow = []
+                yrow = []
+                titlerow = []
                 for question in row:
-                    if self.get_question_type(question) != 'single-choice':
+                    counts_df = self.count(question, labels=True)
+                    # test if questiontype is supported
+                    if self.get_question_type(question) == 'single-choice':
+                        comparisontype = 'single-choice'
+                    else:
                        raise NotImplementedError(
-                           '''only single-choice questions implemented at the
+                           '''only single-choice comparison implemented at the
                            moment.
                            '''
-                       )
-                    else:
-                        print('currently under construction')
+                           )
+                    # add values to xs and ys
+                    xrow.append(
+                            np.array(
+                                counts_df.index.values
+                                )
+                        )
+                    yrow.append(
+                        pd.Series(counts_df.iloc[:, 0], name="Number of Responses")
+                        )
+                    titlerow.append(
+                        counts_df.columns[0]
+                        )
+                xs.append(xrow.copy())
+                ys.append(yrow.copy())
+                titles.append(titlerow.copy())
+            
+            if comparisontype == 'single-choice':
+                (fig, axs) = simple_comparison_plot(
+                xs=xs,
+                ys=ys,
+                dimensions = dimensions,
+                answer_supress = answer_supress,
+                titles=titles,
+                theme=theme,
+                totalbar = totalbar,
+                no_answers = no_answers,
+                hide_titles = hide_titles,
+                spacing_bar = spacing_bar
+                )
+                print(ys)
+            # Save to a file
+            if save:
+                filename = 'comparison'
+                if isinstance(save, str):
+                    filename = save
+                # Make a valid file name
+                filename = _clean_file_name(filename)
+                fullpath = os.path.join(self.output_folder, filename)
+                fig.savefig(fullpath)
+                print(f"Saved plot to {fullpath}")
+
+            fig.show()
            
 
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
