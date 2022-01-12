@@ -34,30 +34,33 @@ def get_percentages(array):
         percentage[answer] = np.append(percentage[answer],
                                        np.reshape(barheight, newshape=(-1, 1)),
                                        axis=1)
-        percentage = pd.DataFrame.from_dict(percentage,
-            orient='index'
-                     )
-        return percentage
+    percentage = pd.DataFrame.from_dict(percentage,
+                                           orient='index'
+                                           )
+    return percentage
     
 def form_xs_and_ys(data_dfs):
     xs = []
     ys = []
+    rowcount = 0
     for row in data_dfs:
         xrow = []
         yrow = []
         for entry in row:
             if type(entry) == np.ndarray:
-                percentage = get_percentages(entry)
-                xrow.append(percentage.index.values)
-                yrow.append(pd.Series(percentage.iloc[:,0]))
+                percentage_df = get_percentages(entry)
+                xrow.append(list(percentage_df.index.values))
+                yrow.append(pd.Series(percentage_df.iloc[:,0]))
             else:
                 xrow.append(list(entry.index.values))
                 yrow.append(list(entry.iloc[:,0].values))
         xs.append(xrow.copy())
         ys.append(yrow.copy())
+        rowcount = rowcount+1
     return xs, ys
 
 def simple_comparison_plot(data_dfs,
+                           all_answers,
                            dimensions = False,
                            answer_supress = False,
                            theme: Optional[Dict] = None,
@@ -96,20 +99,47 @@ def simple_comparison_plot(data_dfs,
     fig.set_size_inches(width,height)
     
     # %% plotting
-    
+    position = 1
     for xrow,yrow in zip(xs,ys):
-        print(len(xs))
-        print(len(ys))
         for (x,y) in zip(xrow,yrow):
+            # add subplot and specify positon where to plot
             ax = fig.add_subplot(
-                len(xs), len(xrow), (xs.index(xrow)+1+xrow.index(x)*len(xs))
+                len(xs), len(xrow),
+                position
                 )
-            sns.barplot(x=x, y=y, ci=None, ax=ax, **additional_params)
+            # plot normal bar plot
+            if type(y) == list:
+                sns.barplot(x=x, y=y, ci=None, ax=ax, **additional_params)
+            # plot combined comparison plot
+            else:
+                # unpack pandas dataframe to usefull variables 
+                q2_answers = []
+                percentages = []
+                for entry in y.values:
+                    q2_answers.append(entry[:,0])
+                    percentages.append(entry[:,1].astype(np.float64))
+                all_answers = np.unique(np.concatenate(np.array(q2_answers)))
+                percentage_all = []
+                for (percentage,
+                     q2_answer) in zip(percentages, q2_answers):
+                    count=0
+                    percentage_all_single = []
+                    for answer in all_answers:
+                        if answer in q2_answer:
+                            percentage_all_single.append(percentage[count])
+                            count = count+1
+                        else:
+                            percentage_all_single.append(0)
+                    percentage_all.append(percentage_all_single.copy())
+                # plot comparison bars
+                bottom = 0
+                for answer,percentage in zip(all_answers, np.transpose(np.array(percentage_all))):
+                    ax.bar(x, percentage, bottom=bottom)
+                    bottom = bottom + percentage
             # scale
-            #ax.autoscale()
-            #ax.set_autoscale_on(True)
-            plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment='right')
-            
+            plt.setp(ax.get_xticklabels(), rotation=30,
+                     horizontalalignment='right')
+            position = position+1
 
     # figure settings
     fig.tight_layout()

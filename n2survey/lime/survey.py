@@ -541,8 +541,10 @@ class LimeSurvey:
                )
             # collect dataframes
             dfs = []
+            all_answers = []
             for row in questions:
                 row_dfs = []
+                row_answers = []
                 for question in row:
                     if type(question) == tuple:
                         # test questiontype:
@@ -565,6 +567,7 @@ class LimeSurvey:
                                                    labels=True,
                                                    drop_other=True)], axis=1
                             ).values)
+                        answers = dict(self.get_choices(question[0]))
                     else:
                         # test questiontype:
                         if self.get_question_type(question) == 'single-choice':
@@ -577,7 +580,12 @@ class LimeSurvey:
                                '''
                                )
                         row_dfs.append(self.count(question, labels=True))
+                        answers = dict(self.get_choices(question))
+                    if '-oth-' in answers:
+                        del answers['-oth-']
+                    row_answers.append(dict(answers))
                 dfs.append(row_dfs.copy())
+                all_answers.append(row_answers.copy())
             
             # Set up plot options
             theme = self.theme.copy()
@@ -586,6 +594,7 @@ class LimeSurvey:
             if comparisontype == 'single-choice':
                 (fig, axs) = simple_comparison_plot(
                 dfs,
+                all_answers,
                 dimensions = dimensions,
                 answer_supress = answer_supress,
                 theme=theme,
