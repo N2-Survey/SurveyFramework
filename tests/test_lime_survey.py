@@ -515,6 +515,7 @@ class TestLimeSurveyGetChoices(BaseTestLimeSurvey2021Case):
         )
 
 
+<<<<<<< HEAD
 class TestLimeSurveyplot(BaseTestLimeSurvey2021WithResponsesCase):
     def test_single_choice_question(self):
         # Todo implement test using mocking or matplotlib.testing
@@ -534,6 +535,8 @@ class TestLimeSurveyplot(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
 
+=======
+>>>>>>> Implement rate_mental_health method for LimeSurvey class. Implement three test cases for rate_mental_health.
 class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
     """Test LimeSurvey rate_mental_health"""
 
