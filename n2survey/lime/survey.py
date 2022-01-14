@@ -930,3 +930,105 @@ class LimeSurvey:
             choices_dict = question_info.choices[0]
 
         return choices_dict
+
+    def rate_mental_health(self, question, condition):
+        """Calculate State Anxiety score based on responses to question.
+
+        Args:
+            question (str): Question ID to use for calculation
+            condition (str): Which kind of mental health condition to rate, "state", "trait", or "depression"
+
+        Returns:
+            df: Mental health condition ratings and classifications
+        """
+
+        # set up condition-specific parameters
+        if condition == "state":
+            base_score = 10 / 3
+            num_subquestions = 6
+            conversion = ["pos", "neg", "neg", "pos", "pos", "neg"]
+            label = "state_anxiety"
+            classification_boundaries = [0, 37, 44, 80]
+            classes = ["no or low anxiety", "moderate anxiety", "high anxiety"]
+        elif condition == "trait":
+            base_score = 5 / 2
+            num_subquestions = 8
+            conversion = [
+                "pos",
+                "neg",
+                "neg",
+                "pos",
+                "neg",
+                "neg",
+                "pos",
+                "neg",
+            ]
+            label = "trait_anxiety"
+            classification_boundaries = [0, 37, 44, 80]
+            classes = ["no or low anxiety", "moderate anxiety", "high anxiety"]
+        elif condition == "depression":
+            base_score = 1
+            num_subquestions = 8
+            conversion = ["freq" for i in range(8)]
+            label = "depression"
+            classification_boundaries = [0, 4, 9, 14, 19, 24]
+            classes = [
+                "no to minimal depression",
+                "mild depression",
+                "moderate depression",
+                "moderately severe depression",
+                "severe depression",
+            ]
+        else:
+            raise ValueError(
+                "Unsupported condition type. Please consult your friendly local psychiatrist."
+            )
+
+        # Set up score conversion dicts
+        pos_direction_scores = {
+            "Not at all": 4 * base_score,
+            "Somewhat": 3 * base_score,
+            "Moderately": 2 * base_score,
+            "Very much": 1 * base_score,
+        }
+        neg_direction_scores = {
+            "Not at all": 1 * base_score,
+            "Somewhat": 2 * base_score,
+            "Moderately": 3 * base_score,
+            "Very much": 4 * base_score,
+        }
+        frequency_scores = {
+            "Not at all": 0 * base_score,
+            "Several days": 1 * base_score,
+            "More than half the days": 2 * base_score,
+            "Nearly every day": 3 * base_score,
+        }
+        conversion_dicts = {
+            "pos": pos_direction_scores,
+            "neg": neg_direction_scores,
+            "freq": frequency_scores,
+        }
+
+        # Map responses from code to text then to score
+        df = pd.DataFrame()
+        subquestion_columns = [
+            f"{question}_SQ00{str(i)}" for i in range(1, num_subquestions + 1)
+        ]
+        for column, conversion in zip(subquestion_columns, conversion):
+            df[f"{column}_score"] = (
+                self.responses[column]
+                .map(self.get_choices(question))
+                .map(conversion_dicts[conversion], na_action="ignore")
+            )
+
+        # Calculate total anxiety scores
+        df[f"total_{label}_score"] = df.sum(axis=1, skipna=False)
+
+        # Classify into three categories
+        df[f"{label}_class"] = pd.cut(
+            df[f"total_{label}_score"],
+            bins=classification_boundaries,
+            labels=classes,
+        )
+
+        return df
