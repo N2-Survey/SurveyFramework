@@ -2,7 +2,7 @@
 name = "n2survey"
 version = "0.1.0"
 description = "Python framework to analyze the N2 Network surveys"
-authors = ["Rustam Giuliev <glvrst@gmail.com>"]
+authors = ["Rustam Giuliev <glvrst@gmail.com>", "Dawei Fu <davidfuswe@gmail.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]

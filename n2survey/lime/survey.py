@@ -8,7 +8,11 @@ import numpy as np
 import pandas as pd
 
 from n2survey.lime.structure import read_lime_questionnaire_structure
-from n2survey.plot import multiple_choice_bar_plot, single_choice_bar_plot
+from n2survey.plot import (
+    likert_bar_plot,
+    multiple_choice_bar_plot,
+    single_choice_bar_plot,
+)
 
 __all__ = ["LimeSurvey", "DEFAULT_THEME", "QUESTION_TYPES"]
 
@@ -192,14 +196,14 @@ class LimeSurvey:
     def get_responses(
         self,
         question: str,
-        labels: bool = False,
+        labels: bool = True,
         drop_other: bool = False,
     ) -> pd.DataFrame:
         """Get responses for a given question with or without labels
 
         Args:
             question (str): Question to get the responses for.
-            labels (bool, optional): If the response consists of labels or not (default False).
+            labels (bool, optional): If the response consists of labels or not (default True).
             drop_other (bool, optional): Whether to exclude contingent question (i.e. "other")
 
         Raises:
@@ -243,7 +247,7 @@ class LimeSurvey:
     def count(
         self,
         question: str,
-        labels: bool = False,
+        labels: bool = True,
         dropna: bool = False,
         add_totals: bool = False,
         percents: bool = False,
@@ -252,7 +256,7 @@ class LimeSurvey:
 
         Args:
             question (str): Name of a question group or a sinlge column
-            labels (bool, optional): Use labels instead of codes. Defaults to False.
+            labels (bool, optional): Use labels instead of codes. Defaults to True.
             dropna (bool, optional): Do not count empty values. Defaults to False.
             add_totals (bool, optional): Add a column and a row with totals. Values
               set to NA if they do not make sense. For example, sums by row for
@@ -399,7 +403,11 @@ class LimeSurvey:
         return dtype_dict, datetime_columns
 
     def plot(
-        self, question, kind: str = None, save: Union[str, bool] = False, **kwargs
+        self,
+        question,
+        kind: str = None,
+        save: Union[str, bool] = False,
+        **kwargs,
     ):
         if kind is not None:
             raise NotImplementedError(
@@ -452,6 +460,34 @@ class LimeSurvey:
             counts_df.iloc[:, 0] = counts_df.iloc[:, 0].astype("float64")
             fig, ax = multiple_choice_bar_plot(
                 counts_df, theme=theme, **non_theme_kwargs
+            )
+        elif question_type == "array":
+            display_title = True
+            display_no_answer = False
+
+            counts_df = self.count(
+                question, labels=True, percents=False, add_totals=True
+            )
+            counts_df.loc["Total", "Total"] = self.responses.shape[0]
+            if not display_no_answer:
+                try:
+                    counts_df = counts_df.drop("No Answer")
+                except KeyError:
+                    pass
+
+            if display_title:
+                title_question = self.get_label(question)
+            else:
+                title_question = None
+
+            fig, ax = likert_bar_plot(
+                counts_df,
+                theme=theme,
+                title_question=title_question,
+                bar_spacing=0.2,
+                bar_thickness=0.4,
+                group_spacing=1,
+                calc_fig_size=True,
             )
         else:
             raise NotImplementedError(
