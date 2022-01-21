@@ -558,6 +558,7 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
             index=[2, 3, 4],
         )
         ref.index.name = "id"
+        ref.columns.names = ["name"]
 
         self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
 
@@ -582,6 +583,7 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
             index=[2, 3, 4],
         )
         ref.index.name = "id"
+        ref.columns.names = ["name"]
 
         self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
 
@@ -608,6 +610,7 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
             index=[2, 3, 4],
         )
         ref.index.name = "id"
+        ref.columns.names = ["name"]
 
         self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
 
