@@ -515,5 +515,24 @@ class TestLimeSurveyGetChoices(BaseTestLimeSurvey2021Case):
         )
 
 
+class TestLimeSurveyplot(BaseTestLimeSurvey2021WithResponsesCase):
+    def test_single_choice_question(self):
+        # Todo implement test using mocking or matplotlib.testing
+        # mock_plot = create_autospec(LimeSurvey.plot)
+        # plot_call_multi = mock_plot()
+
+        self.survey.plot(
+            self.multiple_choice_column,
+            rc={"font.sans-serif": "Tahoma"},
+            display_title=True,
+        )
+
+        self.survey.plot(
+            self.single_choice_column,
+            rc={"font.sans-serif": "Tahoma"},
+            palette="colorblind",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
