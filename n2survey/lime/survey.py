@@ -296,6 +296,7 @@ class LimeSurvey:
 
         return responses
 
+<<<<<<< HEAD
     def construct_filter_conditions(self, conditions: Union[tuple, list]) -> str:
         """Construct conditions for slicing the responses df in format for DataFrame.query().
             Pairs of question id and answer text are expected, e.g. ("A6", "Woman")
@@ -310,10 +311,15 @@ class LimeSurvey:
 
         # Default logic to AND for multiple questions, OR for choices within one question
         # E.g. (A6 == 'A1' | A6 == 'A3') & (A7 == 'A1' | A7 == 'A3' | A7 == 'A5')
+=======
+    def construct_filter_conditions(self, conditions):
+
+>>>>>>> Implement construct_filter_conditions and filter_responses methods
         final_conditions = []
         outter_logic = " & "
         inner_logic = " | "
 
+<<<<<<< HEAD
         # Check whether a single or multiple questions to query
         if isinstance(conditions, list):
             for condition in conditions:
@@ -351,10 +357,27 @@ class LimeSurvey:
                         )
 
                     # For other question types, e.g. "free", texts are left unchanged
+=======
+        if isinstance(conditions, list):
+            for condition in conditions:
+                question, answers = condition
+                answer_dict = self.get_choices(question)
+
+                if isinstance(answers, list):
+                    if answer_dict is not None:
+                        inverted_answer_dict = {
+                            answer: id for id, answer in answer_dict.items()
+                        }
+                        answers = [inverted_answer_dict[answer] for answer in answers]
+                        condition_str = inner_logic.join(
+                            [f"{question} == '{answer}'" for answer in answers]
+                        )
+>>>>>>> Implement construct_filter_conditions and filter_responses methods
                     else:
                         condition_str = inner_logic.join(
                             [f"{question} == {answer}" for answer in answers]
                         )
+<<<<<<< HEAD
 
                 # If only a single answer to question
                 else:
@@ -411,10 +434,37 @@ class LimeSurvey:
                     )
 
                 # For other question types, e.g. "free", texts are left unchanged
+=======
+                else:
+                    if answer_dict is not None:
+                        inverted_answer_dict = {
+                            answer: id for id, answer in answer_dict.items()
+                        }
+                        answers = inverted_answer_dict[answers]
+                        condition_str = f"{question} == '{answers}'"
+                    else:
+                        condition_str = f"{question} == {answers}"
+                final_conditions.append(f"({condition_str})")
+            constructed_str = outter_logic.join(final_conditions)
+        else:
+            question, answers = conditions
+            answer_dict = self.get_choices(question)
+
+            if isinstance(answers, list):
+                if answer_dict is not None:
+                    inverted_answer_dict = {
+                        answer: id for id, answer in answer_dict.items()
+                    }
+                    answers = [inverted_answer_dict[answer] for answer in answers]
+                    condition_str = inner_logic.join(
+                        [f"{question} == '{answer}'" for answer in answers]
+                    )
+>>>>>>> Implement construct_filter_conditions and filter_responses methods
                 else:
                     condition_str = inner_logic.join(
                         [f"{question} == {answer}" for answer in answers]
                     )
+<<<<<<< HEAD
 
             # If only a single answer to question
             else:
@@ -430,10 +480,20 @@ class LimeSurvey:
                     }
                     subquestion = inverted_answer_dict[answers]
                     condition_str = f"{subquestion} == 'Y'"
+=======
+            else:
+                if answer_dict is not None:
+                    inverted_answer_dict = {
+                        answer: id for id, answer in answer_dict.items()
+                    }
+                    answers = inverted_answer_dict[answers]
+                    condition_str = f"{question} == '{answers}'"
+>>>>>>> Implement construct_filter_conditions and filter_responses methods
                 else:
                     condition_str = f"{question} == {answers}"
             constructed_str = condition_str
 
+<<<<<<< HEAD
         return constructed_str
 
     def keep_choices(self, conditions: Union[tuple, list]) -> "LimeSurvey":
@@ -492,6 +552,16 @@ class LimeSurvey:
         filtered_survey.responses = self.responses.query(condition)
 
         return filtered_survey
+=======
+        print(constructed_str)
+        return constructed_str
+
+    def filter_responses(self, conditions):
+
+        constructed_filter_conditions = self.construct_filter_conditions(conditions)
+        # print(self.responses.query("self.responses['A00'] == 'A1'"))
+        print(self.responses.query(constructed_filter_conditions))
+>>>>>>> Implement construct_filter_conditions and filter_responses methods
 
     def count(
         self,
