@@ -210,7 +210,7 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
                 False,
                 True,
                 False,
-                "nan",
+                np.nan,
             ],
             [
                 False,
@@ -233,7 +233,7 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
                 False,
                 False,
                 False,
-                "nan",
+                np.nan,
             ],
         ]
         response = self.survey.get_responses(self.multiple_choice_column, labels=False)
