@@ -14,6 +14,7 @@ def create_bar_plot(
     fig_dim,
     bar_thickness,
     bar_spacing,
+    **kwargs,
 ):
     """
     Create bar plot
@@ -41,7 +42,9 @@ def create_bar_plot(
     fig = plt.figure(figsize=fig_dim)
 
     # Create bar plot
-    ax = sns.barplot(x=data_df.iloc[:, 0], y=data_df.index, palette=palette, orient="h")
+    ax = sns.barplot(
+        x=data_df.iloc[:, 0], y=data_df.index, palette=palette, orient="h", **kwargs
+    )
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.spines["bottom"].set_visible(False)
@@ -169,6 +172,7 @@ def multiple_choice_bar_plot(
     bar_spacing=1.2,
     display_threshold=0,
     wrap_text=True,
+    **kwargs,
 ):
     """
     Plot the response to a multiple choice question as a horizontal barplot
@@ -202,6 +206,7 @@ def multiple_choice_bar_plot(
         fig_dim,
         bar_thickness,
         bar_spacing,
+        **kwargs,
     )
 
     return fig, ax

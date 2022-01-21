@@ -51,6 +51,42 @@ def _clean_file_name(filename: str) -> str:
     return "".join(c for c in filename if c in valid_chars)
 
 
+def _split_plot_kwargs(mixed_kwargs: dict) -> tuple[dict, dict]:
+    """Split dict of arguments into theme and non-theme arguments
+
+    Args:
+        mixed_kwargs (dict): Initial dict of mixed arguments
+
+    Returns:
+        tuple[dict, dict]: Tuple of (<theme arguements>, <non-theme arguments>)
+    """
+    theme_args = {k: v for k, v in mixed_kwargs.items() if k in DEFAULT_THEME}
+    nontheme_args = {k: v for k, v in mixed_kwargs.items() if k not in DEFAULT_THEME}
+    return theme_args, nontheme_args
+
+
+def deep_dict_update(source: dict, update_dict: dict) -> dict:
+    """Recursive dictionary update
+
+    Args:
+        source (dict): Source dictionary to update
+        update_dict (dict): Dictionary with "new" data
+
+    Returns:
+        dict: Upated dictionary. Neasted dictionaries are updated recursevely
+          Neasted lists are combined.
+    """
+    for key, val in update_dict.items():
+        if isinstance(val, dict):
+            tmp = deep_dict_update(source.get(key, {}), val)
+            source[key] = tmp
+        elif isinstance(val, list):
+            source[key] = source.get(key, []) + val
+        else:
+            source[key] = val
+    return source
+
+
 class LimeSurvey:
     """Base LimeSurvey class"""
 
@@ -416,26 +452,10 @@ class LimeSurvey:
                 f"`servey.get_responses({question})` or `servey.count({question})`"
             )
 
-        # Set up plot options
+        # Prepare theme and non-theme arguments
         theme = self.theme.copy()
-
-        if kwargs:
-            # initialize non_theme_kwargs as a copy of kwargs
-            non_theme_kwargs = kwargs.copy()
-            for t_element in theme.keys():
-                # remove element if it is theme argument from non_theme_kwargs
-                if t_element in non_theme_kwargs:
-                    non_theme_kwargs.pop(t_element)
-                # if element is the "rc" parameter update theme and remove it from kwargs
-                elif t_element == "rc":
-                    theme["rc"].update(kwargs["rc"])
-                    kwargs.pop("rc")
-            # remove keywords from kwargs, that are not element of theme
-            for kw_element in kwargs.copy().keys():
-                if kw_element not in theme:
-                    kwargs.pop(kw_element)
-
-            theme.update(kwargs)
+        theme_kwargs, non_theme_kwargs = _split_plot_kwargs(kwargs)
+        theme = deep_dict_update(theme, theme_kwargs)
 
         question_type = self.get_question_type(question)
 
@@ -488,6 +508,7 @@ class LimeSurvey:
                 bar_thickness=0.4,
                 group_spacing=1,
                 calc_fig_size=True,
+                **non_theme_kwargs,
             )
         else:
             raise NotImplementedError(
@@ -508,7 +529,7 @@ class LimeSurvey:
             fig.savefig(fullpath)
             print(f"Saved plot to {fullpath}")
 
-        fig.show()
+        return fig, ax
 
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)
