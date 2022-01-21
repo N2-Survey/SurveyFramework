@@ -237,7 +237,9 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
             ],
         ]
         response = self.survey.get_responses(self.multiple_choice_column, labels=False)
-        np.testing.assert_allclose(expected_response, response.values[:2], equal_nan=True)
+        np.testing.assert_allclose(
+            expected_response, response.values[:2], equal_nan=True
+        )
 
         expected_columns = [
             "I do not like scientific work.",
