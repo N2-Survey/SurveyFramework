@@ -280,6 +280,78 @@ class LimeSurvey:
 
         return responses
 
+    def construct_filter_conditions(self, conditions):
+
+        final_conditions = []
+        outter_logic = " & "
+        inner_logic = " | "
+
+        if isinstance(conditions, list):
+            for condition in conditions:
+                question, answers = condition
+                answer_dict = self.get_choices(question)
+
+                if isinstance(answers, list):
+                    if answer_dict is not None:
+                        inverted_answer_dict = {
+                            answer: id for id, answer in answer_dict.items()
+                        }
+                        answers = [inverted_answer_dict[answer] for answer in answers]
+                        condition_str = inner_logic.join(
+                            [f"{question} == '{answer}'" for answer in answers]
+                        )
+                    else:
+                        condition_str = inner_logic.join(
+                            [f"{question} == {answer}" for answer in answers]
+                        )
+                else:
+                    if answer_dict is not None:
+                        inverted_answer_dict = {
+                            answer: id for id, answer in answer_dict.items()
+                        }
+                        answers = inverted_answer_dict[answers]
+                        condition_str = f"{question} == '{answers}'"
+                    else:
+                        condition_str = f"{question} == {answers}"
+                final_conditions.append(f"({condition_str})")
+            constructed_str = outter_logic.join(final_conditions)
+        else:
+            question, answers = conditions
+            answer_dict = self.get_choices(question)
+
+            if isinstance(answers, list):
+                if answer_dict is not None:
+                    inverted_answer_dict = {
+                        answer: id for id, answer in answer_dict.items()
+                    }
+                    answers = [inverted_answer_dict[answer] for answer in answers]
+                    condition_str = inner_logic.join(
+                        [f"{question} == '{answer}'" for answer in answers]
+                    )
+                else:
+                    condition_str = inner_logic.join(
+                        [f"{question} == {answer}" for answer in answers]
+                    )
+            else:
+                if answer_dict is not None:
+                    inverted_answer_dict = {
+                        answer: id for id, answer in answer_dict.items()
+                    }
+                    answers = inverted_answer_dict[answers]
+                    condition_str = f"{question} == '{answers}'"
+                else:
+                    condition_str = f"{question} == {answers}"
+            constructed_str = condition_str
+
+        print(constructed_str)
+        return constructed_str
+
+    def filter_responses(self, conditions):
+
+        constructed_filter_conditions = self.construct_filter_conditions(conditions)
+        # print(self.responses.query("self.responses['A00'] == 'A1'"))
+        print(self.responses.query(constructed_filter_conditions))
+
     def count(
         self,
         question: str,
@@ -635,3 +707,19 @@ class LimeSurvey:
             choices_dict = question_info.choices[0]
 
         return choices_dict
+
+
+if __name__ == "__main__":
+    s = LimeSurvey("/home/dawaifu/SurveyFramework/data/survey_structure_2021.xml")
+    s.read_responses("/home/dawaifu/SurveyFramework/data/dummy_data_2021_codeonly.csv")
+    # print(s.get_label("A11"))
+    print(s.get_choices("A10"))
+    # print(s.responses)
+    s.filter_responses(
+        [
+            ("A6", ["Woman", "Man"]),
+            ("A7", ["Heterosexual", "Bisexual", "Queer"]),
+            ("C5_SQ001", 80),
+            ("A10_SQ007", "Y"),
+        ]
+    )
