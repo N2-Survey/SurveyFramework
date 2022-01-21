@@ -210,10 +210,9 @@ class LimeSurvey:
             # ASSUME: question response consists of multiple columns with
             #         'Y' or NaN as entries.
             # Concatenate the last 'Other' column because it should not be masked with boolean values.
-            # responses = pd.concat(
-            #     [pd.notna(responses.iloc[:, :-1]), responses.iloc[:, -1]], axis=1
-            # )
-            responses = pd.notna(responses)
+            responses = pd.concat(
+                [pd.notna(responses.iloc[:, :-1]), responses.iloc[:, -1]], axis=1
+            )
 
         # replace labels
         if labels:
