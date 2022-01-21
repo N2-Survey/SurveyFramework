@@ -8,7 +8,11 @@ import numpy as np
 import pandas as pd
 
 from n2survey.lime.structure import read_lime_questionnaire_structure
-from n2survey.plot import multiple_choice_bar_plot, single_choice_bar_plot
+from n2survey.plot import (
+    likert_bar_plot,
+    multiple_choice_bar_plot,
+    single_choice_bar_plot,
+)
 
 __all__ = ["LimeSurvey", "DEFAULT_THEME", "QUESTION_TYPES"]
 
@@ -395,7 +399,11 @@ class LimeSurvey:
         return dtype_dict, datetime_columns
 
     def plot(
-        self, question, kind: str = None, save: Union[str, bool] = False, **kwargs
+        self,
+        question,
+        kind: str = None,
+        save: Union[str, bool] = False,
+        **kwargs,
     ):
         if kind is not None:
             raise NotImplementedError(
@@ -431,6 +439,34 @@ class LimeSurvey:
                 display_title=True,
                 sort="descending",
                 bar_spacing=1.2,
+            )
+        elif question_type == "array":
+            display_title = True
+            display_no_answer = False
+
+            counts_df = self.count(
+                question, labels=True, percents=False, add_totals=True
+            )
+            counts_df.loc["Total", "Total"] = self.responses.shape[0]
+            if not display_no_answer:
+                try:
+                    counts_df = counts_df.drop("No Answer")
+                except KeyError:
+                    pass
+
+            if display_title:
+                title_question = self.get_label(question)
+            else:
+                title_question = None
+
+            fig, ax = likert_bar_plot(
+                counts_df,
+                theme=theme,
+                title_question=title_question,
+                bar_spacing=0.2,
+                bar_thickness=0.4,
+                group_spacing=1,
+                calc_fig_size=True,
             )
         else:
             raise NotImplementedError(
