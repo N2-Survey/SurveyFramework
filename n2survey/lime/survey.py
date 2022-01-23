@@ -442,9 +442,10 @@ class LimeSurvey:
     def plot(
         self,
         question,
-        compare_with = False,
+        compare_with: Union[str,bool] = False,
         totalbar: bool = False,
         answer_supress: Union[list,bool] = False,
+        threshold_percentage: float = 0.0,
         kind: str = None,
         save: Union[str, bool] = False,
         **kwargs,
@@ -480,11 +481,17 @@ class LimeSurvey:
                                                labels=True,
                                                drop_other=True)], axis=1
                         ).values
+                    if totalbar:
+                        totalbar = np.unique(self.get_responses(compare_with,
+                                           labels=True,
+                                           drop_other=True),
+                                  return_counts=True)
                     fig, ax = simple_comparison_plot(
                         DF,
                         totalbar=totalbar, 
                         answer_supress=answer_supress,
-                        theme=theme)
+                        theme=theme,
+                        threshold_percentage=threshold_percentage)
                 else:
                     raise NotImplementedError(
                         '''
@@ -559,135 +566,7 @@ class LimeSurvey:
 
         return fig, ax
         
-    def plot_compare(
-        self,
-        questions,
-        bar_supress = False,
-        answer_supress = False,
-        kind: str = None,
-        save: Union[str, bool] = False,
-        totalbar = False,
-        no_answers = False,
-        hide_titles = False,
-        spacing_bar = False,
-        dimensions = False,
-        threshold = 0,
-        bar_width = 0.8,
-        **kwargs,
-    ):
-        '''
-        function to compare plots in the same figure, can be added to the 
-        "plot" function above. The function decides from questions input type: 
-            if input is just str it will use the normal plot function, 
-            if input is list type it will plot the entries next to each other
-               depending on the dimension and length of the entries:
-                   questions = [[A,B],
-                                [C,D]] --> [[A top left, B top right],
-                                              [C bot left, D bot right]]
-           if list entries or questions is tuple:
-               function combines the tuple entries in one barplot
-        '''
-        
-        if kind is not None:
-            raise NotImplementedError(
-                'Forced plot type is not supported yet.'
-            )
-        
-        # switch to plot function if only one question is given --> userfriendly
-        # we can also make this an "use different function" error
-        if type(questions) == str:
-            self.plot(question = questions,
-                      kind = kind,
-                      save = save,
-                      **kwargs)
-        else:
-            if type(questions) == tuple:
-                questions = [[questions]]
-            if type(questions[0]) == str:
-                print('''
-                      Assuming plot horizontaly next to each other,
-                      for more control on placement use:
-                          questions = [[(A,B),C],
-                                       [D,(E,F)]]
-                      ''')
-                questions = [questions]
-            if any([totalbar,hide_titles,spacing_bar,
-                    answer_supress]):
-               raise NotImplementedError(
-                   'option not yet implemented'
-               )
-            # collect dataframes
-            dfs = []
-            for row in questions:
-                row_dfs = []
-                for question in row:
-                    if type(question) == tuple:
-                        # test questiontype:
-                        for i in question:
-                            if self.get_question_type(i) == 'single-choice':
-                                comparisontype = 'single-choice'
-                            else:
-                                raise NotImplementedError(
-                                    '''
-                                    only single-choice comparison 
-                                    implemented at the moment.
-                                    '''
-                                    )
-                                
-                        row_dfs.append(pd.concat(
-                            [self.get_responses(
-                                question[0],labels=True,drop_other=True
-                                ),
-                                self.get_responses(question[1],
-                                                   labels=True,
-                                                   drop_other=True)], axis=1
-                            ).values)
-                    else:
-                        # test questiontype:
-                        if self.get_question_type(question) == 'single-choice':
-                            comparisontype = 'single-choice'
-                        else:
-                           raise NotImplementedError(
-                               '''
-                               only single-choice comparison 
-                               implemented at the moment.
-                               '''
-                               )
-                        row_dfs.append(self.count(question, labels=True))
-                dfs.append(row_dfs.copy())
-            
-            # Set up plot options
-            theme = self.theme.copy()
-            theme.update(kwargs)
-            
-            if comparisontype == 'single-choice':
-                (fig, axs) = simple_comparison_plot(
-                dfs,
-                dimensions = dimensions,
-                answer_supress = answer_supress,
-                theme=theme,
-                totalbar = totalbar,
-                no_answers = no_answers,
-                hide_titles = hide_titles,
-                spacing_bar = spacing_bar,
-                threshold = threshold,
-                bar_width = bar_width
-                )
-            # Save to a file
-            if save:
-                filename = 'comparison'
-                if isinstance(save, str):
-                    filename = save
-                # Make a valid file name
-                filename = _clean_file_name(filename)
-                fullpath = os.path.join(self.output_folder, filename)
-                fig.savefig(fullpath)
-                print(f"Saved plot to {fullpath}")
-
-            fig.show()
-        return dfs
-           
-
+   
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)
 

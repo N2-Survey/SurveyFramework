@@ -9,10 +9,15 @@ import seaborn as sns
 
 __all__ = ["simple_comparison_plot"]
 
-def get_percentages(array, threshold=0, answer_supress = False):
+def get_percentages(array, threshold=0, answer_supress = False, totalbar = False):
     # get possible combinations
     (combi, 
      no_of) = np.unique(array.astype(str), return_counts = True, axis=0)
+    if totalbar:
+        total_combi = np.full((totalbar[0].shape[0],1),"Total")
+        total_combi = np.append(total_combi, np.reshape(totalbar[0], newshape=(-1,1)), axis=1)
+        combi = np.append(total_combi, combi, axis=0)
+        no_of = np.append(totalbar[1],no_of)
     # calculate percentages of x
     percentage = {}
     for answer in combi[:,0]:
@@ -24,15 +29,15 @@ def get_percentages(array, threshold=0, answer_supress = False):
                          decimals=1), newshape = (-1,1)
                 ), axis=1
             )
-    percentage = pd.DataFrame.from_dict(percentage,
-                                           orient='index'
-                                           )
     return percentage
     
-def form_x_and_y(df):
-    PERCENTAGE = get_percentages(df)
-    x = list(PERCENTAGE.index.values)
-    y = pd.Series(PERCENTAGE.iloc[:,0])
+def form_x_and_y(df, totalbar=False):
+    PERCENTAGE = get_percentages(df, totalbar=totalbar)
+    x = []
+    y = []
+    for entry in PERCENTAGE:
+        x.append(entry)
+        y.append(PERCENTAGE[entry])
     return x, y
 
 def simple_comparison_plot(df,
@@ -44,19 +49,18 @@ def simple_comparison_plot(df,
                            hide_titles = False,
                            spacing_bar = False,
                            show_percents = True,
-                           threshold = 0,
+                           threshold_percentage = 0,
                            bar_width = 0.8
                            ):
-    (x,y) = form_x_and_y(df)
+    (x,y) = form_x_and_y(df, totalbar=totalbar)
         
     # %% Prepare figure
     fig, ax = plt.subplots()
     fig_width, _ = fig.get_size_inches()
     # %% plot
-    # unpack pandas dataframe to usefull variables 
     q2_answers = []
     percentages = []
-    for entry in y.values:
+    for entry in y:
         q2_answers.append(entry[:,0])
         percentages.append(entry[:,1].astype(np.float64))
     all_answers = np.unique(np.concatenate(np.array(q2_answers)))
@@ -80,12 +84,12 @@ def simple_comparison_plot(df,
                width=bar_width)
         bottom = bottom + percentage
         labels = percentage.astype(str)
-        labels[np.where(labels.astype(np.float64) <= threshold)]=''
+        labels[np.where(labels.astype(np.float64) <= threshold_percentage)]=''
         ax.bar_label(ax.containers[count], labels, fmt='%s',
                      label_type='center')
         count = count+1
     labels = all_answers
-    plt.legend(labels, bbox_to_anchor=([0.1, 1, 0, 0]), ncol=2,
+    ax.legend(labels, bbox_to_anchor=([0.1, 1, 0, 0]), ncol=2,
                frameon=False)
     # scale
     plt.setp(ax.get_xticklabels(), rotation=30,
