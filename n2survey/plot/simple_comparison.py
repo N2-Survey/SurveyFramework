@@ -62,7 +62,8 @@ def simple_comparison_plot(df,
                            show_percents = True,
                            threshold_percentage = 0,
                            bar_width = 0.8,
-                           legend_columns: int = 2
+                           legend_columns: int = 2,
+                           plot_title: Union[str, bool] = False
                            ):
     (x,y) = form_x_and_y(df, totalbar=totalbar, answer_supress=answer_supress)
     if bar_positions:
@@ -112,6 +113,8 @@ def simple_comparison_plot(df,
     ax.legend(labels, bbox_to_anchor=([0.1, 1, 0, 0]), ncol=legend_columns,
                frameon=False)
     ax.axes.get_yaxis().set_visible(False)
+    if plot_title:
+        ax.set_title(plot_title, pad=30)
     # scale
     plt.setp(ax.get_xticklabels(), rotation=30,
              horizontalalignment='right')

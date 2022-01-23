@@ -443,12 +443,13 @@ class LimeSurvey:
         self,
         question,
         add_questions: Union[list, bool] = False,
-        compare_with: Union[str,bool] = False,
+        compare_with: Union[str, bool] = False,
         totalbar: bool = False,
-        answer_supress: Union[list,bool] = False,
+        answer_supress: Union[list, bool] = False,
         threshold_percentage: float = 0.0,
-        bar_positions: Union[list, bool]= False,
-        legend_columns=2,
+        bar_positions: Union[list, bool] = False,
+        legend_columns: int = 2,
+        plot_title: Union[str, bool] = True,
         kind: str = None,
         save: Union[str, bool] = False,
         **kwargs,
@@ -466,6 +467,10 @@ class LimeSurvey:
         theme = deep_dict_update(theme, theme_kwargs)
 
         question_type = self.get_question_type(question)
+        # get plot title
+        if plot_title:
+            if type(plot_title) != str:
+                plot_title = self.get_label(question)
 
         if question_type == "single-choice":
             counts_df = self.count(question, labels=True)
@@ -524,6 +529,7 @@ class LimeSurvey:
                     answer_supress=answer_supress,
                     bar_positions=bar_positions,
                     theme=theme,
+                    plot_title=plot_title,
                     threshold_percentage=threshold_percentage,
                     legend_columns=legend_columns)
                 
