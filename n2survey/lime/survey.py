@@ -442,10 +442,13 @@ class LimeSurvey:
     def plot(
         self,
         question,
+        add_questions: Union[list, bool] = False,
         compare_with: Union[str,bool] = False,
         totalbar: bool = False,
         answer_supress: Union[list,bool] = False,
         threshold_percentage: float = 0.0,
+        bar_positions: Union[list, bool]= False,
+        legend_columns=2,
         kind: str = None,
         save: Union[str, bool] = False,
         **kwargs,
@@ -471,34 +474,59 @@ class LimeSurvey:
                 non_theme_kwargs.update({"title": counts_df.columns[0]})
             
             if compare_with:
+                DF = []
                 if self.get_question_type(compare_with) == 'single-choice':
+                    
                     # create Dataframe from both questions
-                    DF = pd.concat(
+                    DF.append(pd.concat(
                         [self.get_responses(
                             question,labels=True,drop_other=True
                             ),
                             self.get_responses(compare_with,
                                                labels=True,
                                                drop_other=True)], axis=1
-                        ).values
-                    if totalbar:
-                        totalbar = np.unique(self.get_responses(compare_with,
-                                           labels=True,
-                                           drop_other=True),
-                                  return_counts=True)
-                    fig, ax = simple_comparison_plot(
-                        DF,
-                        totalbar=totalbar, 
-                        answer_supress=answer_supress,
-                        theme=theme,
-                        threshold_percentage=threshold_percentage)
+                        ).values)
+                            
                 else:
                     raise NotImplementedError(
-                        '''
-                        only single-choice to single-choice comparison 
-                        implemented at the moment.
-                        '''
-                        )
+                         '''
+                         only single-choice to single-choice comparison 
+                         implemented at the moment.
+                         '''
+                         )
+                if add_questions:
+                    for entry in add_questions:
+                        if self.get_question_type(compare_with) == 'single-choice':
+                            DF.append(
+                                pd.concat([self.get_responses(entry,
+                                                              labels=True,
+                                                              drop_other=True),
+                                           self.get_responses(compare_with,
+                                                              labels=True,
+                                                              drop_other=True)],
+                                          axis=1).values
+                                )
+                        else:
+                            raise NotImplementedError(
+                            '''
+                            only single-choice to single-choice comparison 
+                            implemented at the moment.
+                            '''
+                            ) 
+                if totalbar:
+                    totalbar = np.unique(self.get_responses(compare_with,
+                                       labels=True,
+                                       drop_other=True),
+                              return_counts=True)
+                fig, ax = simple_comparison_plot(
+                    DF,
+                    totalbar=totalbar, 
+                    answer_supress=answer_supress,
+                    bar_positions=bar_positions,
+                    theme=theme,
+                    threshold_percentage=threshold_percentage,
+                    legend_columns=legend_columns)
+                
             else:
                 fig, ax = single_choice_bar_plot(
                     x=counts_df.index.values,
