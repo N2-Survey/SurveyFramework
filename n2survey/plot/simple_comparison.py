@@ -9,8 +9,32 @@ import seaborn as sns
 
 __all__ = ["simple_comparison_plot"]
 
+def calculate_barwidth(xs, bar_width):
+    # necessary for same barwidth for all plots
+    bar_width_correct = []
+    for xrow in xs:
+        no_bars_row = np.array([])
+        total = 0
+        for x in xrow:
+            no_bars_row = np.append(no_bars_row, len(x))
+            total = total+len(x)
+        bar_width_correct.append(list(np.round(no_bars_row*bar_width/total,
+                                               decimals=2)))
+    return bar_width_correct
 
-def get_percentages(array):
+def calculate_subplot_width(xs, fig_width):
+    subplot_widths = []
+    for xrow in xs:
+        no_bars_row = np.array([])
+        total = 0
+        for x in xrow:
+            no_bars_row = np.append(no_bars_row, len(x))
+            total = total+len(x)
+        subplot_widths.append(list(np.round(no_bars_row*fig_width/total,
+                                               decimals=2)))
+    return subplot_widths
+
+def get_percentages(array, threshold=0, answer_supress = False):
     (combi, 
      no_of) = np.unique(array.astype(str), return_counts = True, axis=0)
     # calculate percentages of x
@@ -24,16 +48,6 @@ def get_percentages(array):
                          decimals=1), newshape = (-1,1)
                 ), axis=1
             )
-        # calculate barheights for overlapping bars
-        barheight = np.array([percentage[answer][0,1]]).astype(np.float64)
-        count = 0
-        for entry in percentage[answer][1:,1].astype(np.float64):
-            barheight = np.append(barheight,
-                                  barheight[count]+entry)
-            count = count+1
-        percentage[answer] = np.append(percentage[answer],
-                                       np.reshape(barheight, newshape=(-1, 1)),
-                                       axis=1)
     percentage = pd.DataFrame.from_dict(percentage,
                                            orient='index'
                                            )
@@ -60,7 +74,6 @@ def form_xs_and_ys(data_dfs):
     return xs, ys
 
 def simple_comparison_plot(data_dfs,
-                           all_answers,
                            dimensions = False,
                            answer_supress = False,
                            theme: Optional[Dict] = None,
@@ -68,9 +81,13 @@ def simple_comparison_plot(data_dfs,
                            totalbar = False,
                            no_answers = False,
                            hide_titles = False,
-                           spacing_bar = False
+                           spacing_bar = False,
+                           show_percents = True,
+                           threshold = 0,
+                           bar_width = 1
                            ):
     (xs,ys) = form_xs_and_ys(data_dfs)
+    bar_width = calculate_barwidth(xs, bar_width)
     # %% additional parameters from bar.py
     # Additional parameters to provide in `sns.barplot`
     additional_params = {}
@@ -100,8 +117,8 @@ def simple_comparison_plot(data_dfs,
     
     # %% plotting
     position = 1
-    for xrow,yrow in zip(xs,ys):
-        for (x,y) in zip(xrow,yrow):
+    for xrow,yrow,width_row in zip(xs,ys, bar_width):
+        for (x, y, width) in zip(xrow, yrow, width_row):
             # add subplot and specify positon where to plot
             ax = fig.add_subplot(
                 len(xs), len(xrow),
@@ -133,14 +150,24 @@ def simple_comparison_plot(data_dfs,
                     percentage_all.append(percentage_all_single.copy())
                 # plot comparison bars
                 bottom = 0
+                count=0
                 for answer,percentage in zip(all_answers, np.transpose(np.array(percentage_all))):
-                    ax.bar(x, percentage, bottom=bottom)
+                    ax.bar(x, percentage, bottom=bottom, label=answer,
+                           width=width)
                     bottom = bottom + percentage
+                    labels = percentage.astype(str)
+                    labels[np.where(labels.astype(np.float64) <= threshold)]=''
+                    ax.bar_label(ax.containers[count], labels, fmt='%s',
+                                 label_type='center')
+                    count = count+1
+                labels = all_answers
+                plt.legend(labels, bbox_to_anchor=([0.1, 1, 0, 0]), ncol=2,
+                           frameon=False)
             # scale
             plt.setp(ax.get_xticklabels(), rotation=30,
                      horizontalalignment='right')
             position = position+1
-
+            print(ax.figure.subplotpars.left)
     # figure settings
     fig.tight_layout()
     return fig, ax

@@ -488,6 +488,7 @@ class LimeSurvey:
     def plot_compare(
         self,
         questions,
+        bar_supress = False,
         answer_supress = False,
         kind: str = None,
         save: Union[str, bool] = False,
@@ -496,6 +497,8 @@ class LimeSurvey:
         hide_titles = False,
         spacing_bar = False,
         dimensions = False,
+        threshold = 0,
+        bar_width = 0.8,
         **kwargs,
     ):
         '''
@@ -534,17 +537,15 @@ class LimeSurvey:
                                        [D,(E,F)]]
                       ''')
                 questions = [questions]
-            if any([totalbar,hide_titles,spacing_bar, no_answers,
+            if any([totalbar,hide_titles,spacing_bar,
                     answer_supress]):
                raise NotImplementedError(
                    'option not yet implemented'
                )
             # collect dataframes
             dfs = []
-            all_answers = []
             for row in questions:
                 row_dfs = []
-                row_answers = []
                 for question in row:
                     if type(question) == tuple:
                         # test questiontype:
@@ -567,7 +568,6 @@ class LimeSurvey:
                                                    labels=True,
                                                    drop_other=True)], axis=1
                             ).values)
-                        answers = dict(self.get_choices(question[0]))
                     else:
                         # test questiontype:
                         if self.get_question_type(question) == 'single-choice':
@@ -580,12 +580,7 @@ class LimeSurvey:
                                '''
                                )
                         row_dfs.append(self.count(question, labels=True))
-                        answers = dict(self.get_choices(question))
-                    if '-oth-' in answers:
-                        del answers['-oth-']
-                    row_answers.append(dict(answers))
                 dfs.append(row_dfs.copy())
-                all_answers.append(row_answers.copy())
             
             # Set up plot options
             theme = self.theme.copy()
@@ -594,14 +589,15 @@ class LimeSurvey:
             if comparisontype == 'single-choice':
                 (fig, axs) = simple_comparison_plot(
                 dfs,
-                all_answers,
                 dimensions = dimensions,
                 answer_supress = answer_supress,
                 theme=theme,
                 totalbar = totalbar,
                 no_answers = no_answers,
                 hide_titles = hide_titles,
-                spacing_bar = spacing_bar
+                spacing_bar = spacing_bar,
+                threshold = threshold,
+                bar_width = bar_width
                 )
             # Save to a file
             if save:
@@ -615,6 +611,7 @@ class LimeSurvey:
                 print(f"Saved plot to {fullpath}")
 
             fig.show()
+        return dfs
            
 
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
