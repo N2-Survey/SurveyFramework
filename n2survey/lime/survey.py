@@ -442,6 +442,9 @@ class LimeSurvey:
     def plot(
         self,
         question,
+        compare_with = False,
+        totalbar: bool = False,
+        answer_supress: Union[list,bool] = False,
         kind: str = None,
         save: Union[str, bool] = False,
         **kwargs,
@@ -465,13 +468,37 @@ class LimeSurvey:
 
             if "title" not in non_theme_kwargs:
                 non_theme_kwargs.update({"title": counts_df.columns[0]})
-
-            fig, ax = single_choice_bar_plot(
-                x=counts_df.index.values,
-                y=pd.Series(counts_df.iloc[:, 0], name="Number of Responses"),
-                theme=theme,
-                **non_theme_kwargs,
-            )
+            
+            if compare_with:
+                if self.get_question_type(compare_with) == 'single-choice':
+                    # create Dataframe from both questions
+                    DF = pd.concat(
+                        [self.get_responses(
+                            question,labels=True,drop_other=True
+                            ),
+                            self.get_responses(compare_with,
+                                               labels=True,
+                                               drop_other=True)], axis=1
+                        ).values
+                    fig, ax = simple_comparison_plot(
+                        DF,
+                        totalbar=totalbar, 
+                        answer_supress=answer_supress,
+                        theme=theme)
+                else:
+                    raise NotImplementedError(
+                        '''
+                        only single-choice to single-choice comparison 
+                        implemented at the moment.
+                        '''
+                        )
+            else:
+                fig, ax = single_choice_bar_plot(
+                    x=counts_df.index.values,
+                    y=pd.Series(counts_df.iloc[:, 0], name="Number of Responses"),
+                    theme=theme,
+                    **non_theme_kwargs,
+                )
         elif question_type == "multiple-choice":
             counts_df = self.count(
                 question, labels=True, percents=True, add_totals=True
