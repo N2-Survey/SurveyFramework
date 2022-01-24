@@ -945,12 +945,14 @@ class LimeSurvey:
         # set up condition-specific parameters
         if condition == "state":
             base_score = 10 / 3
+            num_subquestions = 6
             conversion = ["pos", "neg", "neg", "pos", "pos", "neg"]
             label = "state_anxiety"
             classification_boundaries = [0, 37, 44, 80]
             classes = ["no or low anxiety", "moderate anxiety", "high anxiety"]
         elif condition == "trait":
             base_score = 5 / 2
+            num_subquestions = 8
             conversion = [
                 "pos",
                 "neg",
@@ -966,6 +968,7 @@ class LimeSurvey:
             classes = ["no or low anxiety", "moderate anxiety", "high anxiety"]
         elif condition == "depression":
             base_score = 1
+            num_subquestions = 8
             conversion = ["freq" for i in range(8)]
             label = "depression"
             classification_boundaries = [0, 4, 9, 14, 19, 24]
@@ -1007,10 +1010,13 @@ class LimeSurvey:
         }
 
         # Map responses from code to text then to score
-        df = self.get_responses(question, labels=False)
-        for column, conversion in zip(df.columns, conversion):
+        df = pd.DataFrame()
+        subquestion_columns = [
+            f"{question}_SQ00{str(i)}" for i in range(1, num_subquestions + 1)
+        ]
+        for column, conversion in zip(subquestion_columns, conversion):
             df[f"{column}_score"] = (
-                df[column]
+                self.responses[column]
                 .map(self.get_choices(question))
                 .map(conversion_dicts[conversion], na_action="ignore")
             )
