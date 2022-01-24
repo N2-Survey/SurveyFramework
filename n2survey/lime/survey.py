@@ -637,7 +637,11 @@ class LimeSurvey:
         return choices_dict
 
     def rate_mental_health(self, question, condition):
+<<<<<<< HEAD
         """Calculate State/Trait Anxiety or Depression score based on responses to question.
+=======
+        """Calculate State Anxiety score based on responses to question.
+>>>>>>> Implement rate_mental_health method for LimeSurvey class. Implement three test cases for rate_mental_health.
 
         Args:
             question (str): Question ID to use for calculation
@@ -650,14 +654,12 @@ class LimeSurvey:
         # set up condition-specific parameters
         if condition == "state":
             base_score = 10 / 3
-            num_subquestions = 6
             conversion = ["pos", "neg", "neg", "pos", "pos", "neg"]
             label = "state_anxiety"
             classification_boundaries = [0, 37, 44, 80]
             classes = ["no or low anxiety", "moderate anxiety", "high anxiety"]
         elif condition == "trait":
             base_score = 5 / 2
-            num_subquestions = 8
             conversion = [
                 "pos",
                 "neg",
@@ -673,7 +675,6 @@ class LimeSurvey:
             classes = ["no or low anxiety", "moderate anxiety", "high anxiety"]
         elif condition == "depression":
             base_score = 1
-            num_subquestions = 8
             conversion = ["freq" for i in range(8)]
             label = "depression"
             classification_boundaries = [0, 4, 9, 14, 19, 24]
@@ -715,13 +716,10 @@ class LimeSurvey:
         }
 
         # Map responses from code to text then to score
-        df = pd.DataFrame()
-        subquestion_columns = [
-            f"{question}_SQ00{str(i)}" for i in range(1, num_subquestions + 1)
-        ]
-        for column, conversion in zip(subquestion_columns, conversion):
+        df = self.get_responses(question, labels=False)
+        for column, conversion in zip(df.columns, conversion):
             df[f"{column}_score"] = (
-                self.responses[column]
+                df[column]
                 .map(self.get_choices(question))
                 .map(conversion_dicts[conversion], na_action="ignore")
             )
