@@ -114,7 +114,7 @@ def simple_comparison_plot(df,
                frameon=False)
     ax.axes.get_yaxis().set_visible(False)
     if plot_title:
-        ax.set_title(plot_title, pad=30)
+        ax.set_title(plot_title, pad=60)
     # scale
     plt.setp(ax.get_xticklabels(), rotation=30,
              horizontalalignment='right')
