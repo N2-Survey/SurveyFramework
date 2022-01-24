@@ -11,11 +11,12 @@ __all__ = ["single_choice_bar_plot"]
 def single_choice_bar_plot(
     x,
     y,
+    theme: Optional[Dict] = None,
     total: Union[int, float, None] = None,
     title: Optional[str] = None,
     show_percents: bool = True,
     show_total: bool = True,
-    theme: Optional[Dict] = None,
+    **kwargs,
 ) -> Tuple[mpl.figure.Figure, mpl.axes.Axes]:
     """Do a bar plot for a single choice question
 
@@ -34,18 +35,17 @@ def single_choice_bar_plot(
         tuple[mpl.figure.Figure, mpl.axes.Axes]: tuple (fig, ax) of the plot
     """
     # Additional parameters to provide in `sns.barplot`
-    additional_params = {}
+    additional_params = kwargs.copy()
 
-    palette = None
     if theme is not None:
         sns.set_theme(**theme)
-        palette = theme.get("palette", None)
 
     # HOTFIX: For some reason, setting "palette" in `set_theme`
     # does not apply the palette. To make it work, we have to provide
     # it directly to `barplot` function
-    if palette is not None:
-        additional_params = {"palette": palette}
+    additional_params["palette"] = additional_params.get("palette", None) or theme.get(
+        "palette", None
+    )
 
     if total is None:
         total = np.array(y).sum()
