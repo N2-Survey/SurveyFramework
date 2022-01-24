@@ -328,7 +328,6 @@ def likert_bar_plot(
     calc_fig_size=True,
     x_axis_max_values=None,
     wrap_text=True,
-    **kwargs,
 ):
     """
     Plot the responses to an array question as a Likert plot
@@ -424,7 +423,6 @@ def likert_bar_plot(
             height=bar_thickness,
             label=format_labels([response_name])[0],
             color=colors[position][index_response],
-            **kwargs,
         )
         plt.yticks(bar_positions, wrap_ticks_label(data_df.columns.values, wrap_text))
 
