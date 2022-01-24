@@ -637,11 +637,7 @@ class LimeSurvey:
         return choices_dict
 
     def rate_mental_health(self, question, condition):
-<<<<<<< HEAD
         """Calculate State/Trait Anxiety or Depression score based on responses to question.
-=======
-        """Calculate State Anxiety score based on responses to question.
->>>>>>> Implement rate_mental_health method for LimeSurvey class. Implement three test cases for rate_mental_health.
 
         Args:
             question (str): Question ID to use for calculation
