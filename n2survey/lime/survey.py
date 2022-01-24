@@ -1058,6 +1058,7 @@ class LimeSurvey:
             if "I feel calm" not in question_label:
                 raise ValueError("Question incompatible with specified condition type.")
             base_score = 10 / 3
+            num_subquestions = 6
             conversion = ["pos", "neg", "neg", "pos", "pos", "neg"]
             label = "state_anxiety"
             classification_boundaries = [0, 37, 44, 80]
@@ -1066,6 +1067,7 @@ class LimeSurvey:
             if "calm, cool and collected" not in question_label:
                 raise ValueError("Question incompatible with specified condition type.")
             base_score = 5 / 2
+            num_subquestions = 8
             conversion = [
                 "pos",
                 "neg",
@@ -1083,6 +1085,7 @@ class LimeSurvey:
             if "interest or pleasure" not in question_label:
                 raise ValueError("Question incompatible with specified condition type.")
             base_score = 1
+            num_subquestions = 8
             conversion = ["freq" for i in range(8)]
             label = "depression"
             classification_boundaries = [0, 4, 9, 14, 19, 24]
