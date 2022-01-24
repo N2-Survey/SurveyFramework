@@ -515,5 +515,83 @@ class TestLimeSurveyGetChoices(BaseTestLimeSurvey2021Case):
         )
 
 
+class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test LimeSurvey rate_mental_health"""
+
+    def test_state_anxiety(self):
+        """Test rating state anxiety"""
+
+        result = self.survey.rate_mental_health("D1", condition="state")
+
+        ref = pd.DataFrame(
+            data={
+                "total_state_anxiety_score": [50.0, 100 / 3, 130 / 3],
+                "state_anxiety_class": pd.Categorical(
+                    ["high anxiety", "no or low anxiety", "moderate anxiety"],
+                    categories=[
+                        "no or low anxiety",
+                        "moderate anxiety",
+                        "high anxiety",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+
+        self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
+
+    def test_trait_anxiety(self):
+        """Test rating trait anxiety"""
+
+        result = self.survey.rate_mental_health("D2", condition="trait")
+
+        ref = pd.DataFrame(
+            data={
+                "total_trait_anxiety_score": [47.5, 32.5, 50.0],
+                "trait_anxiety_class": pd.Categorical(
+                    ["high anxiety", "no or low anxiety", "high anxiety"],
+                    categories=[
+                        "no or low anxiety",
+                        "moderate anxiety",
+                        "high anxiety",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+
+        self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
+
+    def test_depression(self):
+        """Test rating depression"""
+
+        result = self.survey.rate_mental_health("D3", condition="depression")
+
+        ref = pd.DataFrame(
+            data={
+                "total_depression_score": [8.0, 5.0, 8.0],
+                "depression_class": pd.Categorical(
+                    ["mild depression", "mild depression", "mild depression"],
+                    categories=[
+                        "no to minimal depression",
+                        "mild depression",
+                        "moderate depression",
+                        "moderately severe depression",
+                        "severe depression",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+
+        self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
+
+
 if __name__ == "__main__":
     unittest.main()
