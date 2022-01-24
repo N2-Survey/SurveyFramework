@@ -38,11 +38,55 @@ QUESTION_TYPES = (
 )
 
 
+# PLOT_KINDS_ = [
+#     "multiple choice plot",
+#     "likert scale plot",
+#     "simple comparison plot",
+#     "basic bar plot"
+# ]
+
+
 def _clean_file_name(filename: str) -> str:
     """Clean a file name from forbiden characters"""
     # "-_.() abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
     return "".join(c for c in filename if c in valid_chars)
+
+
+def _split_plot_kwargs(mixed_kwargs: dict) -> tuple[dict, dict]:
+    """Split dict of arguments into theme and non-theme arguments
+
+    Args:
+        mixed_kwargs (dict): Initial dict of mixed arguments
+
+    Returns:
+        tuple[dict, dict]: Tuple of (<theme arguements>, <non-theme arguments>)
+    """
+    theme_args = {k: v for k, v in mixed_kwargs.items() if k in DEFAULT_THEME}
+    nontheme_args = {k: v for k, v in mixed_kwargs.items() if k not in DEFAULT_THEME}
+    return theme_args, nontheme_args
+
+
+def deep_dict_update(source: dict, update_dict: dict) -> dict:
+    """Recursive dictionary update
+
+    Args:
+        source (dict): Source dictionary to update
+        update_dict (dict): Dictionary with "new" data
+
+    Returns:
+        dict: Upated dictionary. Neasted dictionaries are updated recursevely
+          Neasted lists are combined.
+    """
+    for key, val in update_dict.items():
+        if isinstance(val, dict):
+            tmp = deep_dict_update(source.get(key, {}), val)
+            source[key] = tmp
+        elif isinstance(val, list):
+            source[key] = source.get(key, []) + val
+        else:
+            source[key] = val
+    return source
 
 
 class LimeSurvey:
@@ -615,7 +659,8 @@ class LimeSurvey:
         )
         # Prepare theme and non-theme arguments
         theme = self.theme.copy()
-        theme.update(kwargs)
+        theme_kwargs, non_theme_kwargs = _split_plot_kwargs(kwargs)
+        theme = deep_dict_update(theme, theme_kwargs)
 
         question_type = self.get_question_type(question)
         # get plot title
@@ -679,11 +724,7 @@ class LimeSurvey:
             counts_df.iloc[-1, :] = np.nan
             counts_df.iloc[:, 0] = counts_df.iloc[:, 0].astype("float64")
             fig, ax = multiple_choice_bar_plot(
-                counts_df,
-                theme=theme,
-                display_title=True,
-                sort="descending",
-                bar_spacing=1.2,
+                counts_df, theme=theme, **non_theme_kwargs
             )
         elif question_type == "array":
             display_title = True
@@ -712,6 +753,7 @@ class LimeSurvey:
                 bar_thickness=0.4,
                 group_spacing=1,
                 calc_fig_size=True,
+                **non_theme_kwargs,
             )
 
         # Save to a file
