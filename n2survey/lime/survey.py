@@ -982,6 +982,7 @@ class LimeSurvey:
         Args:
             question (str): Question ID to use for calculation
             condition (str): Which kind of mental health condition to rate, "state", "trait", or "depression"
+            attach (bool): Whether to attach the result DataFrame to the responses DataFrame. Default: False
 
         Returns:
             df: Mental health condition ratings and classifications
@@ -989,12 +990,16 @@ class LimeSurvey:
 
         # set up condition-specific parameters
         if condition == "state":
+            if "I feel calm" not in self.get_label(question + "_SQ001"):
+                raise ValueError("Question incompatible with specified condition type.")
             base_score = 10 / 3
             conversion = ["pos", "neg", "neg", "pos", "pos", "neg"]
             label = "state_anxiety"
             classification_boundaries = [0, 37, 44, 80]
             classes = ["no or low anxiety", "moderate anxiety", "high anxiety"]
         elif condition == "trait":
+            if "calm, cool and collected" not in self.get_label(question + "_SQ001"):
+                raise ValueError("Question incompatible with specified condition type.")
             base_score = 5 / 2
             conversion = [
                 "pos",
@@ -1010,6 +1015,8 @@ class LimeSurvey:
             classification_boundaries = [0, 37, 44, 80]
             classes = ["no or low anxiety", "moderate anxiety", "high anxiety"]
         elif condition == "depression":
+            if "interest or pleasure" not in self.get_label(question + "_SQ001"):
+                raise ValueError("Question incompatible with specified condition type.")
             base_score = 1
             conversion = ["freq" for i in range(8)]
             label = "depression"
@@ -1052,10 +1059,11 @@ class LimeSurvey:
         }
 
         # Map responses from code to text then to score
-        df = self.get_responses(question, labels=False)
-        for column, conversion in zip(df.columns, conversion):
+        df = pd.DataFrame()
+        data = self.get_responses(question, labels=False)
+        for column, conversion in zip(data.columns, conversion):
             df[f"{column}_score"] = (
-                df[column]
+                data[column]
                 .map(self.get_choices(question))
                 .map(conversion_dicts[conversion], na_action="ignore")
             )
@@ -1069,5 +1077,9 @@ class LimeSurvey:
             bins=classification_boundaries,
             labels=classes,
         )
+
+        # Concatenate onto responses DataFrame from the right
+        if attach:
+            self.responses = pd.concat([self.responses, df], axis=1)
 
         return df
