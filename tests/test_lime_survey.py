@@ -540,7 +540,7 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
     def test_state_anxiety(self):
         """Test rating state anxiety"""
 
-        result = self.survey.rate_mental_health("D1", condition="state")
+        result = self.survey.rate_mental_health("D1")
 
         ref = pd.DataFrame(
             data={
@@ -564,7 +564,7 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
     def test_trait_anxiety(self):
         """Test rating trait anxiety"""
 
-        result = self.survey.rate_mental_health("D2", condition="trait")
+        result = self.survey.rate_mental_health("D2")
 
         ref = pd.DataFrame(
             data={
@@ -588,7 +588,7 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
     def test_depression(self):
         """Test rating depression"""
 
-        result = self.survey.rate_mental_health("D3", condition="depression")
+        result = self.survey.rate_mental_health("D3")
 
         ref = pd.DataFrame(
             data={
