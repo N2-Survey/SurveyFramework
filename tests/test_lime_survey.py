@@ -534,5 +534,139 @@ class TestLimeSurveyplot(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
 
+class TestLimeSurveyKeepChoices(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test LimeSurvey keep_choices method"""
+
+    def test_single_choice(self):
+        """Test keep_choices for single-choice question"""
+
+        filtered_survey = self.survey.keep_choices(("A3", "Geosciences"))
+
+        self.assertCountEqual(filtered_survey.responses.index, [4, 37])
+
+    def test_multiple_choice(self):
+        """Test keep_choices for multiple-choice question"""
+
+        filtered_survey = self.survey.keep_choices(("A10", "Caribbean"))
+
+        self.assertCountEqual(filtered_survey.responses.index, [31, 45])
+
+    def test_array(self):
+        """Test keep_choices for array question"""
+
+        filtered_survey = self.survey.keep_choices(("C1_SQ005", "Very dissatisfied"))
+
+        self.assertCountEqual(filtered_survey.responses.index, [10, 39, 45])
+
+    def test_list_choices(self):
+        """Test keep_choices for list of choices to one question"""
+
+        filtered_survey = self.survey.keep_choices(("B2", ["500-700", "1101-1200"]))
+
+        self.assertCountEqual(filtered_survey.responses.index, [28, 38, 39])
+
+    def test_list_questions(self):
+        """Test keep_choices for list of choices to one question"""
+
+        filtered_survey = self.survey.keep_choices(
+            [("A11", "German"), ("B9b", ["Computer", "Chair"])]
+        )
+
+        self.assertCountEqual(filtered_survey.responses.index, [5, 21, 46])
+
+
+class TestLimeSurveyFilter(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test LimeSurvey filter method"""
+
+    def test_single_choice(self):
+        """Test filter for single-choice question"""
+
+        filtered_survey = self.survey.filter(self.survey.responses.loc[:, "A3"] == "A3")
+
+        self.assertCountEqual(filtered_survey.responses.index, [4, 37])
+
+    def test_multiple_choice(self):
+        """Test filter for multiple-choice question"""
+
+        filtered_survey = self.survey.filter(
+            self.survey.responses.loc[:, "A10_SQ005"] == "Y"
+        )
+
+        self.assertCountEqual(filtered_survey.responses.index, [31, 45])
+
+    def test_array(self):
+        """Test filter for array question"""
+
+        filtered_survey = self.survey.filter(
+            self.survey.responses.loc[:, "C1_SQ005"] == "A5"
+        )
+
+        self.assertCountEqual(filtered_survey.responses.index, [10, 39, 45])
+
+    def test_list_choices(self):
+        """Test filter for list of choices to one question"""
+
+        filtered_survey = self.survey.filter(
+            (self.survey.responses.loc[:, "B2"] == "A2")
+            | (self.survey.responses.loc[:, "B2"] == "A5")
+        )
+
+        self.assertCountEqual(filtered_survey.responses.index, [28, 38, 39])
+
+    def test_list_questions(self):
+        """Test filter for list of choices to one question"""
+
+        filtered_survey = self.survey.filter(
+            (self.survey.responses.loc[:, "A11"] == "A1")
+            & (
+                (self.survey.responses.loc[:, "B9b_SQ001"] == "Y")
+                | (self.survey.responses.loc[:, "B9b_SQ002"] == "Y")
+            )
+        )
+
+        self.assertCountEqual(filtered_survey.responses.index, [5, 21, 46])
+
+
+class TestLimeSurveyQuery(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test LimeSurvey query method"""
+
+    def test_single_choice(self):
+        """Test query for single-choice question"""
+
+        filtered_survey = self.survey.query("A3 == 'A3'")
+
+        self.assertCountEqual(filtered_survey.responses.index, [4, 37])
+
+    def test_multiple_choice(self):
+        """Test query for multiple-choice question"""
+
+        filtered_survey = self.survey.query("A10_SQ005 == 'Y'")
+
+        self.assertCountEqual(filtered_survey.responses.index, [31, 45])
+
+    def test_array(self):
+        """Test query for array question"""
+
+        filtered_survey = self.survey.query("C1_SQ005 == 'A5'")
+
+        self.assertCountEqual(filtered_survey.responses.index, [10, 39, 45])
+
+    def test_list_choices(self):
+        """Test query for list of choices to one question"""
+
+        filtered_survey = self.survey.query("B2 == 'A2' | B2 ==  'A5'")
+
+        self.assertCountEqual(filtered_survey.responses.index, [28, 38, 39])
+
+    def test_list_questions(self):
+        """Test query for list of choices to one question"""
+
+        filtered_survey = self.survey.query(
+            "A11 == 'A1' & (B9b_SQ001 == 'Y' | B9b_SQ002 == 'Y')"
+        )
+
+        self.assertCountEqual(filtered_survey.responses.index, [5, 21, 46])
+
+
 if __name__ == "__main__":
     unittest.main()
