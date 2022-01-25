@@ -930,33 +930,3 @@ class LimeSurvey:
             choices_dict = question_info.choices[0]
 
         return choices_dict
-
-
-if __name__ == "__main__":
-    s = LimeSurvey("/home/dawaifu/SurveyFramework/data/survey_structure_2021.xml")
-    s.read_responses("/home/dawaifu/SurveyFramework/data/dummy_data_2021_codeonly.csv")
-    # print(s.get_question_type("C5"))
-    # print(s.questions.loc["C5_SQ001", "type"])
-    # print(s.get_choices("C5"))
-    # print(s.questions[s.questions["type"] == "array"])
-    s2 = s.filter_responses(
-        [
-            ("A6", ["Woman", "Man"]),
-            ("A7", ["Heterosexual", "Bisexual", "Queer"]),
-            ("B6_SQ001", ["Yes", "No"]),
-            (
-                "C3",
-                [
-                    "I do not like my topic.",
-                    "I have work related difficulties with my supervisor.",
-                ],
-            ),
-        ]
-    )
-    print(s2.responses)
-    print(s2.responses.loc[7, "A1"] is s.responses.loc[7, "A1"])
-    # print(s2.responses)
-
-    print(s.count("A1"))
-    print(s2.count("A1"))
-    # print(s.responses.memory_usage(deep=True).sum())
