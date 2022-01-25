@@ -274,7 +274,6 @@ class LimeSurvey:
         question: str,
         labels: bool = True,
         drop_other: bool = False,
-        filtered_responses: pd.DataFrame = None,
     ) -> pd.DataFrame:
         """Get responses for a given question with or without labels
 
@@ -282,7 +281,6 @@ class LimeSurvey:
             question (str): Question to get the responses for.
             labels (bool, optional): If the response consists of labels or not (default True).
             drop_other (bool, optional): Whether to exclude contingent question (i.e. "other")
-            filtered_responses (pd.DataFrame, optional): Pre-filtered responses DataFrame as basis of analysis
 
         Raises:
             ValueError: Inconsistent question types within question groups.
@@ -401,7 +399,6 @@ class LimeSurvey:
     def count(
         self,
         question: str,
-        conditions: Union[tuple, list] = None,
         labels: bool = True,
         dropna: bool = False,
         add_totals: bool = False,
@@ -411,8 +408,6 @@ class LimeSurvey:
 
         Args:
             question (str): Name of a question group or a sinlge column
-            conditions (tuple or list of tuples): Conditions to re-format. Tuples in format of (question_id, choices).
-                choices can be a single str or list of str. Multiple conditions are input as a list of tuples.
             labels (bool, optional): Use labels instead of codes. Defaults to True.
             dropna (bool, optional): Do not count empty values. Defaults to False.
             add_totals (bool, optional): Add a column and a row with totals. Values
@@ -438,17 +433,7 @@ class LimeSurvey:
               total count contains misleading data, NA
         """
         question_type = self.get_question_type(question)
-
-        # Retrieve data from the original or filtered responses DataFrame
-        if conditions is None:
-            responses = self.get_responses(question, labels=labels, drop_other=True)
-        else:
-            responses = self.get_responses(
-                question,
-                labels=labels,
-                drop_other=True,
-                filtered_responses=self.filter_responses(conditions),
-            )
+        responses = self.get_responses(question, labels=labels, drop_other=True)
 
         if responses.shape[1] == 1:
             # If it consist of only one column, i.e. free, single choice, or
@@ -954,37 +939,24 @@ if __name__ == "__main__":
     # print(s.questions.loc["C5_SQ001", "type"])
     # print(s.get_choices("C5"))
     # print(s.questions[s.questions["type"] == "array"])
-    print(
-        s.filter_responses(
-            [
-                ("A6", ["Woman", "Man"]),
-                ("A7", ["Heterosexual", "Bisexual", "Queer"]),
-                ("B6_SQ001", ["Yes", "No"]),
-                (
-                    "C3",
-                    [
-                        "I do not like my topic.",
-                        "I have work related difficulties with my supervisor.",
-                    ],
-                ),
-            ]
-        )
+    s2 = s.filter_responses(
+        [
+            ("A6", ["Woman", "Man"]),
+            ("A7", ["Heterosexual", "Bisexual", "Queer"]),
+            ("B6_SQ001", ["Yes", "No"]),
+            (
+                "C3",
+                [
+                    "I do not like my topic.",
+                    "I have work related difficulties with my supervisor.",
+                ],
+            ),
+        ]
     )
+    print(s2.responses)
+    print(s2.responses.loc[7, "A1"] is s.responses.loc[7, "A1"])
+    # print(s2.responses)
+
     print(s.count("A1"))
-    print(
-        s.count(
-            "A1",
-            conditions=[
-                ("A6", ["Woman", "Man"]),
-                ("A7", ["Heterosexual", "Bisexual", "Queer"]),
-                ("B6_SQ001", ["Yes", "No"]),
-                (
-                    "C3",
-                    [
-                        "I do not like my topic.",
-                        "I have work related difficulties with my supervisor.",
-                    ],
-                ),
-            ],
-        )
-    )
+    print(s2.count("A1"))
+    # print(s.responses.memory_usage(deep=True).sum())
