@@ -936,16 +936,32 @@ class LimeSurvey:
 
         Args:
             question (str): Question ID to use for calculation
-            condition (str): Which kind of mental health condition to rate, "state", "trait", or "depression"
-            attach (bool): Whether to attach the result DataFrame to the responses DataFrame. Default: False
+            condition (str): Which kind of mental health condition to rate, "state",
+                "trait", or "depression"
+            attach (bool): Whether to attach the result DataFrame to the responses
+                DataFrame. Default: False
 
         Returns:
             df: Mental health condition ratings and classifications
         """
 
-        # set up condition-specific parameters
+        question_label = self.get_label(question + "_SQ001")
+        # Infer condition type if not provided
+        if condition is None:
+            if "I feel calm" in question_label:
+                condition = "state"
+            elif "calm, cool and collected" in question_label:
+                condition = "trait"
+            elif "interest or pleasure" in question_label:
+                condition = "depression"
+            else:
+                raise ValueError(
+                    "Question incompatible with any supported condition type."
+                )
+
+        # Set up condition-specific parameters
         if condition == "state":
-            if "I feel calm" not in self.get_label(question + "_SQ001"):
+            if "I feel calm" not in question_label:
                 raise ValueError("Question incompatible with specified condition type.")
             base_score = 10 / 3
             conversion = ["pos", "neg", "neg", "pos", "pos", "neg"]
@@ -953,7 +969,7 @@ class LimeSurvey:
             classification_boundaries = [0, 37, 44, 80]
             classes = ["no or low anxiety", "moderate anxiety", "high anxiety"]
         elif condition == "trait":
-            if "calm, cool and collected" not in self.get_label(question + "_SQ001"):
+            if "calm, cool and collected" not in question_label:
                 raise ValueError("Question incompatible with specified condition type.")
             base_score = 5 / 2
             conversion = [
@@ -970,7 +986,7 @@ class LimeSurvey:
             classification_boundaries = [0, 37, 44, 80]
             classes = ["no or low anxiety", "moderate anxiety", "high anxiety"]
         elif condition == "depression":
-            if "interest or pleasure" not in self.get_label(question + "_SQ001"):
+            if "interest or pleasure" not in question_label:
                 raise ValueError("Question incompatible with specified condition type.")
             base_score = 1
             conversion = ["freq" for i in range(8)]
