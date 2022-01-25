@@ -231,14 +231,14 @@ class LimeSurvey:
         self.responses = question_responses
         self.lime_system_info = system_info
 
-    def __copy(self):
-        """Create a deep copy of the LimeSurvey instance
+    def _copy(self):
+        """Create a copy of the LimeSurvey instance
 
         Returns:
             LimeSurvey: a copy of the LimeSurvey instance
         """
 
-        return copy.deepcopy(self)
+        return copy.copy(self)
 
     def get_responses(
         self,
@@ -323,7 +323,8 @@ class LimeSurvey:
                 # Check whether a single or multiple answers to each question to filter
                 if isinstance(answers, list):
 
-                    # For single-choice and array type questions, texts are converted to choice id using the choices dict
+                    # For single-choice and array type questions, texts are converted
+                    # to choice id using the choices dict
                     if question_type in ["single-choice", "array"]:
                         inverted_answer_dict = {
                             answer: id
@@ -335,7 +336,8 @@ class LimeSurvey:
                             [f"{question} == '{answer}'" for answer in answers]
                         )
 
-                    # For multiple-choice questions, texts are converted to subquestion id using the choices dict
+                    # For multiple-choice questions, texts are converted to subquestion
+                    # id using the choices dict
                     elif question_type == "multiple-choice":
                         inverted_answer_dict = {
                             answer: id
@@ -382,15 +384,23 @@ class LimeSurvey:
             question, answers = conditions
             question_type = self.get_question_type(question)
 
+            # Check whether a single or multiple answers to each question to filter
             if isinstance(answers, list):
+
+                # For single-choice and array type questions, texts are converted
+                # to choice id using the choices dict
                 if question_type in ["single-choice", "array"]:
                     inverted_answer_dict = {
                         answer: id for id, answer in self.get_choices(question).items()
                     }
                     answers = [inverted_answer_dict[answer] for answer in answers]
+                    # Condition str is joined by inner_logic operator
                     condition_str = inner_logic.join(
                         [f"{question} == '{answer}'" for answer in answers]
                     )
+
+                # For multiple-choice questions, texts are converted to subquestion
+                # id using the choices dict
                 elif question_type == "multiple-choice":
                     inverted_answer_dict = {
                         answer: id for id, answer in self.get_choices(question).items()
@@ -399,10 +409,14 @@ class LimeSurvey:
                     condition_str = inner_logic.join(
                         [f"{subquestion} == 'Y'" for subquestion in subquestions]
                     )
+
+                # For other question types, e.g. "free", texts are left unchanged
                 else:
                     condition_str = inner_logic.join(
                         [f"{question} == {answer}" for answer in answers]
                     )
+
+            # If only a single answer to question
             else:
                 if question_type in ["single-choice", "array"]:
                     inverted_answer_dict = {
@@ -414,7 +428,7 @@ class LimeSurvey:
                     inverted_answer_dict = {
                         answer: id for id, answer in self.get_choices(question).items()
                     }
-                    subquestion = [inverted_answer_dict[answer] for answer in answers]
+                    subquestion = inverted_answer_dict[answers]
                     condition_str = f"{subquestion} == 'Y'"
                 else:
                     condition_str = f"{question} == {answers}"
@@ -422,22 +436,60 @@ class LimeSurvey:
 
         return constructed_str
 
-    def filter_responses(self, conditions: Union[tuple, list]) -> pd.DataFrame:
-        """Filter responses DataFrame with conditions on answers to specified questions
+    def keep_choices(self, conditions: Union[tuple, list]) -> "LimeSurvey":
+        """Filter responses DataFrame by keeping certain choices to specified questions
 
         Args:
-            conditions (tuple or list of tuples): Conditions to re-format. Tuples in format of (question_id, choices).
-                choices can be a single str or list of str. Multiple conditions are input as a list of tuples.
+            conditions (tuple or list of tuples): Conditions to re-format. Tuples in
+                format of (question_id, choices). choices can be a single str or list
+                of str. Multiple conditions are input as a list of tuples.
+                E.g. ("A6", "Woman") or [("A6", ["Woman", "Man"]), ("B6_SQ001", "Yes")]
 
         Returns:
-            pd.DataFrame: filtered responses DataFrame
+            LimeSurvey: LimeSurvey with filtered responses
         """
 
+        # Construct filter conditions str
         constructed_filter_conditions = self.construct_filter_conditions(conditions)
-        filtered_survey = self.__copy()
-        filtered_survey.responses = self.responses.query(
-            constructed_filter_conditions
-        ).copy()
+        # Make copy of LimeSurvey instance
+        filtered_survey = self._copy()
+        # Filter responses DataFrame
+        filtered_survey.responses = self.responses.query(constructed_filter_conditions)
+
+        return filtered_survey
+
+    def filter(self, mask: Union[pd.Series, pd.DataFrame]) -> "LimeSurvey":
+        """Filter responses DataFrame by applying a mask Series
+
+        Args:
+            mask (pd.Series): A bool Series or DataFrame as mask
+
+        Returns:
+            LimeSurvey: LimeSurvey with filtered responses
+        """
+
+        # Make copy of LimeSurvey instance
+        filtered_survey = self._copy()
+        # Filter responses DataFrame
+        filtered_survey.responses = self.responses[mask]
+
+        return filtered_survey
+
+    def query(self, condition: str) -> "LimeSurvey":
+        """Filter responses DataFrame by querying with a condition
+
+        Args:
+            condition (str): Condition str for pd.DataFrame.query().
+                E.g. "A6 == 'Woman' & "C3 == 'I do not like my topic.'"
+
+        Returns:
+            LimeSurvey: LimeSurvey with filtered responses
+        """
+
+        # Make copy of LimeSurvey instance
+        filtered_survey = self._copy()
+        # Filter responses DataFrame
+        filtered_survey.responses = self.responses.query(condition)
 
         return filtered_survey
 
@@ -975,33 +1027,3 @@ class LimeSurvey:
             choices_dict = question_info.choices[0]
 
         return choices_dict
-
-
-if __name__ == "__main__":
-    s = LimeSurvey("/home/dawaifu/SurveyFramework/data/survey_structure_2021.xml")
-    s.read_responses("/home/dawaifu/SurveyFramework/data/dummy_data_2021_codeonly.csv")
-    # print(s.get_question_type("C5"))
-    # print(s.questions.loc["C5_SQ001", "type"])
-    # print(s.get_choices("C5"))
-    # print(s.questions[s.questions["type"] == "array"])
-    s2 = s.filter_responses(
-        [
-            ("A6", ["Woman", "Man"]),
-            ("A7", ["Heterosexual", "Bisexual", "Queer"]),
-            ("B6_SQ001", ["Yes", "No"]),
-            (
-                "C3",
-                [
-                    "I do not like my topic.",
-                    "I have work related difficulties with my supervisor.",
-                ],
-            ),
-        ]
-    )
-    print(s2.responses)
-    print(s2.responses.loc[7, "A1"] is s.responses.loc[7, "A1"])
-    # print(s2.responses)
-
-    print(s.count("A1"))
-    print(s2.count("A1"))
-    # print(s.responses.memory_usage(deep=True).sum())
