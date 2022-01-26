@@ -269,6 +269,15 @@ class LimeSurvey:
 
         return survey_copy
 
+    def __deepcopy(self):
+        """Create a deep copy of the LimeSurvey instance
+
+        Returns:
+            LimeSurvey: a deep copy of the LimeSurvey instance
+        """
+
+        return copy.deepcopy(self)
+
     def get_responses(
         self,
         question: str,
