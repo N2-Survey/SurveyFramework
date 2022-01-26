@@ -231,14 +231,23 @@ class LimeSurvey:
         self.responses = question_responses
         self.lime_system_info = system_info
 
-    def _copy(self):
-        """Create a copy of the LimeSurvey instance
+    def __copy__(self):
+        """Create a shallow copy of the LimeSurvey instance
 
         Returns:
-            LimeSurvey: a copy of the LimeSurvey instance
+            LimeSurvey: a shallow copy of the LimeSurvey instance
         """
 
         return copy.copy(self)
+
+    def __deepcopy(self):
+        """Create a deep copy of the LimeSurvey instance
+
+        Returns:
+            LimeSurvey: a deep copy of the LimeSurvey instance
+        """
+
+        return copy.deepcopy(self)
 
     def get_responses(
         self,
@@ -296,147 +305,37 @@ class LimeSurvey:
 
         return responses
 
-    def construct_filter_conditions(self, conditions: Union[tuple, list]) -> str:
-        """Construct conditions for slicing the responses df in format for DataFrame.query().
-            Pairs of question id and answer text are expected, e.g. ("A6", "Woman")
+    def __getitem__(
+        self, key: Union[pd.Series, pd.DataFrame, str, tuple]
+    ) -> Union["LimeSurvey", pd.DataFrame]:
+        """Retrieve or slice the responses DataFrame
 
         Args:
-            conditions (tuple or list of tuples): Conditions to re-format. Tuples in format of (question_id, choices).
-                choices can be a single str or list of str. Multiple conditions are input as a list of tuples.
+            key (pd.Series, pd.DataFrame, str, or tuple): A key for filter or get_responses method
 
         Returns:
-            str: formatted conditions for pd.DataFrame.query()
+            LimeSurvey or pd.DataFrame: A copy of LimeSurvey instance with filtered responses
+                DataFrameor or sliced responses DataFrame
         """
-
-        # Default logic to AND for multiple questions, OR for choices within one question
-        # E.g. (A6 == 'A1' | A6 == 'A3') & (A7 == 'A1' | A7 == 'A3' | A7 == 'A5')
-        final_conditions = []
-        outter_logic = " & "
-        inner_logic = " | "
-
-        # Check whether a single or multiple questions to query
-        if isinstance(conditions, list):
-            for condition in conditions:
-                question, answers = condition
-                question_type = self.get_question_type(question)
-
-                # Check whether a single or multiple answers to each question to filter
-                if isinstance(answers, list):
-
-                    # For single-choice and array type questions, texts are converted
-                    # to choice id using the choices dict
-                    if question_type in ["single-choice", "array"]:
-                        inverted_answer_dict = {
-                            answer: id
-                            for id, answer in self.get_choices(question).items()
-                        }
-                        answers = [inverted_answer_dict[answer] for answer in answers]
-                        # Condition str is joined by inner_logic operator
-                        condition_str = inner_logic.join(
-                            [f"{question} == '{answer}'" for answer in answers]
-                        )
-
-                    # For multiple-choice questions, texts are converted to subquestion
-                    # id using the choices dict
-                    elif question_type == "multiple-choice":
-                        inverted_answer_dict = {
-                            answer: id
-                            for id, answer in self.get_choices(question).items()
-                        }
-                        subquestions = [
-                            inverted_answer_dict[answer] for answer in answers
-                        ]
-                        condition_str = inner_logic.join(
-                            [f"{subquestion} == 'Y'" for subquestion in subquestions]
-                        )
-
-                    # For other question types, e.g. "free", texts are left unchanged
-                    else:
-                        condition_str = inner_logic.join(
-                            [f"{question} == {answer}" for answer in answers]
-                        )
-
-                # If only a single answer to question
-                else:
-                    if question_type in ["single-choice", "array"]:
-                        inverted_answer_dict = {
-                            answer: id
-                            for id, answer in self.get_choices(question).items()
-                        }
-                        answers = inverted_answer_dict[answers]
-                        condition_str = f"{question} == '{answers}'"
-                    elif question_type == "multiple-choice":
-                        inverted_answer_dict = {
-                            answer: id
-                            for id, answer in self.get_choices(question).items()
-                        }
-                        subquestion = inverted_answer_dict[answers]
-                        condition_str = f"{subquestion} == 'Y'"
-                    else:
-                        condition_str = f"{question} == {answers}"
-                final_conditions.append(f"({condition_str})")
-
-            # Final str is joined by outter_logic operator
-            constructed_str = outter_logic.join(final_conditions)
-
-        # If only a single question to query
+        # A bool-valued Series e.g. survey.responses["A3"] == "A5"
+        if isinstance(key, (pd.Series, pd.DataFrame)):
+            return self.filter(key)
+        # A question id e.g. "A3"
+        elif isinstance(key, str):
+            return self.get_responses(key)
+        # Two args e.g. survey.responses["A3"] == "A5", "B1"
+        # or 1:10, "B1"
+        elif isinstance(key, tuple):
+            rows, columns = key
+            return self.filter(rows).get_responses(columns)
         else:
-            question, answers = conditions
-            question_type = self.get_question_type(question)
+            raise SyntaxError(
+                "Argument must be of type pd.Series, pd.DataFrame, str, or tuple."
+            )
 
-            # Check whether a single or multiple answers to each question to filter
-            if isinstance(answers, list):
-
-                # For single-choice and array type questions, texts are converted
-                # to choice id using the choices dict
-                if question_type in ["single-choice", "array"]:
-                    inverted_answer_dict = {
-                        answer: id for id, answer in self.get_choices(question).items()
-                    }
-                    answers = [inverted_answer_dict[answer] for answer in answers]
-                    # Condition str is joined by inner_logic operator
-                    condition_str = inner_logic.join(
-                        [f"{question} == '{answer}'" for answer in answers]
-                    )
-
-                # For multiple-choice questions, texts are converted to subquestion
-                # id using the choices dict
-                elif question_type == "multiple-choice":
-                    inverted_answer_dict = {
-                        answer: id for id, answer in self.get_choices(question).items()
-                    }
-                    subquestions = [inverted_answer_dict[answer] for answer in answers]
-                    condition_str = inner_logic.join(
-                        [f"{subquestion} == 'Y'" for subquestion in subquestions]
-                    )
-
-                # For other question types, e.g. "free", texts are left unchanged
-                else:
-                    condition_str = inner_logic.join(
-                        [f"{question} == {answer}" for answer in answers]
-                    )
-
-            # If only a single answer to question
-            else:
-                if question_type in ["single-choice", "array"]:
-                    inverted_answer_dict = {
-                        answer: id for id, answer in self.get_choices(question).items()
-                    }
-                    answers = inverted_answer_dict[answers]
-                    condition_str = f"{question} == '{answers}'"
-                elif question_type == "multiple-choice":
-                    inverted_answer_dict = {
-                        answer: id for id, answer in self.get_choices(question).items()
-                    }
-                    subquestion = inverted_answer_dict[answers]
-                    condition_str = f"{subquestion} == 'Y'"
-                else:
-                    condition_str = f"{question} == {answers}"
-            constructed_str = condition_str
-
-        return constructed_str
-
-    def keep_choices(self, conditions: Union[tuple, list]) -> "LimeSurvey":
+    def keep_choices(
+        self, question: str, choices: Union[str, bool, list], logic: str = "or"
+    ) -> "LimeSurvey":
         """Filter responses DataFrame by keeping certain choices to specified questions
 
         Args:
@@ -449,17 +348,39 @@ class LimeSurvey:
             LimeSurvey: LimeSurvey with filtered responses
         """
 
-        # Construct filter conditions str
-        constructed_filter_conditions = self.construct_filter_conditions(conditions)
-        # Make copy of LimeSurvey instance
-        filtered_survey = self._copy()
-        # Filter responses DataFrame
-        filtered_survey.responses = self.responses.query(constructed_filter_conditions)
+        logic_dict = {"and": " & ", "or": " | "}
+        question_type = self.get_question_type(question)
 
-        return filtered_survey
+        # Convert into list
+        if not isinstance(choices, list):
+            choices = [choices]
+
+        # Handle multiple-choice questions with choices as sub-question
+        # labels differently, e.g. keep_choices("A3", "Chemistry")
+        if (question_type == "multiple-choice") & (True not in choices):
+            inverted_answer_dict = {
+                answer: id for id, answer in self.get_choices(question).items()
+            }
+            subquestions = [inverted_answer_dict[choice] for choice in choices]
+            return self.query(
+                logic_dict[logic].join(
+                    [f"{subquestion} == 'Y'" for subquestion in subquestions]
+                )
+            )
+        # All other cases, including single-choice questions, array sub-questions,
+        # mutliple-choice sub-questions with True labels
+        else:
+            return self.filter(
+                self.get_responses(question, labels=False)
+                .isin(choices)
+                .any(axis="columns")
+                | self.get_responses(question, labels=True)
+                .isin(choices)
+                .any(axis="columns")
+            )
 
     def filter(self, mask: Union[pd.Series, pd.DataFrame]) -> "LimeSurvey":
-        """Filter responses DataFrame by applying a mask Series
+        """Filter responses DataFrame by applying a mask Series or DataFrame
 
         Args:
             mask (pd.Series): A bool Series or DataFrame as mask
@@ -469,17 +390,17 @@ class LimeSurvey:
         """
 
         # Make copy of LimeSurvey instance
-        filtered_survey = self._copy()
+        filtered_survey = self.__copy__()
         # Filter responses DataFrame
         filtered_survey.responses = self.responses[mask]
 
         return filtered_survey
 
-    def query(self, condition: str) -> "LimeSurvey":
-        """Filter responses DataFrame by querying with a condition
+    def query(self, expr: str) -> "LimeSurvey":
+        """Filter responses DataFrame with a boolean expression
 
         Args:
-            condition (str): Condition str for pd.DataFrame.query().
+            expr (str): Condition str for pd.DataFrame.query().
                 E.g. "A6 == 'Woman' & "C3 == 'I do not like my topic.'"
 
         Returns:
@@ -487,9 +408,9 @@ class LimeSurvey:
         """
 
         # Make copy of LimeSurvey instance
-        filtered_survey = self._copy()
+        filtered_survey = self.__copy__()
         # Filter responses DataFrame
-        filtered_survey.responses = self.responses.query(condition)
+        filtered_survey.responses = self.responses.query(expr)
 
         return filtered_survey
 
