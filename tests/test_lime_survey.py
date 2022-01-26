@@ -537,42 +537,72 @@ class TestLimeSurveyplot(BaseTestLimeSurvey2021WithResponsesCase):
 class TestLimeSurveyKeepChoices(BaseTestLimeSurvey2021WithResponsesCase):
     """Test LimeSurvey keep_choices method"""
 
-    def test_single_choice(self):
-        """Test keep_choices for single-choice question"""
+    def test_single_choice_label(self):
+        """Test keep_choices for single-choice question with choice label"""
 
-        filtered_survey = self.survey.keep_choices(("A3", "Geosciences"))
+        filtered_survey = self.survey.keep_choices("A3", "Geosciences")
 
         self.assertCountEqual(filtered_survey.responses.index, [4, 37])
 
-    def test_multiple_choice(self):
-        """Test keep_choices for multiple-choice question"""
+    def test_single_choice_id(self):
+        """Test keep_choices for single-choice question with choice id"""
 
-        filtered_survey = self.survey.keep_choices(("A10", "Caribbean"))
+        filtered_survey = self.survey.keep_choices("A3", "A3")
+
+        self.assertCountEqual(filtered_survey.responses.index, [4, 37])
+
+    def test_multiple_choice_label(self):
+        """Test keep_choices for multiple-choice question with choice label"""
+
+        filtered_survey = self.survey.keep_choices("A10", "Caribbean")
 
         self.assertCountEqual(filtered_survey.responses.index, [31, 45])
 
-    def test_array(self):
-        """Test keep_choices for array question"""
+    def test_multiple_choice_multiple_labels(self):
+        """Test keep_choices for multiple-choice question with multiple choice labels"""
 
-        filtered_survey = self.survey.keep_choices(("C1_SQ005", "Very dissatisfied"))
+        filtered_survey = self.survey.keep_choices(
+            "A10", ["African", "Pacific Islander", "South Asian"]
+        )
+
+        self.assertCountEqual(filtered_survey.responses.index, [24, 32, 45])
+
+    def test_multiple_choice_subquestion(self):
+        """Test keep_choices for multiple-choice sub-question"""
+
+        filtered_survey = self.survey.keep_choices("A10_SQ005", True)
+
+        self.assertCountEqual(filtered_survey.responses.index, [31, 45])
+
+    def test_array_label(self):
+        """Test keep_choices for array question with choice label"""
+
+        filtered_survey = self.survey.keep_choices("C1_SQ005", "Very dissatisfied")
+
+        self.assertCountEqual(filtered_survey.responses.index, [10, 39, 45])
+
+    def test_array_id(self):
+        """Test keep_choices for array question with choice id"""
+
+        filtered_survey = self.survey.keep_choices("C1_SQ005", "A5")
 
         self.assertCountEqual(filtered_survey.responses.index, [10, 39, 45])
 
     def test_list_choices(self):
         """Test keep_choices for list of choices to one question"""
 
-        filtered_survey = self.survey.keep_choices(("B2", ["500-700", "1101-1200"]))
+        filtered_survey = self.survey.keep_choices("B2", ["500-700", "1101-1200"])
 
         self.assertCountEqual(filtered_survey.responses.index, [28, 38, 39])
 
-    def test_list_questions(self):
-        """Test keep_choices for list of choices to one question"""
+    def test_chained_questions(self):
+        """Test keep_choices for chained questions"""
 
         filtered_survey = self.survey.keep_choices(
-            [("A11", "German"), ("B9b", ["Computer", "Chair"])]
-        )
+            "A10", ["European/European descent", "East Asian/Southeast Asian"]
+        ).keep_choices("A7", ["A4", "A5"])
 
-        self.assertCountEqual(filtered_survey.responses.index, [5, 21, 46])
+        self.assertCountEqual(filtered_survey.responses.index, [24, 34])
 
 
 class TestLimeSurveyFilter(BaseTestLimeSurvey2021WithResponsesCase):
