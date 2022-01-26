@@ -237,17 +237,23 @@ class LimeSurvey:
         Returns:
             LimeSurvey: a shallow copy of the LimeSurvey instance
         """
+        survey_copy = LimeSurvey("data/survey_structure_2021.xml")
+        survey_copy.__dict__.update(self.__dict__)
 
-        return copy.copy(self)
+        return survey_copy
 
-    def __deepcopy(self):
+    def __deepcopy__(self, memo_dict={}):
         """Create a deep copy of the LimeSurvey instance
 
         Returns:
             LimeSurvey: a deep copy of the LimeSurvey instance
         """
 
-        return copy.deepcopy(self)
+        survey_copy = LimeSurvey("data/survey_structure_2021.xml")
+        survey_copy.__dict__.update(self.__dict__)
+        survey_copy.responses = copy.deepcopy(self.responses, memo_dict)
+
+        return survey_copy
 
     def get_responses(
         self,
