@@ -645,7 +645,7 @@ class LimeSurvey:
                 question, compare_with, answer_sequence, add_questions=add_questions
             )
         if question_type == "single-choice":
-            counts_df = self.count(question, labels=True)
+            counts_df = self.count(question, labels=True, dropna=True)
 
             if "title" not in non_theme_kwargs:
                 non_theme_kwargs.update({"title": counts_df.columns[0]})
@@ -938,8 +938,11 @@ class LimeSurvey:
             question (str): Question ID to use for calculation
             condition (str): Which kind of mental health condition to rate, "state",
                 "trait", or "depression"
-            attach (bool): Whether to attach the result DataFrame to the responses
-                DataFrame. Default: False
+            attach_score (bool): Whether to attach the calculated score to the
+                responses DataFrame. Default: False
+            attach_class (bool): Whether to attach the calculated class to the
+                responses DataFrame. Default: True
+
 
         Returns:
             df: Mental health condition ratings and classifications
@@ -1039,18 +1042,51 @@ class LimeSurvey:
                 .map(conversion_dicts[conversion], na_action="ignore")
             )
 
-        # Calculate total anxiety scores
-        df[f"total_{label}_score"] = df.sum(axis=1, skipna=False)
+        # Calculate total anxiety or depression scores
+        df[f"{question}_score"] = df.sum(axis=1, skipna=False)
 
-        # Classify into three categories
-        df[f"{label}_class"] = pd.cut(
-            df[f"total_{label}_score"],
+        # Classify into categories
+        df[f"{question}_class"] = pd.cut(
+            df[f"{question}_score"],
             bins=classification_boundaries,
             labels=classes,
         )
 
         # Concatenate onto responses DataFrame from the right
-        if attach:
-            self.responses = pd.concat([self.responses, df], axis=1)
+        if attach_score:
+            self.responses = pd.concat(
+                [self.responses, df.loc[:, f"{question}_score"]], axis=1
+            )
+            score_column = self.questions.loc[f"{question}_SQ001"].copy()
+            score_column.name = f"{question}_score"
+            score_column["label"] = f"Total {label.replace('_', ' ')} score"
+            score_column["choices"] = None
+            score_column["type"] = "free"
+            self.questions = self.questions.append(score_column)
+        if attach_class:
+            self.responses = pd.concat(
+                [self.responses, df.loc[:, f"{question}_class"]], axis=1
+            )
+            class_column = self.questions.loc[f"{question}_SQ001"].copy()
+            class_column.name = f"{question}_class"
+            class_column["label"] = f"{label.replace('_', ' ')} category"
+            class_column["choices"] = None
+            class_column["type"] = "single-choice"
+            # print(score_column)
+            # print(class_column)
+            self.questions = self.questions.append(class_column)
+            # print(type(self.questions.loc[f"{question}_score", "choices"]))
+            # print(self.questions.iloc[-3:])
+            # print(self.get_question(question).index)
 
         return df
+
+
+if __name__ == "__main__":
+    s = LimeSurvey("/home/dawaifu/SurveyFramework/data/survey_structure_2021.xml")
+    s.read_responses("/home/dawaifu/SurveyFramework/data/dummy_data_2021_codeonly.csv")
+    # print(s.questions.loc["D1_SQ001", :])
+    s.rate_mental_health("D1", attach_class=True)
+    # print(s.count("D1", labels=False, add_totals=True, dropna=True))
+    print(s.count("D1", dropna=True, labels=True))
+    # s.plot("D1_class", save=True)
