@@ -113,6 +113,7 @@ class LimeSurvey:
             directory is used.
         """
         # Parse XML structure file
+        self.structure_file = structure_file
         structure_dict = read_lime_questionnaire_structure(structure_file)
 
         # Get pandas.DataFrame table for the structure
@@ -236,7 +237,7 @@ class LimeSurvey:
         Returns:
             LimeSurvey: a shallow copy of the LimeSurvey instance
         """
-        survey_copy = LimeSurvey("data/survey_structure_2021.xml")
+        survey_copy = LimeSurvey(self.structure_file)
         survey_copy.__dict__.update(self.__dict__)
 
         return survey_copy
@@ -248,7 +249,7 @@ class LimeSurvey:
             LimeSurvey: a deep copy of the LimeSurvey instance
         """
 
-        survey_copy = LimeSurvey("data/survey_structure_2021.xml")
+        survey_copy = LimeSurvey(self.structure_file)
         survey_copy.__dict__.update(self.__dict__)
         survey_copy.responses = copy.deepcopy(self.responses, memo_dict)
 
@@ -307,32 +308,52 @@ class LimeSurvey:
         return responses
 
     def __getitem__(
-        self, key: Union[pd.Series, pd.DataFrame, str, tuple]
+        self, key: Union[pd.Series, pd.DataFrame, str, list, tuple]
     ) -> Union["LimeSurvey", pd.DataFrame]:
         """Retrieve or slice the responses DataFrame
 
         Args:
-            key (pd.Series, pd.DataFrame, str, or tuple): A key for filter or get_responses method
+            key (pd.Series, pd.DataFrame, str, list, or tuple): A key for
+                DataFrame slicing or get_responses method
 
         Returns:
-            LimeSurvey or pd.DataFrame: A copy of LimeSurvey instance with filtered responses
-                DataFrameor or sliced responses DataFrame
+            LimeSurvey: A copy of LimeSurvey instance with filtered responses
+                DataFrame
         """
-        # A bool-valued Series e.g. survey.responses["A3"] == "A5"
+        filtered_survey = self.__copy__()
+
+        # A bool-valued Series, e.g. survey.responses["A3"] == "A5"
         if isinstance(key, (pd.Series, pd.DataFrame)):
-            return self.filter(key)
-        # A question id e.g. "A3"
+            filtered_survey.responses = filtered_survey.responses[key]
+        # A question id, e.g. "A3"
         elif isinstance(key, str):
-            return self.get_responses(key)
-        # Two args e.g. survey.responses["A3"] == "A5", "B1"
+            filtered_survey.responses = filtered_survey.get_responses(key)
+        # A list of columns, e.g. ["C3_SQ001", "C3_Sq002"]
+        elif isinstance(key, list):
+            responses_list = []
+            for question in key:
+                responses_list.append(filtered_survey.get_responses(question))
+            filtered_survey.responses = pd.concat(responses_list, axis="columns")
+        # Two args, e.g. survey.responses["A3"] == "A5", "B1"
         # or 1:10, "B1"
         elif isinstance(key, tuple):
+            assert len(key) == 2
             rows, columns = key
-            return self.filter(rows).get_responses(columns)
+            filtered_survey.responses = filtered_survey.responses[rows]
+            filtered_survey = filtered_survey[columns]
         else:
             raise SyntaxError(
-                "Argument must be of type pd.Series, pd.DataFrame, str, or tuple."
+                """
+                Input must be of type pd.Series, pd.DataFrame, str, or tuple.
+                Examples:
+                    pd.Series: survey.responses["A3"] == "A5"
+                    str: "A3"
+                    list of str: ["C3_SQ001", "C3_Sq002"]
+                    tuple: survey.responses["A3"] == "A5", "B1"
+                """
             )
+
+        return filtered_survey
 
     def keep_choices(
         self, question: str, choices: Union[str, bool, list], logic: str = "or"
@@ -340,16 +361,18 @@ class LimeSurvey:
         """Filter responses DataFrame by keeping certain choices to specified questions
 
         Args:
-            conditions (tuple or list of tuples): Conditions to re-format. Tuples in
-                format of (question_id, choices). choices can be a single str or list
-                of str. Multiple conditions are input as a list of tuples.
-                E.g. ("A6", "Woman") or [("A6", ["Woman", "Man"]), ("B6_SQ001", "Yes")]
+            question (str): Question ID to filter by
+            choices (str, bool, list): choices to keep. Can be str, bool, or list of
+                str or bool values. E.g. "A3", "Physics", True, ["A1", "A2", "A4"]
+            logic (str): logic for mutliple-choice question choices, either "and", i.e.
+                all of the specified choices are present, or "or", i.e. any of the
+                specified is present. Default: "or"
 
         Returns:
-            LimeSurvey: LimeSurvey with filtered responses
+            LimeSurvey: A copy of LimeSurvey instance with filtered responses
+                DataFrame
         """
 
-        logic_dict = {"and": " & ", "or": " | "}
         question_type = self.get_question_type(question)
 
         # Convert into list
@@ -359,43 +382,31 @@ class LimeSurvey:
         # Handle multiple-choice questions with choices as sub-question
         # labels differently, e.g. keep_choices("A3", "Chemistry")
         if (question_type == "multiple-choice") & (True not in choices):
-            inverted_answer_dict = {
-                answer: id for id, answer in self.get_choices(question).items()
-            }
-            subquestions = [inverted_answer_dict[choice] for choice in choices]
-            return self.query(
-                logic_dict[logic].join(
-                    [f"{subquestion} == 'Y'" for subquestion in subquestions]
-                )
-            )
+            column_codes = self.get_responses(question, labels=False).columns
+            mask = self.responses[
+                column_codes[
+                    column_codes.isin(choices)
+                    | self.get_responses(question, labels=True).columns.isin(choices)
+                ]
+            ]
+            if logic == "or":
+                return self[mask.any(axis="columns")]
+            elif logic == "and":
+                return self[mask.all(axis="columns")]
+            else:
+                raise ValueError("Unsupported logic. Must be either 'or' or 'and'.")
+
         # All other cases, including single-choice questions, array sub-questions,
         # mutliple-choice sub-questions with True labels
         else:
-            return self.filter(
+            return self[
                 self.get_responses(question, labels=False)
                 .isin(choices)
                 .any(axis="columns")
                 | self.get_responses(question, labels=True)
                 .isin(choices)
                 .any(axis="columns")
-            )
-
-    def filter(self, mask: Union[pd.Series, pd.DataFrame]) -> "LimeSurvey":
-        """Filter responses DataFrame by applying a mask Series or DataFrame
-
-        Args:
-            mask (pd.Series): A bool Series or DataFrame as mask
-
-        Returns:
-            LimeSurvey: LimeSurvey with filtered responses
-        """
-
-        # Make copy of LimeSurvey instance
-        filtered_survey = self.__copy__()
-        # Filter responses DataFrame
-        filtered_survey.responses = self.responses[mask]
-
-        return filtered_survey
+            ]
 
     def query(self, expr: str) -> "LimeSurvey":
         """Filter responses DataFrame with a boolean expression
