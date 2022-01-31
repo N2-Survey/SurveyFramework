@@ -597,7 +597,7 @@ class LimeSurvey:
             fullpath = os.path.join(self.output_folder, filename)
             fig.savefig(fullpath)
             print(f"Saved plot to {fullpath}")
-
+        
         return fig, ax
         
    
