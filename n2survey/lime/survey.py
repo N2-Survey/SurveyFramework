@@ -11,8 +11,8 @@ from n2survey.lime.structure import read_lime_questionnaire_structure
 from n2survey.plot import (
     likert_bar_plot,
     multiple_choice_bar_plot,
+    simple_comparison_plot,
     single_choice_bar_plot,
-    simple_comparison_plot
 )
 
 __all__ = ["LimeSurvey", "DEFAULT_THEME", "QUESTION_TYPES"]
@@ -24,9 +24,7 @@ DEFAULT_THEME = {
     "font": "sans-serif",
     "font_scale": 1,
     "color_codes": True,
-    "rc": {
-        "figure.figsize": (12, 12),
-    },
+    "rc": {"figure.figsize": (12, 12), },
 }
 
 QUESTION_TYPES = (
@@ -231,10 +229,7 @@ class LimeSurvey:
         self.lime_system_info = system_info
 
     def get_responses(
-        self,
-        question: str,
-        labels: bool = True,
-        drop_other: bool = False,
+        self, question: str, labels: bool = True, drop_other: bool = False,
     ) -> pd.DataFrame:
         """Get responses for a given question with or without labels
 
@@ -477,62 +472,72 @@ class LimeSurvey:
 
             if "title" not in non_theme_kwargs:
                 non_theme_kwargs.update({"title": counts_df.columns[0]})
-            
+
             if compare_with:
                 DF = []
-                if self.get_question_type(compare_with) == 'single-choice':
-                    
+                if self.get_question_type(compare_with) == "single-choice":
+
                     # create Dataframe from both questions
-                    DF.append(pd.concat(
-                        [self.get_responses(
-                            question,labels=True,drop_other=True
-                            ),
-                            self.get_responses(compare_with,
-                                               labels=True,
-                                               drop_other=True)], axis=1
-                        ).values)
-                            
+                    DF.append(
+                        pd.concat(
+                            [
+                                self.get_responses(
+                                    question, labels=True, drop_other=True
+                                ),
+                                self.get_responses(
+                                    compare_with, labels=True, drop_other=True
+                                ),
+                            ],
+                            axis=1,
+                        ).values
+                    )
+
                 else:
                     raise NotImplementedError(
-                         '''
-                         only single-choice to single-choice comparison 
+                        """
+                         only single-choice to single-choice comparison
                          implemented at the moment.
-                         '''
-                         )
+                         """
+                    )
                 if add_questions:
                     for entry in add_questions:
-                        if self.get_question_type(compare_with) == 'single-choice':
+                        if self.get_question_type(compare_with) == "single-choice":
                             DF.append(
-                                pd.concat([self.get_responses(entry,
-                                                              labels=True,
-                                                              drop_other=True),
-                                           self.get_responses(compare_with,
-                                                              labels=True,
-                                                              drop_other=True)],
-                                          axis=1).values
-                                )
+                                pd.concat(
+                                    [
+                                        self.get_responses(
+                                            entry, labels=True, drop_other=True
+                                        ),
+                                        self.get_responses(
+                                            compare_with, labels=True, drop_other=True
+                                        ),
+                                    ],
+                                    axis=1,
+                                ).values
+                            )
                         else:
                             raise NotImplementedError(
-                            '''
-                            only single-choice to single-choice comparison 
+                                """
+                            only single-choice to single-choice comparison
                             implemented at the moment.
-                            '''
-                            ) 
+                            """
+                            )
                 if totalbar:
-                    totalbar = np.unique(self.get_responses(compare_with,
-                                       labels=True,
-                                       drop_other=True),
-                              return_counts=True)
+                    totalbar = np.unique(
+                        self.get_responses(compare_with, labels=True, drop_other=True),
+                        return_counts=True,
+                    )
                 fig, ax = simple_comparison_plot(
                     DF,
-                    totalbar=totalbar, 
+                    totalbar=totalbar,
                     answer_supress=answer_supress,
                     bar_positions=bar_positions,
                     theme=theme,
                     plot_title=plot_title,
                     threshold_percentage=threshold_percentage,
-                    legend_columns=legend_columns)
-                
+                    legend_columns=legend_columns,
+                )
+
             else:
                 fig, ax = single_choice_bar_plot(
                     x=counts_df.index.values,
@@ -597,10 +602,9 @@ class LimeSurvey:
             fullpath = os.path.join(self.output_folder, filename)
             fig.savefig(fullpath)
             print(f"Saved plot to {fullpath}")
-        
+
         return fig, ax
-        
-   
+
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)
 

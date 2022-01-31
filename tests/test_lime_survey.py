@@ -85,8 +85,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         ]
 
         self.assertEqual(
-            (self.survey.responses[array_columns].dtypes == "category").all(),
-            True,
+            (self.survey.responses[array_columns].dtypes == "category").all(), True,
         )
 
     def test_multiple_choice_dtype(self):
@@ -373,8 +372,7 @@ class TestLimeSurveyGetLabel(BaseTestLimeSurvey2021Case):
         label = self.survey.get_label(self.single_choice_column)
 
         self.assertEqual(
-            label,
-            "To which gender do you identify most?",
+            label, "To which gender do you identify most?",
         )
 
     def test_multiple_choice_label_by_group(self):
@@ -383,8 +381,7 @@ class TestLimeSurveyGetLabel(BaseTestLimeSurvey2021Case):
         label = self.survey.get_label(self.multiple_choice_column)
 
         self.assertEqual(
-            label,
-            "What was/were the reason(s) for considering to quit your PhD?",
+            label, "What was/were the reason(s) for considering to quit your PhD?",
         )
 
     def test_multiple_choice_label_by_subquestion(self):
@@ -393,8 +390,7 @@ class TestLimeSurveyGetLabel(BaseTestLimeSurvey2021Case):
         label = self.survey.get_label(self.multiple_choice_column + "_SQ001")
 
         self.assertEqual(
-            label,
-            "What was/were the reason(s) for considering to quit your PhD?",
+            label, "What was/were the reason(s) for considering to quit your PhD?",
         )
 
     def test_array_label_by_group(self):
@@ -413,8 +409,7 @@ class TestLimeSurveyGetLabel(BaseTestLimeSurvey2021Case):
         label = self.survey.get_label(self.array_column + "_SQ001")
 
         self.assertEqual(
-            label,
-            "More time needed to complete PhD project",
+            label, "More time needed to complete PhD project",
         )
 
     def test_free_label(self):
@@ -423,8 +418,7 @@ class TestLimeSurveyGetLabel(BaseTestLimeSurvey2021Case):
         label = self.survey.get_label(self.free_column)
 
         self.assertEqual(
-            label,
-            "When did you start your PhD?",
+            label, "When did you start your PhD?",
         )
 
 
@@ -485,8 +479,7 @@ class TestLimeSurveyGetChoices(BaseTestLimeSurvey2021Case):
         choices = self.survey.get_choices(self.multiple_choice_column + "_SQ001")
 
         self.assertDictEqual(
-            choices,
-            {"Y": "I do not like scientific work."},
+            choices, {"Y": "I do not like scientific work."},
         )
 
     def test_array_choices(self):
@@ -512,8 +505,7 @@ class TestLimeSurveyGetChoices(BaseTestLimeSurvey2021Case):
         label = self.survey.get_choices(self.free_column)
 
         self.assertEqual(
-            label,
-            None,
+            label, None,
         )
 
 
