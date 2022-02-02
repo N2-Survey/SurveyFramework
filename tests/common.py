@@ -43,7 +43,8 @@ class BaseTestLimeSurvey2021Case(BaseTestCase):
         cls.array_column = "B6"
         cls.free_column = "A8"
         # Read lime survey
-        cls.survey = LimeSurvey(structure_file=cls.structure_file)
+        cls.survey = LimeSurvey()
+        cls.survey.read_structure(structure_file=cls.structure_file)
 
 
 class BaseTestLimeSurvey2021WithResponsesCase(BaseTestLimeSurvey2021Case):
