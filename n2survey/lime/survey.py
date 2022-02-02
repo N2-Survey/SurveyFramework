@@ -276,7 +276,8 @@ class LimeSurvey:
             LimeSurvey: a deep copy of the LimeSurvey instance
         """
 
-        survey_copy = LimeSurvey(self.structure_file)
+        survey_copy = LimeSurvey()
+        survey_copy.read_structure(self.structure_file)
         survey_copy.__dict__.update(self.__dict__)
         survey_copy.responses = copy.deepcopy(self.responses, memo_dict)
 
