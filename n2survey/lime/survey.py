@@ -635,3 +635,19 @@ class LimeSurvey:
             choices_dict = question_info.choices[0]
 
         return choices_dict
+
+    def get_num_range(self, question: str):
+
+        responses = self.get_responses(question).iloc[:, 0]
+
+        def _strRange_to_intRange(strAnswer: str) -> int:
+
+            if re.search(r"-", strAnswer):
+                list_range = re.findall(r"(?:[1-9]\d*)(?:\.)?(?:[1-9]\d+)?", strAnswer)
+                return [int(list_range[0]), int(list_range[1])]
+            else:
+                return np.NaN  # Handy when computing mean, median,... using numpy
+
+        responses_num = responses.apply(_strRange_to_intRange)
+
+        return responses_num
