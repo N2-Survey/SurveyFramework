@@ -97,14 +97,12 @@ class LimeSurvey:
 
     def __init__(
         self,
-        structure_file: str,
         theme: Optional[dict] = None,
         output_folder: Optional[str] = None,
     ) -> None:
         """Get an instance of the Survey
 
         Args:
-            structure_file (str): Path to the structure XML file
             theme (Optional[dict], optional): seaborn theme parameters.
               See `seaborn.set_theme` for the details. By default,
               `n2survey.DEFAULT_THEME` is used.
@@ -112,6 +110,22 @@ class LimeSurvey:
             i.e. plots, repotrs, etc. will be saved. By default, current woring
             directory is used.
         """
+
+        # Update default plotting options
+        self.theme = DEFAULT_THEME.copy()
+        if theme:
+            self.theme.update(theme)
+
+        # Set a folder for output results
+        self.output_folder = output_folder or os.path.abspath(os.curdir)
+
+    def read_structure(self, structure_file: str) -> None:
+        """Read structure XML file
+
+        Args:
+            structure_file (str): Path to the structure XML file
+        """
+
         # Parse XML structure file
         self.structure_file = structure_file
         structure_dict = read_lime_questionnaire_structure(structure_file)
@@ -124,14 +138,6 @@ class LimeSurvey:
         question_df["is_contingent"] = question_df.contingent_of_name.notnull()
         self.sections = section_df
         self.questions = question_df
-
-        # Update default plotting options
-        self.theme = DEFAULT_THEME.copy()
-        if theme:
-            self.theme.update(theme)
-
-        # Set a folder for output results
-        self.output_folder = output_folder or os.path.abspath(os.curdir)
 
     def read_responses(self, responses_file: str) -> None:
         """Read responses CSV file
@@ -237,7 +243,8 @@ class LimeSurvey:
         Returns:
             LimeSurvey: a shallow copy of the LimeSurvey instance
         """
-        survey_copy = LimeSurvey(self.structure_file)
+        survey_copy = LimeSurvey()
+        survey_copy.read_structure(self.structure_file)
         survey_copy.__dict__.update(self.__dict__)
 
         return survey_copy
@@ -249,7 +256,8 @@ class LimeSurvey:
             LimeSurvey: a deep copy of the LimeSurvey instance
         """
 
-        survey_copy = LimeSurvey(self.structure_file)
+        survey_copy = LimeSurvey()
+        survey_copy.read_structure(self.structure_file)
         survey_copy.__dict__.update(self.__dict__)
         survey_copy.responses = copy.deepcopy(self.responses, memo_dict)
 
