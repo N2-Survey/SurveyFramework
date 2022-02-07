@@ -258,10 +258,10 @@ class LimeSurvey:
         if question_type == "multiple-choice":
             # ASSUME: question response consists of multiple columns with
             #         'Y' or NaN as entries.
-            # Concatenate the last 'Other' column because it should not be masked with boolean values.
-            responses = pd.concat(
-                [pd.notna(responses.iloc[:, :-1]), responses.iloc[:, -1]], axis=1
-            )
+            # Masked with boolean values the responses with nan only for the columns where is_contingent is True.
+            responses.loc[:, ~question_group.is_contingent] = responses.loc[
+                :, ~question_group.is_contingent
+            ].notnull()
 
         # replace labels
         if labels:
