@@ -548,45 +548,45 @@ class TestLimeSurveyGetItem(BaseTestLimeSurvey2021WithResponsesCase):
         filtered_survey = self.survey[self.single_choice_column]
 
         ref = [
-            "Woman",
-            "Woman",
-            "Man",
-            "I don't want to answer this question",
-            "No Answer",
-            "Woman",
-            "Woman",
-            "Woman",
-            "Woman",
-            "Woman",
-            "No Answer",
-            "Woman",
-            "Woman",
-            "Woman",
-            "Woman",
-            "No Answer",
-            "Woman",
-            "Woman",
-            "Woman",
-            "Gender diverse (Gender-fluid)",
-            "Man",
-            "Non-binary",
-            "Non-binary",
-            "Woman",
-            "Man",
-            "Woman",
-            "Woman",
-            "Man",
-            "Woman",
-            "Man",
-            "Man",
-            "No Answer",
-            "Man",
-            "Non-binary",
-            "Man",
-            "Man",
+            "A1",
+            "A1",
+            "A3",
+            "A2",
+            np.nan,
+            "A1",
+            "A1",
+            "A1",
+            "A1",
+            "A1",
+            np.nan,
+            "A1",
+            "A1",
+            "A1",
+            "A1",
+            np.nan,
+            "A1",
+            "A1",
+            "A1",
+            "A4",
+            "A3",
+            "A5",
+            "A5",
+            "A1",
+            "A3",
+            "A1",
+            "A1",
+            "A3",
+            "A1",
+            "A3",
+            "A3",
+            np.nan,
+            "A3",
+            "A5",
+            "A3",
+            "A3",
         ]
 
-        self.assertCountEqual(list(filtered_survey.responses.values[:, 0]), ref)
+        np.testing.assert_equal(list(filtered_survey.responses.values[:, 0]), ref)
 
     def test_list(self):
         """Test __getitem__ for list of str input"""
@@ -594,66 +594,71 @@ class TestLimeSurveyGetItem(BaseTestLimeSurvey2021WithResponsesCase):
         filtered_survey = self.survey[[self.array_column, self.single_choice_column]]
 
         ref = [
-            "Woman",
-            "Woman",
-            "Man",
-            "I don't want to answer this question",
-            "No Answer",
-            "Woman",
-            "Woman",
-            "Woman",
-            "Woman",
-            "Woman",
-            "No Answer",
-            "Woman",
-            "Woman",
-            "Woman",
-            "Woman",
-            "No Answer",
-            "Woman",
-            "Woman",
-            "Woman",
-            "Gender diverse (Gender-fluid)",
-            "Man",
-            "Non-binary",
-            "Non-binary",
-            "Woman",
-            "Man",
-            "Woman",
-            "Woman",
-            "Man",
-            "Woman",
-            "Man",
-            "Man",
-            "No Answer",
-            "Man",
-            "Non-binary",
-            "Man",
-            "Man",
+            "A2",
+            "A1",
+            "A3",
+            "A1",
+            np.nan,
+            "A2",
+            "A1",
+            "A1",
+            "A2",
+            "A2",
+            np.nan,
+            "A1",
+            "A2",
+            "A3",
+            "A2",
+            np.nan,
+            "A3",
+            "A2",
+            "A1",
+            np.nan,
+            "A3",
+            "A2",
+            np.nan,
+            "A4",
+            "A3",
+            "A3",
+            "A3",
+            "A1",
+            "A2",
+            "A3",
+            "A1",
+            np.nan,
+            "A3",
+            "A3",
+            "A3",
+            "A3",
         ]
 
-        self.assertCountEqual(list(filtered_survey.responses.values[:, 3]), ref)
+        np.testing.assert_equal(list(filtered_survey.responses.values[:, 2]), ref)
 
     def test_single_choice(self):
         """Test __getitem__ for single-choice question"""
 
         filtered_survey = self.survey[self.survey.responses.loc[:, "A3"] == "A3"]
 
-        self.assertCountEqual(filtered_survey.responses.index, [4, 37])
+        np.testing.assert_equal(np.array(filtered_survey.responses.index), [4, 37])
+        np.testing.assert_equal(filtered_survey.responses.values[:, 7], ["A11", "A7"])
 
     def test_multiple_choice(self):
         """Test __getitem__ for multiple-choice question"""
 
         filtered_survey = self.survey[self.survey.responses.loc[:, "A10_SQ005"] == "Y"]
 
-        self.assertCountEqual(filtered_survey.responses.index, [31, 45])
+        np.testing.assert_equal(np.array(filtered_survey.responses.index), [31, 45])
+        np.testing.assert_equal(filtered_survey.responses.values[:, 7], ["A10", "A7"])
 
     def test_array(self):
         """Test __getitem__ for array question"""
 
         filtered_survey = self.survey[self.survey.responses.loc[:, "C1_SQ005"] == "A5"]
 
-        self.assertCountEqual(filtered_survey.responses.index, [10, 39, 45])
+        np.testing.assert_equal(np.array(filtered_survey.responses.index), [10, 39, 45])
+        np.testing.assert_equal(
+            filtered_survey.responses.values[:, 7], ["A8", "A9", "A7"]
+        )
 
     def test_list_choices(self):
         """Test __getitem__ for list of choices to one question"""
@@ -663,7 +668,10 @@ class TestLimeSurveyGetItem(BaseTestLimeSurvey2021WithResponsesCase):
             | (self.survey.responses.loc[:, "B2"] == "A5")
         ]
 
-        self.assertCountEqual(filtered_survey.responses.index, [28, 38, 39])
+        np.testing.assert_equal(np.array(filtered_survey.responses.index), [28, 38, 39])
+        np.testing.assert_equal(
+            filtered_survey.responses.values[:, 7], ["A25", "A32", "A9"]
+        )
 
     def test_list_questions(self):
         """Test __getitem__ for list of choices to one question"""
@@ -676,7 +684,10 @@ class TestLimeSurveyGetItem(BaseTestLimeSurvey2021WithResponsesCase):
             )
         ]
 
-        self.assertCountEqual(filtered_survey.responses.index, [5, 21, 46])
+        np.testing.assert_equal(np.array(filtered_survey.responses.index), [5, 21, 46])
+        np.testing.assert_equal(
+            filtered_survey.responses.values[:, 7], ["A38", "A11", "A8"]
+        )
 
     def test_tuple(self):
         """Test __getitem__ for tuple input"""
@@ -685,9 +696,9 @@ class TestLimeSurveyGetItem(BaseTestLimeSurvey2021WithResponsesCase):
             self.survey.responses[self.single_choice_column] == "A5", "A5"
         ]
 
-        ref = ["1977", "1987", "1990"]
+        ref = ["A25", "A4", "A7"]
 
-        self.assertCountEqual(list(filtered_survey.responses.values[:, 0]), ref)
+        np.testing.assert_equal(filtered_survey.responses.values[:, 0], ref)
 
     def test_tuple_list(self):
         """Test __getitem__ for tuple input with list as second element"""
@@ -697,80 +708,9 @@ class TestLimeSurveyGetItem(BaseTestLimeSurvey2021WithResponsesCase):
             [self.array_column, self.multiple_choice_column],
         ]
 
-        ref = [False, False, True]
+        ref = [np.nan, np.nan, "Y"]
 
-        self.assertCountEqual(list(filtered_survey.responses.values[:, 6]), ref)
-
-
-class TestLimeSurveyKeepChoices(BaseTestLimeSurvey2021WithResponsesCase):
-    """Test LimeSurvey keep_choices method"""
-
-    def test_single_choice_label(self):
-        """Test keep_choices for single-choice question with choice label"""
-
-        filtered_survey = self.survey.keep_choices("A3", "Geosciences")
-
-        self.assertCountEqual(filtered_survey.responses.index, [4, 37])
-
-    def test_single_choice_id(self):
-        """Test keep_choices for single-choice question with choice id"""
-
-        filtered_survey = self.survey.keep_choices("A3", "A3")
-
-        self.assertCountEqual(filtered_survey.responses.index, [4, 37])
-
-    def test_multiple_choice_label(self):
-        """Test keep_choices for multiple-choice question with choice label"""
-
-        filtered_survey = self.survey.keep_choices("A10", "Caribbean")
-
-        self.assertCountEqual(filtered_survey.responses.index, [31, 45])
-
-    def test_multiple_choice_multiple_labels(self):
-        """Test keep_choices for multiple-choice question with multiple choice labels"""
-
-        filtered_survey = self.survey.keep_choices(
-            "A10", ["African", "Pacific Islander", "South Asian"]
-        )
-
-        self.assertCountEqual(filtered_survey.responses.index, [24, 32, 45])
-
-    def test_multiple_choice_subquestion(self):
-        """Test keep_choices for multiple-choice sub-question"""
-
-        filtered_survey = self.survey.keep_choices("A10_SQ005", True)
-
-        self.assertCountEqual(filtered_survey.responses.index, [31, 45])
-
-    def test_array_label(self):
-        """Test keep_choices for array question with choice label"""
-
-        filtered_survey = self.survey.keep_choices("C1_SQ005", "Very dissatisfied")
-
-        self.assertCountEqual(filtered_survey.responses.index, [10, 39, 45])
-
-    def test_array_id(self):
-        """Test keep_choices for array question with choice id"""
-
-        filtered_survey = self.survey.keep_choices("C1_SQ005", "A5")
-
-        self.assertCountEqual(filtered_survey.responses.index, [10, 39, 45])
-
-    def test_list_choices(self):
-        """Test keep_choices for list of choices to one question"""
-
-        filtered_survey = self.survey.keep_choices("B2", ["500-700", "1101-1200"])
-
-        self.assertCountEqual(filtered_survey.responses.index, [28, 38, 39])
-
-    def test_chained_questions(self):
-        """Test keep_choices for chained questions"""
-
-        filtered_survey = self.survey.keep_choices(
-            "A10", ["European/European descent", "East Asian/Southeast Asian"]
-        ).keep_choices("A7", ["A4", "A5"])
-
-        self.assertCountEqual(filtered_survey.responses.index, [24, 34])
+        np.testing.assert_equal(list(filtered_survey.responses.values[:, 6]), ref)
 
 
 class TestLimeSurveyQuery(BaseTestLimeSurvey2021WithResponsesCase):
@@ -781,28 +721,28 @@ class TestLimeSurveyQuery(BaseTestLimeSurvey2021WithResponsesCase):
 
         filtered_survey = self.survey.query("A3 == 'A3'")
 
-        self.assertCountEqual(filtered_survey.responses.index, [4, 37])
+        np.testing.assert_equal(list(filtered_survey.responses.index), [4, 37])
 
     def test_multiple_choice(self):
         """Test query for multiple-choice question"""
 
         filtered_survey = self.survey.query("A10_SQ005 == 'Y'")
 
-        self.assertCountEqual(filtered_survey.responses.index, [31, 45])
+        np.testing.assert_equal(list(filtered_survey.responses.index), [31, 45])
 
     def test_array(self):
         """Test query for array question"""
 
         filtered_survey = self.survey.query("C1_SQ005 == 'A5'")
 
-        self.assertCountEqual(filtered_survey.responses.index, [10, 39, 45])
+        np.testing.assert_equal(list(filtered_survey.responses.index), [10, 39, 45])
 
     def test_list_choices(self):
         """Test query for list of choices to one question"""
 
         filtered_survey = self.survey.query("B2 == 'A2' | B2 ==  'A5'")
 
-        self.assertCountEqual(filtered_survey.responses.index, [28, 38, 39])
+        np.testing.assert_equal(list(filtered_survey.responses.index), [28, 38, 39])
 
     def test_list_questions(self):
         """Test query for list of choices to one question"""
@@ -811,7 +751,7 @@ class TestLimeSurveyQuery(BaseTestLimeSurvey2021WithResponsesCase):
             "A11 == 'A1' & (B9b_SQ001 == 'Y' | B9b_SQ002 == 'Y')"
         )
 
-        self.assertCountEqual(filtered_survey.responses.index, [5, 21, 46])
+        np.testing.assert_equal(list(filtered_survey.responses.index), [5, 21, 46])
 
 
 if __name__ == "__main__":
