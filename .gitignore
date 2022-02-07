@@ -139,4 +139,4 @@ dmypy.json
 *.jpg
 *.jpeg
 
-.DS_store
+*.DS_store
