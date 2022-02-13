@@ -15,7 +15,7 @@ DEFAULT_THEME = {
     "font": "sans-serif",
     "font_scale": 1,
     "color_codes": True,
-    "rc": {"figure.figsize": (12, 12),},
+    "rc": {"figure.figsize": (12, 12), },
 }
 
 

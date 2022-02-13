@@ -437,25 +437,61 @@ class LimeSurvey:
     def plot(
         self,
         question,
-        add_questions: Union[list, bool] = False,
-        compare_with: Union[str, bool] = False,
+        compare_with: str = None,
+        add_questions: list = None,
         totalbar: bool = False,
-        answer_supress: Union[list, bool] = False,
+        answer_suppress: list = None,
         threshold_percentage: float = 0.0,
         bar_positions: Union[list, bool] = False,
         legend_columns: int = 2,
         plot_title: Union[str, bool] = True,
-        kind: str = None,
         save: Union[str, bool] = False,
+        answer_sequence: Union[list, bool] = False,
+        kind: str = None,
         **kwargs,
     ):
+        '''
+        This function plots answers of the 'question' given.
+        Optional Parameters:
+            'compare_with':
+                correlates answers of 'question' with answers
+                of the question given to the 'compare_with' variable.
+            'add_questions':
+                adds bars of other questions to the plot
+            'totalbar':
+                calculates the number of answers of 'compare_with' question
+                and displays them as first question-answer in the plot.
+            'answer_suppress':
+                removes every entry in 'answer_suppress' from the plot
+            'threshold_percentage':
+                removes percentages if below threshold, standard is 0
+            'bar_positions':
+                positions the entries in the plot [0,1.5,2.5,3.5] will assign
+                the first 4 answers in the plot (including totalbar) at
+                the given positions. Every additional question-position is
+                calculated by adding +1 to the highest position, except if the
+                answer is the first one of a question in 'add_questions', then
+                it automatically adds +1.5 to distinguish the new question from
+                the previous one
+            'legend_columns':
+                number of columns of the legend added by 'compare_with' on top
+                of the Plot
+                ATTENTION: if the number of columns is too high this will
+                press the plot right next to the legend and smush it.
+            'plot_title': if False no title, if True question as title
+                if string --> string as title
+            'save': save plot as png either with question indicator as name
+                if True or as string if string is added here
+        '''
         if kind is not None:
             raise NotImplementedError(
                 "Forced plot type is not supported yet."
                 f"Please use matplotlib directly with"
                 f"`servey.get_responses({question})` or `servey.count({question})`"
             )
-
+        # check if plot is implemented:
+        self.check_plot_implemented(question, compare_with=compare_with,
+                                    add_questions=add_questions)
         # Prepare theme and non-theme arguments
         theme = self.theme.copy()
         theme_kwargs, non_theme_kwargs = _split_plot_kwargs(kwargs)
@@ -464,78 +500,45 @@ class LimeSurvey:
         question_type = self.get_question_type(question)
         # get plot title
         if plot_title:
-            if type(plot_title) != str:
+            if not isinstance(plot_title, str):
                 plot_title = self.get_label(question)
-
+        if compare_with:
+            # load necessary data for comparison
+            if answer_sequence:
+                answer_sequence = [answer_sequence]
+            else:
+                answer_sequence = self.get_answer_sequence(question,
+                                                           add_questions=add_questions,
+                                                           totalbar=totalbar)
+            df, answer_sequence = self.create_comparison_data(
+                question,
+                compare_with,
+                answer_sequence,
+                add_questions=add_questions
+            )
         if question_type == "single-choice":
             counts_df = self.count(question, labels=True)
 
             if "title" not in non_theme_kwargs:
                 non_theme_kwargs.update({"title": counts_df.columns[0]})
-
             if compare_with:
-                DF = []
-                if self.get_question_type(compare_with) == "single-choice":
-
-                    # create Dataframe from both questions
-                    DF.append(
-                        pd.concat(
-                            [
-                                self.get_responses(
-                                    question, labels=True, drop_other=True
-                                ),
-                                self.get_responses(
-                                    compare_with, labels=True, drop_other=True
-                                ),
-                            ],
-                            axis=1,
-                        ).values
-                    )
-
-                else:
-                    raise NotImplementedError(
-                        """
-                         only single-choice to single-choice comparison
-                         implemented at the moment.
-                         """
-                    )
-                if add_questions:
-                    for entry in add_questions:
-                        if self.get_question_type(compare_with) == "single-choice":
-                            DF.append(
-                                pd.concat(
-                                    [
-                                        self.get_responses(
-                                            entry, labels=True, drop_other=True
-                                        ),
-                                        self.get_responses(
-                                            compare_with, labels=True, drop_other=True
-                                        ),
-                                    ],
-                                    axis=1,
-                                ).values
-                            )
-                        else:
-                            raise NotImplementedError(
-                                """
-                            only single-choice to single-choice comparison
-                            implemented at the moment.
-                            """
-                            )
                 if totalbar:
-                    totalbar = np.unique(
-                        self.get_responses(compare_with, labels=True, drop_other=True),
+                    totalbar_data = np.unique(
+                        self.get_responses(compare_with, labels=True,
+                                           drop_other=True),
                         return_counts=True,
                     )
+                else:
+                    totalbar_data = None
                 fig, ax = simple_comparison_plot(
-                    DF,
-                    totalbar=totalbar,
-                    answer_supress=answer_supress,
+                    df,
+                    totalbar=totalbar_data,
+                    answer_suppress=answer_suppress,
                     bar_positions=bar_positions,
-                    theme=theme,
-                    plot_title=plot_title,
                     threshold_percentage=threshold_percentage,
                     legend_columns=legend_columns,
+                    plot_title=plot_title,
+                    answer_sequence=answer_sequence
                 )
 
             else:
@@ -584,12 +587,6 @@ class LimeSurvey:
                 calc_fig_size=True,
                 **non_theme_kwargs,
             )
-        else:
-            raise NotImplementedError(
-                "Only single choice fields are available."
-                f"Please use matplotlib directly with"
-                f"`servey.get_responses({question})` or `servey.count({question})`"
-            )
 
         # Save to a file
         if save:
@@ -604,6 +601,113 @@ class LimeSurvey:
             print(f"Saved plot to {fullpath}")
 
         return fig, ax
+
+    def check_plot_implemented(self,
+                               question,
+                               compare_with=None,
+                               add_questions=None):
+        '''
+        function to check if question type and/or combination of questions for
+        compare_with is already implemented and working
+        '''
+        if not add_questions:
+            add_questions = []
+        supported_plots = ['single-choice', 'multiple-choice', 'array']
+        supported_comparisons = [('single-choice', 'single-choice')]
+        all_plots = [question]
+        if compare_with:
+            all_plots.append(compare_with)
+        for i in add_questions:
+            all_plots.append(i)
+        for plot in all_plots:
+            if self.get_question_type(plot) not in supported_plots:
+                raise NotImplementedError(
+                    '''
+                    Question type not yet implemented
+                    '''
+                )
+        if compare_with:
+            tuple_list = [(question, compare_with)]
+            for i in add_questions:
+                tuple_list.append((question, i))
+            for i in tuple_list:
+                question_type_tuple = (self.get_question_type(i[0]),
+                                       self.get_question_type(i[1]))
+                if question_type_tuple not in supported_comparisons:
+                    raise NotImplementedError(
+                        f' comparison {i} not yet implemented'
+                    )
+
+    def get_answer_sequence(self, question, add_questions=None, totalbar=False):
+        '''
+        creates answer sequence from given questions to keep sequence in
+        plot consistent if answers that were never chosen are suppressed
+        '''
+        if not add_questions:
+            add_questions = []
+        answer_sequence = [list(self.count(
+            question, labels=True
+        ).index.values.astype(str))]
+        if add_questions:
+            for entry in add_questions:
+                answer_sequence.append(list(self.count(
+                    entry, labels=True
+                ).index.values.astype(str)))
+        if totalbar:
+            answer_sequence[0].insert(0, 'Total')
+        return answer_sequence
+
+    def create_comparison_data(self, question, compare_with, answer_sequence,
+                               add_questions=None):
+        '''
+        This function loads and combines necessary data for the plot functions.
+        depending on the wanted (question/add_question_entry,compare_with) tuple
+        '''
+        if not add_questions:
+            add_questions = []
+        df = []
+        if self.get_question_type(compare_with) == "single-choice":
+            # create Dataarray from all existing combinations of
+            # question and compare_with
+            df.append(
+                pd.concat(
+                    [
+                        self.get_responses(
+                            question, labels=True, drop_other=True
+                        ),
+                        self.get_responses(
+                            compare_with, labels=True, drop_other=True
+                        ),
+                    ],
+                    axis=1,
+                ).values
+            )
+            # remove combinations that do not occure from answer_sequence
+            for answer in answer_sequence[0].copy():
+                if all([answer not in df[0][:, 0], answer != 'Total']):
+                    answer_sequence[0].remove(answer)
+        if add_questions:
+            # add combinations for additional questions with
+            # 'compare_with' question
+            for entry, answerlist in zip(add_questions,
+                                         answer_sequence[1:]):
+                if self.get_question_type(compare_with) == "single-choice":
+                    next_df = pd.concat(
+                        [
+                            self.get_responses(
+                                entry, labels=True, drop_other=True
+                            ),
+                            self.get_responses(
+                                compare_with, labels=True, drop_other=True
+                            ),
+                        ],
+                        axis=1,
+                    ).values
+                    df.append(next_df)
+                for answer in answerlist.copy():
+                    if answer not in next_df[:, 0]:
+                        answerlist.remove(answer)
+        return df, answer_sequence
 
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)

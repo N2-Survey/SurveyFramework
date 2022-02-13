@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Union
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,7 +6,7 @@ import numpy as np
 __all__ = ["simple_comparison_plot"]
 
 
-def get_percentages(array, threshold=0, answer_supress=False, totalbar=False):
+def get_percentages(array, totalbar=None):
     """
     This function calculates the total number of combinations from the given
     array of answer combinations.
@@ -14,7 +14,8 @@ def get_percentages(array, threshold=0, answer_supress=False, totalbar=False):
     with the percentages for each combination+the totalbar if wanted
     """
     # get possible combinations (combi) and count how often they occure (no_of)
-    (combi, no_of) = np.unique(array.astype(str), return_counts=True, axis=0)
+    (existing_combinations,
+     occurences) = np.unique(array.astype(str), return_counts=True, axis=0)
     # if a totalbar array is calculated in the plot function survey.py
     # it will be appended to the beginning of combi and no_of
     if totalbar:
@@ -22,18 +23,21 @@ def get_percentages(array, threshold=0, answer_supress=False, totalbar=False):
         total_combi = np.append(
             total_combi, np.reshape(totalbar[0], newshape=(-1, 1)), axis=1
         )
-        combi = np.append(total_combi, combi, axis=0)
-        no_of = np.append(totalbar[1], no_of)
+        existing_combinations = np.append(total_combi,
+                                          existing_combinations, axis=0)
+        occurences = np.append(totalbar[1], occurences)
     # Total values are converted to percentages and packed into a dictionary,
     # which is less confusing then pandas dataframe
     percentage = {}
-    for answer in combi[:, 0]:
-        answer_rows = np.where(combi[:, 0] == answer)
+    for answer in existing_combinations[:, 0]:
+        answer_rows = np.where(existing_combinations[:, 0] == answer)
         percentage[answer] = np.append(
-            np.reshape(combi[answer_rows, 1], newshape=(-1, 1)),
+            np.reshape(existing_combinations[answer_rows, 1],
+                       newshape=(-1, 1)),
             np.reshape(
                 np.round(
-                    no_of[answer_rows] / sum(no_of[answer_rows]) * 100, decimals=1
+                    occurences[answer_rows] / sum(
+                        occurences[answer_rows]) * 100, decimals=1
                 ),
                 newshape=(-1, 1),
             ),
@@ -42,38 +46,44 @@ def get_percentages(array, threshold=0, answer_supress=False, totalbar=False):
     return percentage
 
 
-def form_x_and_y(df, totalbar=False, answer_supress=False):
+def form_x_and_y(df, totalbar=None, answer_suppress=False):
     """
-    This Function splits up the dataframe given to it to x and y components
-    it applies the get_percentages function to calculate Percentages from
-    the compared with Question.
-    It also filters out the answers specified by answer_supress.
-    If additional answers should be compared this function also splits them up
-    for the get_percentages function which only can handle one array, not
-    a list of arrays.
+    This function splits up the array given to it to x and y components for
+    the plot.
+    it collects the percentages of the people that answered the 'compare_with'
+    question and the correlation with the answers those people gave to the
+    main 'question'.
+    It filters out the answers specified by answer_suppress.
     """
-    PERCENTAGES = []
+    percentages_for_comparison = []
     for entry in df:
-        PERCENTAGE = get_percentages(entry, totalbar=totalbar)
-        totalbar = False
-        if answer_supress:
-            for answer in answer_supress:
-                if answer not in PERCENTAGE:
+        percentage_correlated_answers = get_percentages(entry,
+                                                        totalbar=totalbar)
+        # totalbar only needs one appearence with the first entry in the df
+        # which is the combinations of "question" and "compare_with"
+        # the same totalbar is not calculated for additional questions in
+        # 'add_questions' that are also compared with the compare_with_question
+        # in 'plot'()-function of survey.py
+        totalbar = None
+        if answer_suppress:
+            for answer in answer_suppress:
+                if answer not in percentage_correlated_answers:
                     print(f"{answer} does not exist for this question")
                 else:
-                    PERCENTAGE.pop(answer)
-        PERCENTAGES.append(PERCENTAGE.copy())
+                    percentage_correlated_answers.pop(answer)
+        percentages_for_comparison.append(percentage_correlated_answers.copy())
 
     x = []
     y = []
-    for PERCENTAGE in PERCENTAGES:
-        for entry in PERCENTAGE:
+    for percentage_correlated_answers in percentages_for_comparison:
+        for entry in percentage_correlated_answers:
             x.append(entry)
-            y.append(PERCENTAGE[entry])
+            y.append(percentage_correlated_answers[entry])
     return x, y
 
 
-def form_bar_positions(df, bar_positions=False, totalbar=False, answer_supress=False):
+def form_bar_positions(df, bar_positions=False, totalbar=None,
+                       answer_suppress=False):
     """
     forms a complete list of bar positions for all bars, also the not
     specified ones.
@@ -85,65 +95,101 @@ def form_bar_positions(df, bar_positions=False, totalbar=False, answer_supress=F
     [('Total',1.5),('Yes', 0.2),] etc.
     with (nameofbar, distance_from_previous_bar)
     At the moment we calculate PERCENTAGE a second time in this function,
-    but the slowing of the whole plot function is neglectable due to this.
+    but the slowing of the whole plot function is neglectable.
     """
     # start list of bar_positions
-    if bar_positions:
-        bar_positions_complete = bar_positions
-    else:
-        bar_positions_complete = [0]
-    COUNT = 0
-    BAR_POS_LENGTH = 0
-    for entry in df:
-        PERCENTAGE = get_percentages(entry, totalbar=totalbar)
-        if answer_supress:
-            for answer in answer_supress:
-                if answer not in PERCENTAGE:
-                    print(f"{answer} does not exist for this question")
-                else:
-                    PERCENTAGE.pop(answer)
-        BAR_POS_LENGTH = BAR_POS_LENGTH + len(PERCENTAGE)
-        totalbar = False
-        if all(
-            [COUNT > 0, len(bar_positions_complete) == BAR_POS_LENGTH - len(PERCENTAGE)]
-        ):
+    bar_positions_complete = bar_positions or [0]
+    count = 0
+    number_of_answers = 0
+    for answer_combinations in df:
+        percentage_correlated_answers = get_percentages(answer_combinations,
+                                                        totalbar=totalbar)
+        for answer in answer_suppress:
+            if answer not in percentage_correlated_answers:
+                print(f"{answer} does not exist for this question")
+            else:
+                percentage_correlated_answers.pop(answer)
+        number_of_answers = number_of_answers + len(percentage_correlated_answers)
+        totalbar = None
+        if (count > 0 and len(bar_positions_complete) == number_of_answers - len(
+                percentage_correlated_answers)):
             bar_positions_complete.append(max(bar_positions_complete) + 1.5)
-        while len(bar_positions_complete) < BAR_POS_LENGTH:
+        while len(bar_positions_complete) < number_of_answers:
             bar_positions_complete.append(max(bar_positions_complete) + 1)
-        COUNT = COUNT + 1
+        count = count + 1
     return bar_positions_complete
+
+
+def filter_answer_sequence(x, answer_sequence):
+    '''
+    removes answers from sequence that where supressed while creating x
+    '''
+    all_answer_sequence = []
+    for answer_list in answer_sequence:
+        all_answer_list = answer_list.copy()
+        for answer in all_answer_sequence.copy():
+            if answer not in x:
+                all_answer_list.remove(answer)
+        for answer in all_answer_list:
+            all_answer_sequence.append(answer)
+    return all_answer_sequence
+
+
+def sort_data(sequence, x, y):
+    '''
+    sorts lists x and y by comparing x and list sequence by rearranging x and y
+    simoultaneously until x == sequence --> all entries in sequence have to
+    also be in x
+    '''
+    indizes = []
+    for x_entry in x:
+        if np.where(np.array(sequence) == x_entry)[0].shape[0] == 1:
+            position = sequence.index(x_entry)
+            indizes.append(position)
+        else:
+            print(f'double bar: {x_entry}')
+            raise NotImplementedError(
+                '''
+                only single occurence of bars supported at the moment
+                '''
+            )
+    x_sorted = [entry for _, entry in sorted(zip(indizes, x))]
+    y_sorted = [entry for _, entry in sorted(zip(indizes, y))]
+    return x_sorted, y_sorted
 
 
 def simple_comparison_plot(
     df,
-    answer_supress: Union[list, bool] = False,
-    theme: Optional[Dict] = None,
-    titles: Optional[list] = None,
-    totalbar=False,
-    no_answers=False,
-    hide_titles=False,
+    answer_suppress: list = None,
+    totalbar: np.ndarray = None,
     bar_positions: Union[list, bool] = False,
-    show_percents=True,
-    threshold_percentage=0,
-    bar_width=0.8,
+    threshold_percentage: float = 0,
+    bar_width: float = 0.8,
     legend_columns: int = 2,
     plot_title: Union[str, bool] = False,
+    answer_sequence: Union[list, bool] = False
 ):
     """
-    plots correlations from the dataframe df with the existing answer
+    plots correlations from the np.ndarray df with the existing answer
     combinations and applies the given specifications.
     """
+    if answer_suppress is None:
+        answer_suppress = []
     # form x-axis with answers to first question and y-axis with
     # percentages of second question correlated to each answer of the first
     # question.
-    (x, y) = form_x_and_y(df, totalbar=totalbar, answer_supress=answer_supress)
+    (x, y) = form_x_and_y(df, totalbar=totalbar, answer_suppress=answer_suppress)
+    # complete and filter answer sequence after sorting out answers
+    answer_sequence = filter_answer_sequence(x, answer_sequence)
     # create a list with positonings of the bars in the plot.
     bar_positions_complete = form_bar_positions(
-        df, bar_positions, totalbar=totalbar, answer_supress=answer_supress
+        df, bar_positions, totalbar=totalbar, answer_suppress=answer_suppress
     )
+    # sort x and y to follow answer_sequence
+    (x, y) = sort_data(answer_sequence, x, y)
+
     # %% Prepare/Define figure
     fig, ax = plt.subplots()
-    fig_width, _ = fig.get_size_inches()
     # %% split up y to list of answers of question 2 and list of percentages
     q2_answers = []
     percentages = []
