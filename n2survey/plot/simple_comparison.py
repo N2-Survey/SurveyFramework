@@ -14,8 +14,9 @@ def get_percentages(array, totalbar=None):
     with the percentages for each combination+the totalbar if wanted
     """
     # get possible combinations (combi) and count how often they occure (no_of)
-    (existing_combinations,
-     occurences) = np.unique(array.astype(str), return_counts=True, axis=0)
+    (existing_combinations, occurences) = np.unique(
+        array.astype(str), return_counts=True, axis=0
+    )
     # if a totalbar array is calculated in the plot function survey.py
     # it will be appended to the beginning of combi and no_of
     if totalbar:
@@ -23,8 +24,7 @@ def get_percentages(array, totalbar=None):
         total_combi = np.append(
             total_combi, np.reshape(totalbar[0], newshape=(-1, 1)), axis=1
         )
-        existing_combinations = np.append(total_combi,
-                                          existing_combinations, axis=0)
+        existing_combinations = np.append(total_combi, existing_combinations, axis=0)
         occurences = np.append(totalbar[1], occurences)
     # Total values are converted to percentages and packed into a dictionary,
     # which is less confusing then pandas dataframe
@@ -32,12 +32,11 @@ def get_percentages(array, totalbar=None):
     for answer in existing_combinations[:, 0]:
         answer_rows = np.where(existing_combinations[:, 0] == answer)
         percentage[answer] = np.append(
-            np.reshape(existing_combinations[answer_rows, 1],
-                       newshape=(-1, 1)),
+            np.reshape(existing_combinations[answer_rows, 1], newshape=(-1, 1)),
             np.reshape(
                 np.round(
-                    occurences[answer_rows] / sum(
-                        occurences[answer_rows]) * 100, decimals=1
+                    occurences[answer_rows] / sum(occurences[answer_rows]) * 100,
+                    decimals=1,
                 ),
                 newshape=(-1, 1),
             ),
@@ -57,8 +56,7 @@ def form_x_and_y(df, totalbar=None, answer_suppress=False):
     """
     percentages_for_comparison = []
     for entry in df:
-        percentage_correlated_answers = get_percentages(entry,
-                                                        totalbar=totalbar)
+        percentage_correlated_answers = get_percentages(entry, totalbar=totalbar)
         # totalbar only needs one appearence with the first entry in the df
         # which is the combinations of "question" and "compare_with"
         # the same totalbar is not calculated for additional questions in
@@ -82,8 +80,7 @@ def form_x_and_y(df, totalbar=None, answer_suppress=False):
     return x, y
 
 
-def form_bar_positions(df, bar_positions=False, totalbar=None,
-                       answer_suppress=False):
+def form_bar_positions(df, bar_positions=False, totalbar=None, answer_suppress=False):
     """
     forms a complete list of bar positions for all bars, also the not
     specified ones.
@@ -102,8 +99,9 @@ def form_bar_positions(df, bar_positions=False, totalbar=None,
     count = 0
     number_of_answers = 0
     for answer_combinations in df:
-        percentage_correlated_answers = get_percentages(answer_combinations,
-                                                        totalbar=totalbar)
+        percentage_correlated_answers = get_percentages(
+            answer_combinations, totalbar=totalbar
+        )
         for answer in answer_suppress:
             if answer not in percentage_correlated_answers:
                 print(f"{answer} does not exist for this question")
@@ -111,8 +109,9 @@ def form_bar_positions(df, bar_positions=False, totalbar=None,
                 percentage_correlated_answers.pop(answer)
         number_of_answers = number_of_answers + len(percentage_correlated_answers)
         totalbar = None
-        if (count > 0 and len(bar_positions_complete) == number_of_answers - len(
-                percentage_correlated_answers)):
+        if count > 0 and len(bar_positions_complete) == number_of_answers - len(
+            percentage_correlated_answers
+        ):
             bar_positions_complete.append(max(bar_positions_complete) + 1.5)
         while len(bar_positions_complete) < number_of_answers:
             bar_positions_complete.append(max(bar_positions_complete) + 1)
@@ -121,9 +120,9 @@ def form_bar_positions(df, bar_positions=False, totalbar=None,
 
 
 def filter_answer_sequence(x, answer_sequence):
-    '''
+    """
     removes answers from sequence that where supressed while creating x
-    '''
+    """
     all_answer_sequence = []
     for answer_list in answer_sequence:
         all_answer_list = answer_list.copy()
@@ -136,22 +135,25 @@ def filter_answer_sequence(x, answer_sequence):
 
 
 def sort_data(sequence, x, y):
-    '''
+    """
     sorts lists x and y by comparing x and list sequence by rearranging x and y
     simoultaneously until x == sequence --> all entries in sequence have to
     also be in x
-    '''
+    at the moment each answer can only occure once in the plot, so if
+    you want to add questions it is necessary to supress e.g. the 'no_answer'
+    answer, else it would give an error. Can be improved in future.
+    """
     indizes = []
     for x_entry in x:
         if np.where(np.array(sequence) == x_entry)[0].shape[0] == 1:
             position = sequence.index(x_entry)
             indizes.append(position)
         else:
-            print(f'double bar: {x_entry}')
+            print(f"double bar: {x_entry}")
             raise NotImplementedError(
-                '''
+                """
                 only single occurence of bars supported at the moment
-                '''
+                """
             )
     x_sorted = [entry for _, entry in sorted(zip(indizes, x))]
     y_sorted = [entry for _, entry in sorted(zip(indizes, y))]
@@ -167,7 +169,7 @@ def simple_comparison_plot(
     bar_width: float = 0.8,
     legend_columns: int = 2,
     plot_title: Union[str, bool] = False,
-    answer_sequence: Union[list, bool] = False
+    answer_sequence: Union[list, bool] = False,
 ):
     """
     plots correlations from the np.ndarray df with the existing answer
