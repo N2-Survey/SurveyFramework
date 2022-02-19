@@ -98,6 +98,7 @@ class LimeSurvey:
 
     def __init__(
         self,
+        structure_file: str = None,
         theme: Optional[dict] = None,
         output_folder: Optional[str] = None,
     ) -> None:
@@ -111,6 +112,10 @@ class LimeSurvey:
             i.e. plots, repotrs, etc. will be saved. By default, current woring
             directory is used.
         """
+
+        # Store path to structure file
+        if structure_file:
+            self.structure_file = os.path.abspath(structure_file)
 
         # Update default plotting options
         self.theme = DEFAULT_THEME.copy()
@@ -128,7 +133,7 @@ class LimeSurvey:
         """
 
         # Parse XML structure file
-        self.structure_file = structure_file
+        self.structure_file = os.path.abspath(structure_file)
         structure_dict = read_lime_questionnaire_structure(structure_file)
 
         # Get pandas.DataFrame table for the structure
@@ -245,7 +250,6 @@ class LimeSurvey:
             LimeSurvey: a shallow copy of the LimeSurvey instance
         """
         survey_copy = LimeSurvey()
-        survey_copy.read_structure(self.structure_file)
         survey_copy.__dict__.update(self.__dict__)
 
         return survey_copy
@@ -258,7 +262,6 @@ class LimeSurvey:
         """
 
         survey_copy = LimeSurvey()
-        survey_copy.read_structure(self.structure_file)
         survey_copy.__dict__.update(self.__dict__)
         survey_copy.responses = copy.deepcopy(self.responses, memo_dict)
 
@@ -322,7 +325,7 @@ class LimeSurvey:
 
     def __getitem__(
         self, key: Union[pd.Series, pd.DataFrame, str, list, tuple]
-    ) -> Union["LimeSurvey", pd.DataFrame]:
+    ) -> "LimeSurvey":
         """Retrieve or slice the responses DataFrame
 
         Args:
@@ -336,13 +339,15 @@ class LimeSurvey:
         filtered_survey = self.__copy__()
 
         # A bool-valued Series, e.g. survey[survey.responses["A3"] == "A5"]
+        # is interpreted as a row filter
         if isinstance(key, (pd.Series, pd.DataFrame)):
             filtered_survey.responses = filtered_survey.responses[key]
-        # A question id, e.g. survey["A3"]
+        # A question id as string, e.g. survey["A3"]
+        # is interpreted as a column filter
         elif isinstance(key, str):
-            columns = filtered_survey.get_question(key).index
-            filtered_survey.responses = filtered_survey.responses[columns]
+            filtered_survey = filtered_survey[list(key)]
         # A list of columns, e.g. survey[["C3_SQ001", "C3_Sq002"]]
+        # is interpreted as a column filter
         elif isinstance(key, list):
             columns = [
                 column
@@ -352,10 +357,10 @@ class LimeSurvey:
             filtered_survey.responses = filtered_survey.responses[columns]
         # Two args, e.g. survey[survey.responses["A3"] == "A5", "B1"]
         # or survey[1:10, ["B1", "C1_SQ001"]]
-        elif isinstance(key, tuple):
-            assert len(key) == 2
+        # is interpreted as (row filter, column filter)
+        elif isinstance(key, tuple) and len(key) == 2:
             rows, columns = key
-            filtered_survey.responses = filtered_survey.responses[rows]
+            filtered_survey = filtered_survey[rows]
             filtered_survey = filtered_survey[columns]
         else:
             raise SyntaxError(
@@ -376,7 +381,7 @@ class LimeSurvey:
 
         Args:
             expr (str): Condition str for pd.DataFrame.query().
-                E.g. "A6 == 'Woman' & "C3 == 'I do not like my topic.'"
+                E.g. "A6 == 'A3' & "B2 == 'A5'"
 
         Returns:
             LimeSurvey: LimeSurvey with filtered responses
