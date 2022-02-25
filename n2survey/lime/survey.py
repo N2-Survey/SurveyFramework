@@ -244,7 +244,6 @@ class LimeSurvey:
         question: str,
         labels: bool = True,
         drop_other: bool = False,
-        filtered_responses: pd.DataFrame = None,
     ) -> pd.DataFrame:
         """Get responses for a given question with or without labels
 
@@ -252,7 +251,6 @@ class LimeSurvey:
             question (str): Question to get the responses for.
             labels (bool, optional): If the response consists of labels or not (default True).
             drop_other (bool, optional): Whether to exclude contingent question (i.e. "other")
-            filtered_responses (pd.DataFrame, optional): Pre-filtered responses DataFrame as basis of analysis
 
         Raises:
             ValueError: Unconsistent question types within question groups.
@@ -264,15 +262,7 @@ class LimeSurvey:
         question_group = self.get_question(question, drop_other=drop_other)
         question_type = self.get_question_type(question)
 
-<<<<<<< HEAD
         responses = self.responses.loc[:, question_group.index]
-=======
-        # Extract from either the original or filtered responses DataFrame
-        if filtered_responses is None:
-            responses = self.responses.loc[:, question_group.index]
-        else:
-            responses = filtered_responses.loc[:, question_group.index]
->>>>>>> Update get_responses and count methods to utilise new filter_responses method
 
         # convert multiple-choice responses
         if question_type == "multiple-choice":
@@ -301,10 +291,6 @@ class LimeSurvey:
 
         return responses
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> Update get_responses and count methods to utilise new filter_responses method
     def construct_filter_conditions(self, conditions: Union[tuple, list]) -> str:
         """Construct conditions for slicing the responses df in format for DataFrame.query().
             Pairs of question id and answer text are expected, e.g. ("A6", "Woman")
@@ -316,25 +302,13 @@ class LimeSurvey:
         Returns:
             str: formatted conditions for pd.DataFrame.query()
         """
-<<<<<<< HEAD
 
         # Default logic to AND for multiple questions, OR for choices within one question
         # E.g. (A6 == 'A1' | A6 == 'A3') & (A7 == 'A1' | A7 == 'A3' | A7 == 'A5')
-=======
-    def construct_filter_conditions(self, conditions):
-
->>>>>>> Implement construct_filter_conditions and filter_responses methods
-=======
-
-        # Default logic to AND for multiple questions, OR for choices within one question
-        # E.g. (A6 == 'A1' | A6 == 'A3') & (A7 == 'A1' | A7 == 'A3' | A7 == 'A5')
->>>>>>> Update get_responses and count methods to utilise new filter_responses method
         final_conditions = []
         outter_logic = " & "
         inner_logic = " | "
 
-<<<<<<< HEAD
-<<<<<<< HEAD
         # Check whether a single or multiple questions to query
         if isinstance(conditions, list):
             for condition in conditions:
@@ -372,54 +346,10 @@ class LimeSurvey:
                         )
 
                     # For other question types, e.g. "free", texts are left unchanged
-=======
-=======
-        # Check whether a single or multiple questions to query
->>>>>>> Update get_responses and count methods to utilise new filter_responses method
-        if isinstance(conditions, list):
-            for condition in conditions:
-                question, answers = condition
-                question_type = self.get_question_type(question)
-
-                # Check whether a single or multiple answers to each question to filter
-                if isinstance(answers, list):
-
-                    # For single-choice and array type questions, texts are converted to choice id using the choices dict
-                    if question_type in ["single-choice", "array"]:
-                        inverted_answer_dict = {
-                            answer: id
-                            for id, answer in self.get_choices(question).items()
-                        }
-                        answers = [inverted_answer_dict[answer] for answer in answers]
-                        # Condition str is joined by inner_logic operator
-                        condition_str = inner_logic.join(
-                            [f"{question} == '{answer}'" for answer in answers]
-                        )
-<<<<<<< HEAD
->>>>>>> Implement construct_filter_conditions and filter_responses methods
-=======
-
-                    # For multiple-choice questions, texts are converted to subquestion id using the choices dict
-                    elif question_type == "multiple-choice":
-                        inverted_answer_dict = {
-                            answer: id
-                            for id, answer in self.get_choices(question).items()
-                        }
-                        subquestions = [
-                            inverted_answer_dict[answer] for answer in answers
-                        ]
-                        condition_str = inner_logic.join(
-                            [f"{subquestion} == 'Y'" for subquestion in subquestions]
-                        )
-
-                    # For other question types, e.g. "free", texts are left unchanged
->>>>>>> Update get_responses and count methods to utilise new filter_responses method
                     else:
                         condition_str = inner_logic.join(
                             [f"{question} == {answer}" for answer in answers]
                         )
-<<<<<<< HEAD
-<<<<<<< HEAD
 
                 # If only a single answer to question
                 else:
@@ -476,64 +406,10 @@ class LimeSurvey:
                     )
 
                 # For other question types, e.g. "free", texts are left unchanged
-=======
-=======
-
-                # If only a single answer to question
->>>>>>> Update get_responses and count methods to utilise new filter_responses method
-                else:
-                    if question_type in ["single-choice", "array"]:
-                        inverted_answer_dict = {
-                            answer: id
-                            for id, answer in self.get_choices(question).items()
-                        }
-                        answers = inverted_answer_dict[answers]
-                        condition_str = f"{question} == '{answers}'"
-                    elif question_type == "multiple-choice":
-                        inverted_answer_dict = {
-                            answer: id
-                            for id, answer in self.get_choices(question).items()
-                        }
-                        subquestion = inverted_answer_dict[answers]
-                        condition_str = f"{subquestion} == 'Y'"
-                    else:
-                        condition_str = f"{question} == {answers}"
-                final_conditions.append(f"({condition_str})")
-
-            # Final str is joined by outter_logic operator
-            constructed_str = outter_logic.join(final_conditions)
-
-        # If only a single question to query
-        else:
-            question, answers = conditions
-            question_type = self.get_question_type(question)
-
-            if isinstance(answers, list):
-                if question_type in ["single-choice", "array"]:
-                    inverted_answer_dict = {
-                        answer: id for id, answer in self.get_choices(question).items()
-                    }
-                    answers = [inverted_answer_dict[answer] for answer in answers]
-                    condition_str = inner_logic.join(
-                        [f"{question} == '{answer}'" for answer in answers]
-                    )
-<<<<<<< HEAD
->>>>>>> Implement construct_filter_conditions and filter_responses methods
-=======
-                elif question_type == "multiple-choice":
-                    inverted_answer_dict = {
-                        answer: id for id, answer in self.get_choices(question).items()
-                    }
-                    subquestions = [inverted_answer_dict[answer] for answer in answers]
-                    condition_str = inner_logic.join(
-                        [f"{subquestion} == 'Y'" for subquestion in subquestions]
-                    )
->>>>>>> Update get_responses and count methods to utilise new filter_responses method
                 else:
                     condition_str = inner_logic.join(
                         [f"{question} == {answer}" for answer in answers]
                     )
-<<<<<<< HEAD
 
             # If only a single answer to question
             else:
@@ -549,30 +425,10 @@ class LimeSurvey:
                     }
                     subquestion = inverted_answer_dict[answers]
                     condition_str = f"{subquestion} == 'Y'"
-=======
-            else:
-                if question_type in ["single-choice", "array"]:
-                    inverted_answer_dict = {
-                        answer: id for id, answer in self.get_choices(question).items()
-                    }
-                    answers = inverted_answer_dict[answers]
-                    condition_str = f"{question} == '{answers}'"
-<<<<<<< HEAD
->>>>>>> Implement construct_filter_conditions and filter_responses methods
-=======
-                elif question_type == "multiple-choice":
-                    inverted_answer_dict = {
-                        answer: id for id, answer in self.get_choices(question).items()
-                    }
-                    subquestion = [inverted_answer_dict[answer] for answer in answers]
-                    condition_str = f"{subquestion} == 'Y'"
->>>>>>> Update get_responses and count methods to utilise new filter_responses method
                 else:
                     condition_str = f"{question} == {answers}"
             constructed_str = condition_str
 
-<<<<<<< HEAD
-<<<<<<< HEAD
         return constructed_str
 
     def keep_choices(self, conditions: Union[tuple, list]) -> "LimeSurvey":
@@ -631,37 +487,10 @@ class LimeSurvey:
         filtered_survey.responses = self.responses.query(condition)
 
         return filtered_survey
-=======
-        print(constructed_str)
-=======
->>>>>>> Update get_responses and count methods to utilise new filter_responses method
-        return constructed_str
-
-    def filter_responses(self, conditions: Union[tuple, list]) -> pd.DataFrame:
-        """Filter responses DataFrame with conditions on answers to specified questions
-
-        Args:
-            conditions (tuple or list of tuples): Conditions to re-format. Tuples in format of (question_id, choices).
-                choices can be a single str or list of str. Multiple conditions are input as a list of tuples.
-
-        Returns:
-            pd.DataFrame: filtered responses DataFrame
-        """
-
-        constructed_filter_conditions = self.construct_filter_conditions(conditions)
-<<<<<<< HEAD
-        # print(self.responses.query("self.responses['A00'] == 'A1'"))
-        print(self.responses.query(constructed_filter_conditions))
->>>>>>> Implement construct_filter_conditions and filter_responses methods
-=======
-
-        return self.responses.query(constructed_filter_conditions)
->>>>>>> Update get_responses and count methods to utilise new filter_responses method
 
     def count(
         self,
         question: str,
-        conditions: Union[tuple, list] = None,
         labels: bool = True,
         dropna: bool = False,
         add_totals: bool = False,
@@ -671,8 +500,6 @@ class LimeSurvey:
 
         Args:
             question (str): Name of a question group or a sinlge column
-            conditions (tuple or list of tuples): Conditions to re-format. Tuples in format of (question_id, choices).
-                choices can be a single str or list of str. Multiple conditions are input as a list of tuples.
             labels (bool, optional): Use labels instead of codes. Defaults to True.
             dropna (bool, optional): Do not count empty values. Defaults to False.
             add_totals (bool, optional): Add a column and a row with totals. Values
@@ -698,17 +525,7 @@ class LimeSurvey:
               total count contains misleading data, NA
         """
         question_type = self.get_question_type(question)
-
-        # Retrieve data from the original or filtered responses DataFrame
-        if conditions is None:
-            responses = self.get_responses(question, labels=labels, drop_other=True)
-        else:
-            responses = self.get_responses(
-                question,
-                labels=labels,
-                drop_other=True,
-                filtered_responses=self.filter_responses(conditions),
-            )
+        responses = self.get_responses(question, labels=labels, drop_other=True)
 
         if responses.shape[1] == 1:
             # If it consist of only one column, i.e. free, single choice, or
@@ -1031,41 +848,14 @@ class LimeSurvey:
 if __name__ == "__main__":
     s = LimeSurvey("/home/dawaifu/SurveyFramework/data/survey_structure_2021.xml")
     s.read_responses("/home/dawaifu/SurveyFramework/data/dummy_data_2021_codeonly.csv")
-    # print(s.get_question_type("C5"))
-    # print(s.questions.loc["C5_SQ001", "type"])
-    # print(s.get_choices("C5"))
-    # print(s.questions[s.questions["type"] == "array"])
-    print(
-        s.filter_responses(
-            [
-                ("A6", ["Woman", "Man"]),
-                ("A7", ["Heterosexual", "Bisexual", "Queer"]),
-                ("B6_SQ001", ["Yes", "No"]),
-                (
-                    "C3",
-                    [
-                        "I do not like my topic.",
-                        "I have work related difficulties with my supervisor.",
-                    ],
-                ),
-            ]
-        )
-    )
-    print(s.count("A1"))
-    print(
-        s.count(
-            "A1",
-            conditions=[
-                ("A6", ["Woman", "Man"]),
-                ("A7", ["Heterosexual", "Bisexual", "Queer"]),
-                ("B6_SQ001", ["Yes", "No"]),
-                (
-                    "C3",
-                    [
-                        "I do not like my topic.",
-                        "I have work related difficulties with my supervisor.",
-                    ],
-                ),
-            ],
-        )
+    # print(s.get_label("A11"))
+    print(s.get_choices("A10"))
+    # print(s.responses)
+    s.filter_responses(
+        [
+            ("A6", ["Woman", "Man"]),
+            ("A7", ["Heterosexual", "Bisexual", "Queer"]),
+            ("C5_SQ001", 80),
+            ("A10_SQ007", "Y"),
+        ]
     )
