@@ -843,3 +843,19 @@ class LimeSurvey:
             choices_dict = question_info.choices[0]
 
         return choices_dict
+
+
+if __name__ == "__main__":
+    s = LimeSurvey("/home/dawaifu/SurveyFramework/data/survey_structure_2021.xml")
+    s.read_responses("/home/dawaifu/SurveyFramework/data/dummy_data_2021_codeonly.csv")
+    # print(s.get_label("A11"))
+    print(s.get_choices("A10"))
+    # print(s.responses)
+    s.filter_responses(
+        [
+            ("A6", ["Woman", "Man"]),
+            ("A7", ["Heterosexual", "Bisexual", "Queer"]),
+            ("C5_SQ001", 80),
+            ("A10_SQ007", "Y"),
+        ]
+    )
