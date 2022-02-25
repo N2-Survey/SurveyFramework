@@ -104,6 +104,7 @@ class LimeSurvey:
         """Get an instance of the Survey
 
         Args:
+            structure_file (str, optional): Path to the structure XML file
             theme (Optional[dict], optional): seaborn theme parameters.
               See `seaborn.set_theme` for the details. By default,
               `n2survey.DEFAULT_THEME` is used.
@@ -361,9 +362,9 @@ class LimeSurvey:
         else:
             raise SyntaxError(
                 """
-                Input must be of type pd.Series, pd.DataFrame, str, or tuple.
+                Input must be of type pd.Series, pd.DataFrame, str, list, or tuple.
                 Examples:
-                    pd.Series: survey[survey.responses["A3"] == "A5"]
+                    pd.Series or pd.DataFrame: survey[survey.responses["A3"] == "A5"]
                     str: survey["A3"]
                     list of str: survey[["C3_SQ001", "C3_Sq002"]]
                     tuple: survey[survey.responses["A3"] == "A5", "B1"]
