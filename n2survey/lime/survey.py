@@ -116,6 +116,7 @@ class LimeSurvey:
         # Store path to structure file
         if structure_file:
             self.structure_file = os.path.abspath(structure_file)
+            self.read_structure(self.structure_file)
 
         # Update default plotting options
         self.theme = DEFAULT_THEME.copy()
@@ -345,7 +346,7 @@ class LimeSurvey:
         # A question id as string, e.g. survey["A3"]
         # is interpreted as a column filter
         elif isinstance(key, str):
-            filtered_survey = filtered_survey[list(key)]
+            filtered_survey = filtered_survey[[key]]
         # A list of columns, e.g. survey[["C3_SQ001", "C3_Sq002"]]
         # is interpreted as a column filter
         elif isinstance(key, list):
