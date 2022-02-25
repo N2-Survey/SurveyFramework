@@ -19,8 +19,7 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
     def test_simple_init(self):
         """Test simple initialisation"""
 
-        survey = LimeSurvey()
-        survey.read_structure(structure_file=self.structure_file)
+        survey = LimeSurvey(structure_file=self.structure_file)
 
         structure_dict = read_lime_questionnaire_structure(self.structure_file)
         section_df = pd.DataFrame(structure_dict["sections"])
@@ -40,8 +39,8 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
         survey = LimeSurvey(
             theme={"palette": "Reds"},
             output_folder="somefolder",
+            structure_file=self.structure_file,
         )
-        survey.read_structure(structure_file=self.structure_file)
         expected_theme = DEFAULT_THEME.copy()
         expected_theme["palette"] = "Reds"
         self.assertEqual(survey.theme, expected_theme)
