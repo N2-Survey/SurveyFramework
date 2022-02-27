@@ -609,7 +609,8 @@ class LimeSurvey:
 
         return fig, ax
 
-    def check_plot_implemented(self, question, compare_with=None, add_questions=None):
+    def check_plot_implemented(self, question, compare_with=None,
+                               add_questions=None):
         """
         function to check if question type and/or combination of questions for
         compare_with is already implemented and working
