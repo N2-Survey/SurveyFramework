@@ -671,7 +671,7 @@ class LimeSurvey:
         self, question, compare_with, answer_sequence, add_questions=[]
     ):
         """
-        Load and combines necessary data for the plot functions.
+        Load and combine necessary data for the plot functions.
         depending on the wanted (question/add_question_entry,compare_with) tuple
         """
         plot_data_list = []
