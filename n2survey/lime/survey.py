@@ -244,7 +244,7 @@ class LimeSurvey:
             drop_other (bool, optional): Whether to exclude contingent question (i.e. "other")
 
         Raises:
-            ValueError: Unconsistent question types within question groups.
+            ValueError: Inconsistent question types within question groups.
             ValueError: Unknown question types.
 
         Returns:
@@ -258,13 +258,17 @@ class LimeSurvey:
         if question_type == "multiple-choice":
             # ASSUME: question response consists of multiple columns with
             #         'Y' or NaN as entries.
-            responses = responses.notnull()
+            # Masked with boolean values the responses with nan only for the columns where is_contingent is True.
+            responses.loc[:, ~question_group.is_contingent] = responses.loc[
+                :, ~question_group.is_contingent
+            ].notnull()
 
         # replace labels
         if labels:
             if question_type == "multiple-choice":
                 # Rename column names
                 responses = responses.rename(columns=self.get_choices(question))
+
             else:
                 # Rename category values and replace NA by self.na_label
                 for column in responses.columns:

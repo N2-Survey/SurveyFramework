@@ -210,7 +210,7 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
                 False,
                 True,
                 False,
-                False,
+                np.nan,
             ],
             [
                 False,
@@ -233,11 +233,13 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
                 False,
                 False,
                 False,
-                False,
+                np.nan,
             ],
         ]
         response = self.survey.get_responses(self.multiple_choice_column, labels=False)
-        np.testing.assert_array_equal(expected_response, response.values[:2])
+        np.testing.assert_equal(
+            expected_response, response.values[:2].astype(np.float64)
+        )
 
         expected_columns = [
             "I do not like scientific work.",
@@ -247,7 +249,9 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
         ]
         response = self.survey.get_responses(self.multiple_choice_column, labels=True)
         np.testing.assert_array_equal(expected_columns, response.columns[:4])
-        np.testing.assert_array_equal(expected_response, response.values[:2])
+        np.testing.assert_array_equal(
+            expected_response, response.values[:2].astype(np.float64)
+        )
 
     def test_get_response_free(self):
         """Test get response for free question type"""
