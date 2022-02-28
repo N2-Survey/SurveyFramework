@@ -8,7 +8,7 @@ __all__ = ["simple_comparison_plot"]
 
 def get_percentages(array, totalbar=None):
     """
-    This function calculates the total number of combinations from the given
+    Calculate the total number of combinations from the given
     array of answer combinations.
     After that it adds the totalbar, if wanted, then it calculates a dictionary
     with the percentages for each combination+the totalbar if wanted
@@ -45,14 +45,14 @@ def get_percentages(array, totalbar=None):
     return percentage
 
 
-def form_x_and_y(df, totalbar=None, answer_suppress=False):
+def form_x_and_y(df, totalbar=None, suppress_answers=[]):
     """
-    This function splits up the array given to it to x and y components for
+    Split up the array given to it to x and y components for
     the plot.
     it collects the percentages of the people that answered the 'compare_with'
     question and the correlation with the answers those people gave to the
     main 'question'.
-    It filters out the answers specified by answer_suppress.
+    It filters out the answers specified by suppress_answers.
     """
     percentages_for_comparison = []
     for entry in df:
@@ -63,12 +63,11 @@ def form_x_and_y(df, totalbar=None, answer_suppress=False):
         # 'add_questions' that are also compared with the compare_with_question
         # in 'plot'()-function of survey.py
         totalbar = None
-        if answer_suppress:
-            for answer in answer_suppress:
-                if answer not in percentage_correlated_answers:
-                    print(f"{answer} does not exist for this question")
-                else:
-                    percentage_correlated_answers.pop(answer)
+        for answer in suppress_answers:
+            if answer not in percentage_correlated_answers:
+                print(f"{answer} does not exist for this question")
+            else:
+                percentage_correlated_answers.pop(answer)
         percentages_for_comparison.append(percentage_correlated_answers.copy())
 
     x = []
@@ -80,9 +79,9 @@ def form_x_and_y(df, totalbar=None, answer_suppress=False):
     return x, y
 
 
-def form_bar_positions(df, bar_positions=False, totalbar=None, answer_suppress=[]):
+def form_bar_positions(df, bar_positions=False, totalbar=None, suppress_answers=[]):
     """
-    forms a complete list of bar positions for all bars, also the not
+    Form a complete list of bar positions for all bars, also the not
     specified ones.
     You can specify bar positions in a list, but if you
     want to specify the last bar you have to specify every bar before that,
@@ -102,7 +101,7 @@ def form_bar_positions(df, bar_positions=False, totalbar=None, answer_suppress=[
         percentage_correlated_answers = get_percentages(
             answer_combinations, totalbar=totalbar
         )
-        for answer in answer_suppress:
+        for answer in suppress_answers:
             if answer not in percentage_correlated_answers:
                 print(f"{answer} does not exist for this question")
             else:
@@ -121,7 +120,7 @@ def form_bar_positions(df, bar_positions=False, totalbar=None, answer_suppress=[
 
 def filter_answer_sequence(x, answer_sequence):
     """
-    removes answers from sequence that where supressed while creating x
+    Remove answers from sequence that were supressed while creating x
     """
     all_answer_sequence = []
     for answer_list in answer_sequence:
@@ -136,18 +135,18 @@ def filter_answer_sequence(x, answer_sequence):
 
 def sort_data(sequence, x, y):
     """
-    sorts lists x and y by comparing x and list sequence by rearranging x and y
+    Sort lists x and y by comparing x and list sequence by rearranging x and y
     simoultaneously until x == sequence --> all entries in sequence have to
     also be in x
     at the moment each answer can only occure once in the plot, so if
     you want to add questions it is necessary to supress e.g. the 'no_answer'
     answer, else it would give an error. Can be improved in future.
     """
-    indizes = []
+    indices = []
     for x_entry in x:
         if np.where(np.array(sequence) == x_entry)[0].shape[0] == 1:
             position = sequence.index(x_entry)
-            indizes.append(position)
+            indices.append(position)
         else:
             print(f"double bar: {x_entry}")
             raise NotImplementedError(
@@ -155,8 +154,8 @@ def sort_data(sequence, x, y):
                 only single occurence of bars supported at the moment
                 """
             )
-    x_sorted = [entry for _, entry in sorted(zip(indizes, x))]
-    y_sorted = [entry for _, entry in sorted(zip(indizes, y))]
+    x_sorted = [entry for _, entry in sorted(zip(indices, x))]
+    y_sorted = [entry for _, entry in sorted(zip(indices, y))]
     return x_sorted, y_sorted
 
 
@@ -169,8 +168,8 @@ def calculate_title_pad(labels, legend_columns, legend_title: Union[str, bool] =
 
 def simple_comparison_plot(
     plot_data_list,
-    answer_suppress: list = [],
-    no_answer_supress: bool = True,
+    suppress_answers: list = [],
+    ignore_no_answer: bool = True,
     totalbar: np.ndarray = None,
     bar_positions: Union[list, bool] = False,
     threshold_percentage: float = 0,
@@ -182,16 +181,16 @@ def simple_comparison_plot(
     answer_sequence: list = [],
 ):
     """
-    Plots correlations from the np.ndarray arrays in plot_data_list with the
+    Plot correlations from the np.ndarray arrays in plot_data_list with the
     existing answer combinations and applies the given specifications.
     """
     # form x-axis with answers to first question and y-axis with
     # percentages of second question correlated to each answer of the first
     # question.
-    if no_answer_supress:
-        answer_suppress.append("No Answer")
+    if ignore_no_answer:
+        suppress_answers.append("No Answer")
     (x, y) = form_x_and_y(
-        plot_data_list, totalbar=totalbar, answer_suppress=answer_suppress
+        plot_data_list, totalbar=totalbar, suppress_answers=suppress_answers
     )
     # complete and filter answer sequence after sorting out answers
     answer_sequence = filter_answer_sequence(x, answer_sequence)
@@ -200,7 +199,7 @@ def simple_comparison_plot(
         plot_data_list,
         bar_positions,
         totalbar=totalbar,
-        answer_suppress=answer_suppress,
+        suppress_answers=suppress_answers,
     )
     # sort x and y to follow answer_sequence
     (x, y) = sort_data(answer_sequence, x, y)

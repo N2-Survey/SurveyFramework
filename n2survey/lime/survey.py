@@ -445,8 +445,8 @@ class LimeSurvey:
         compare_with: str = None,
         add_questions: list = [],
         totalbar: bool = False,
-        answer_suppress: list = [],
-        no_answer_supress: bool = True,
+        suppress_answers: list = [],
+        ignore_no_answer: bool = True,
         threshold_percentage: float = 0.0,
         bar_positions: Union[list, bool] = False,
         legend_columns: int = 2,
@@ -459,7 +459,7 @@ class LimeSurvey:
         **kwargs,
     ):
         """
-        This function plots answers of the 'question' given.
+        Plot answers of the 'question' given.
         Optional Parameters:
             'compare_with':
                 correlates answers of 'question' with answers
@@ -469,8 +469,8 @@ class LimeSurvey:
             'totalbar':
                 calculates the number of answers of 'compare_with' question
                 and displays them as first question-answer in the plot.
-            'answer_suppress':
-                removes every entry in 'answer_suppress' from the plot
+            'suppress_answers':
+                removes every entry in 'suppress_answers' from the plot
             'threshold_percentage':
                 removes percentages if below threshold, standard is 0
             'bar_positions':
@@ -545,8 +545,8 @@ class LimeSurvey:
                 fig, ax = simple_comparison_plot(
                     plot_data_list,
                     totalbar=totalbar_data,
-                    answer_suppress=answer_suppress,
-                    no_answer_supress=no_answer_supress,
+                    suppress_answers=suppress_answers,
+                    ignore_no_answer=ignore_no_answer,
                     bar_positions=bar_positions,
                     threshold_percentage=threshold_percentage,
                     legend_columns=legend_columns,
@@ -618,7 +618,7 @@ class LimeSurvey:
 
     def check_plot_implemented(self, question, compare_with=None, add_questions=[]):
         """
-        function to check if question type and/or combination of questions for
+        Check if question type and/or combination of questions for
         compare_with is already implemented and working
         """
         supported_plots = ["single-choice", "multiple-choice", "array"]
@@ -653,7 +653,7 @@ class LimeSurvey:
 
     def get_answer_sequence(self, question, add_questions=[], totalbar=False):
         """
-        Creates answer sequence from given questions to keep sequence in
+        Create answer sequence from given questions to keep sequence in
         plot consistent if answers that were never chosen are suppressed
         """
         answer_sequence = [
@@ -671,7 +671,7 @@ class LimeSurvey:
         self, question, compare_with, answer_sequence, add_questions=[]
     ):
         """
-        This function loads and combines necessary data for the plot functions.
+        Load and combines necessary data for the plot functions.
         depending on the wanted (question/add_question_entry,compare_with) tuple
         """
         plot_data_list = []
