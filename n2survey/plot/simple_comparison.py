@@ -80,7 +80,7 @@ def form_x_and_y(df, totalbar=None, answer_suppress=False):
     return x, y
 
 
-def form_bar_positions(df, bar_positions=False, totalbar=None, answer_suppress=False):
+def form_bar_positions(df, bar_positions=False, totalbar=None, answer_suppress=[]):
     """
     forms a complete list of bar positions for all bars, also the not
     specified ones.
@@ -126,7 +126,7 @@ def filter_answer_sequence(x, answer_sequence):
     all_answer_sequence = []
     for answer_list in answer_sequence:
         all_answer_list = answer_list.copy()
-        for answer in all_answer_sequence.copy():
+        for answer in answer_list:
             if answer not in x:
                 all_answer_list.remove(answer)
         for answer in all_answer_list:
@@ -160,36 +160,50 @@ def sort_data(sequence, x, y):
     return x_sorted, y_sorted
 
 
+def calculate_title_pad(labels, legend_columns, legend_title: Union[str, bool] = None):
+    pad = int(len(labels) / legend_columns) * 20 + 20
+    if legend_title:
+        pad = pad + 20
+    return pad
+
+
 def simple_comparison_plot(
-    df,
-    answer_suppress: list = None,
+    plot_data_list,
+    answer_suppress: list = [],
+    no_answer_supress: bool = True,
     totalbar: np.ndarray = None,
     bar_positions: Union[list, bool] = False,
     threshold_percentage: float = 0,
     bar_width: float = 0.8,
     legend_columns: int = 2,
     plot_title: Union[str, bool] = False,
-    answer_sequence: Union[list, bool] = False,
+    plot_title_position: tuple = (()),
+    legend_title: str = None,
+    answer_sequence: list = [],
 ):
     """
-    plots correlations from the np.ndarray df with the existing answer
-    combinations and applies the given specifications.
+    Plots correlations from the np.ndarray arrays in plot_data_list with the
+    existing answer combinations and applies the given specifications.
     """
-    if answer_suppress is None:
-        answer_suppress = []
     # form x-axis with answers to first question and y-axis with
     # percentages of second question correlated to each answer of the first
     # question.
-    (x, y) = form_x_and_y(df, totalbar=totalbar, answer_suppress=answer_suppress)
+    if no_answer_supress:
+        answer_suppress.append("No Answer")
+    (x, y) = form_x_and_y(
+        plot_data_list, totalbar=totalbar, answer_suppress=answer_suppress
+    )
     # complete and filter answer sequence after sorting out answers
     answer_sequence = filter_answer_sequence(x, answer_sequence)
     # create a list with positonings of the bars in the plot.
     bar_positions_complete = form_bar_positions(
-        df, bar_positions, totalbar=totalbar, answer_suppress=answer_suppress
+        plot_data_list,
+        bar_positions,
+        totalbar=totalbar,
+        answer_suppress=answer_suppress,
     )
     # sort x and y to follow answer_sequence
     (x, y) = sort_data(answer_sequence, x, y)
-
     # %% Prepare/Define figure
     fig, ax = plt.subplots()
     # %% split up y to list of answers of question 2 and list of percentages
@@ -198,7 +212,7 @@ def simple_comparison_plot(
     for entry in y:
         q2_answers.append(entry[:, 0])
         percentages.append(entry[:, 1].astype(np.float64))
-    all_answers = np.unique(np.concatenate(np.array(q2_answers)))
+    all_answers = np.unique(np.concatenate(np.array(q2_answers, dtype=object)))
     percentage_all = []
     for (percentage, q2_answer) in zip(percentages, q2_answers):
         count = 0
@@ -229,11 +243,23 @@ def simple_comparison_plot(
         count = count + 1
     labels = all_answers
     ax.legend(
-        labels, bbox_to_anchor=([0.1, 1, 0, 0]), ncol=legend_columns, frameon=False
+        labels,
+        bbox_to_anchor=([0.1, 1, 0, 0]),
+        ncol=legend_columns,
+        frameon=False,
+        title=legend_title,
     )
     ax.axes.get_yaxis().set_visible(False)
     if plot_title:
-        ax.set_title(plot_title, pad=60)
+        if plot_title_position:
+            ax.text(plot_title_position[0], plot_title_position[1], plot_title)
+        else:
+            ax.set_title(
+                plot_title,
+                pad=calculate_title_pad(
+                    labels, legend_columns, legend_title=legend_title
+                ),
+            )
     # scale
     plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment="right")
     # figure settings

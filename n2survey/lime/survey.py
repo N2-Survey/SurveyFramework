@@ -443,15 +443,18 @@ class LimeSurvey:
         self,
         question,
         compare_with: str = None,
-        add_questions: list = None,
+        add_questions: list = [],
         totalbar: bool = False,
-        answer_suppress: list = None,
+        answer_suppress: list = [],
+        no_answer_supress: bool = True,
         threshold_percentage: float = 0.0,
         bar_positions: Union[list, bool] = False,
         legend_columns: int = 2,
         plot_title: Union[str, bool] = True,
+        plot_title_position: tuple = (()),
         save: Union[str, bool] = False,
-        answer_sequence: Union[list, bool] = False,
+        answer_sequence: list = [],
+        legend_title: Union[str, bool] = None,
         kind: str = None,
         **kwargs,
     ):
@@ -483,8 +486,11 @@ class LimeSurvey:
                 of the Plot
                 ATTENTION: if the number of columns is too high this will
                 press the plot right next to the legend and smush it.
-            'plot_title': if False no title, if True question as title
-                if string --> string as title
+            'plot_title': if False: no title, if True: question as title,
+                if string: string as title
+            'plot_title_position': tuple (x,y), if empty, position of the
+                title is calculated depending on number of legend entries
+                and 'legend_columns'
             'save': save plot as png either with question indicator as name
                 if True or as string if string is added here
             'answer_sequence': getting the answers in the right order made the
@@ -510,18 +516,17 @@ class LimeSurvey:
 
         question_type = self.get_question_type(question)
         # get plot title
-        if plot_title:
-            if not isinstance(plot_title, str):
-                plot_title = self.get_label(question)
+        if plot_title is True:
+            plot_title = self.get_label(question)
+        if legend_title is True:
+            legend_title = self.get_label(compare_with)
         if compare_with:
             # load necessary data for comparison
-            if answer_sequence:
-                answer_sequence = [answer_sequence]
-            else:
+            if not answer_sequence:
                 answer_sequence = self.get_answer_sequence(
                     question, add_questions=add_questions, totalbar=totalbar
                 )
-            df, answer_sequence = self.create_comparison_data(
+            plot_data_list, answer_sequence = self.create_comparison_data(
                 question, compare_with, answer_sequence, add_questions=add_questions
             )
         if question_type == "single-choice":
@@ -538,13 +543,16 @@ class LimeSurvey:
                 else:
                     totalbar_data = None
                 fig, ax = simple_comparison_plot(
-                    df,
+                    plot_data_list,
                     totalbar=totalbar_data,
                     answer_suppress=answer_suppress,
+                    no_answer_supress=no_answer_supress,
                     bar_positions=bar_positions,
                     threshold_percentage=threshold_percentage,
                     legend_columns=legend_columns,
                     plot_title=plot_title,
+                    plot_title_position=plot_title_position,
+                    legend_title=legend_title,
                     answer_sequence=answer_sequence,
                 )
 
@@ -606,31 +614,31 @@ class LimeSurvey:
             fullpath = os.path.join(self.output_folder, filename)
             fig.savefig(fullpath)
             print(f"Saved plot to {fullpath}")
-
         return fig, ax
 
-    def check_plot_implemented(self, question, compare_with=None,
-                               add_questions=None):
+    def check_plot_implemented(self, question, compare_with=None, add_questions=[]):
         """
         function to check if question type and/or combination of questions for
         compare_with is already implemented and working
         """
-        if not add_questions:
-            add_questions = []
         supported_plots = ["single-choice", "multiple-choice", "array"]
         supported_comparisons = [("single-choice", "single-choice")]
         all_plots = [question]
         if compare_with:
             all_plots.append(compare_with)
-        for i in add_questions:
-            all_plots.append(i)
-        for plot in all_plots:
-            if self.get_question_type(plot) not in supported_plots:
+        all_plots = all_plots + add_questions
+        question_types = [self.get_question_type(plot) for plot in all_plots]
+        count = 0
+        for question_type in question_types:
+            if question_type not in supported_plots:
+                plot = all_plots[count]
+                print(f"{plot} is unsupported questiontype")
                 raise NotImplementedError(
                     """
                     Question type not yet implemented
                     """
                 )
+            count = count + 1
         if compare_with:
             tuple_list = [(question, compare_with)]
             for i in add_questions:
@@ -641,41 +649,36 @@ class LimeSurvey:
                     self.get_question_type(i[1]),
                 )
                 if question_type_tuple not in supported_comparisons:
-                    raise NotImplementedError(f" comparison {i} not yet implemented")
+                    raise NotImplementedError(f"Comparison {i} not yet implemented")
 
-    def get_answer_sequence(self, question, add_questions=None, totalbar=False):
+    def get_answer_sequence(self, question, add_questions=[], totalbar=False):
         """
-        creates answer sequence from given questions to keep sequence in
+        Creates answer sequence from given questions to keep sequence in
         plot consistent if answers that were never chosen are suppressed
         """
-        if not add_questions:
-            add_questions = []
         answer_sequence = [
             list(self.count(question, labels=True).index.values.astype(str))
         ]
-        if add_questions:
-            for entry in add_questions:
-                answer_sequence.append(
-                    list(self.count(entry, labels=True).index.values.astype(str))
-                )
+        for entry in add_questions:
+            answer_sequence.append(
+                list(self.count(entry, labels=True).index.values.astype(str))
+            )
         if totalbar:
             answer_sequence[0].insert(0, "Total")
         return answer_sequence
 
     def create_comparison_data(
-        self, question, compare_with, answer_sequence, add_questions=None
+        self, question, compare_with, answer_sequence, add_questions=[]
     ):
         """
         This function loads and combines necessary data for the plot functions.
         depending on the wanted (question/add_question_entry,compare_with) tuple
         """
-        if not add_questions:
-            add_questions = []
-        df = []
+        plot_data_list = []
         if self.get_question_type(compare_with) == "single-choice":
             # create Dataarray from all existing combinations of
             # question and compare_with
-            df.append(
+            plot_data_list.append(
                 pd.concat(
                     [
                         self.get_responses(question, labels=True, drop_other=True),
@@ -686,14 +689,14 @@ class LimeSurvey:
             )
             # remove combinations that do not occure from answer_sequence
             for answer in answer_sequence[0].copy():
-                if all([answer not in df[0][:, 0], answer != "Total"]):
+                if all([answer not in plot_data_list[0][:, 0], answer != "Total"]):
                     answer_sequence[0].remove(answer)
         if add_questions:
             # add combinations for additional questions with
             # 'compare_with' question
             for entry, answerlist in zip(add_questions, answer_sequence[1:]):
                 if self.get_question_type(compare_with) == "single-choice":
-                    next_df = pd.concat(
+                    next_plot_data = pd.concat(
                         [
                             self.get_responses(entry, labels=True, drop_other=True),
                             self.get_responses(
@@ -702,11 +705,11 @@ class LimeSurvey:
                         ],
                         axis=1,
                     ).values
-                    df.append(next_df)
+                    plot_data_list.append(next_plot_data)
                 for answer in answerlist.copy():
-                    if answer not in next_df[:, 0]:
+                    if answer not in next_plot_data[:, 0]:
                         answerlist.remove(answer)
-        return df, answer_sequence
+        return plot_data_list, answer_sequence
 
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)
