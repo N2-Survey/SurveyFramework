@@ -11,6 +11,7 @@ from n2survey.lime.structure import read_lime_questionnaire_structure
 from n2survey.plot import (
     likert_bar_plot,
     multiple_choice_bar_plot,
+    simple_comparison_plot,
     single_choice_bar_plot,
 )
 
@@ -441,36 +442,127 @@ class LimeSurvey:
     def plot(
         self,
         question,
-        kind: str = None,
+        compare_with: str = None,
+        add_questions: list = [],
+        totalbar: bool = False,
+        suppress_answers: list = [],
+        ignore_no_answer: bool = True,
+        threshold_percentage: float = 0.0,
+        bar_positions: Union[list, bool] = False,
+        legend_columns: int = 2,
+        plot_title: Union[str, bool] = True,
+        plot_title_position: tuple = (()),
         save: Union[str, bool] = False,
+        answer_sequence: list = [],
+        legend_title: Union[str, bool] = None,
+        kind: str = None,
         **kwargs,
     ):
+        """
+        Plot answers of the 'question' given.
+        Optional Parameters:
+            'compare_with':
+                correlates answers of 'question' with answers
+                of the question given to the 'compare_with' variable.
+            'add_questions':
+                adds bars of other questions to the plot
+            'totalbar':
+                calculates the number of answers of 'compare_with' question
+                and displays them as first question-answer in the plot.
+            'suppress_answers':
+                removes every entry in 'suppress_answers' from the plot
+            'threshold_percentage':
+                removes percentages if below threshold, standard is 0
+            'bar_positions':
+                positions the entries in the plot [0,1.5,2.5,3.5] will assign
+                the first 4 answers in the plot (including totalbar) at
+                the given positions. Every additional question-position is
+                calculated by adding +1 to the highest position, except if the
+                answer is the first one of a question in 'add_questions', then
+                it automatically adds +1.5 to distinguish the new question from
+                the previous one
+            'legend_columns':
+                number of columns of the legend added by 'compare_with' on top
+                of the Plot
+                ATTENTION: if the number of columns is too high this will
+                press the plot right next to the legend and smush it.
+            'plot_title': if False: no title, if True: question as title,
+                if string: string as title
+            'plot_title_position': tuple (x,y), if empty, position of the
+                title is calculated depending on number of legend entries
+                and 'legend_columns'
+            'save': save plot as png either with question indicator as name
+                if True or as string if string is added here
+            'answer_sequence': getting the answers in the right order made the
+            inclusion of an answer_sequence variable necessary, which also
+            can be used if you want to give the order of bars yourself,
+            just add in a list with the answers as entries in the order you
+            want
+        """
         if kind is not None:
             raise NotImplementedError(
                 "Forced plot type is not supported yet."
                 f"Please use matplotlib directly with"
                 f"`servey.get_responses({question})` or `servey.count({question})`"
             )
-
+        # check if plot is implemented:
+        self.check_plot_implemented(
+            question, compare_with=compare_with, add_questions=add_questions
+        )
         # Prepare theme and non-theme arguments
         theme = self.theme.copy()
         theme_kwargs, non_theme_kwargs = _split_plot_kwargs(kwargs)
         theme = deep_dict_update(theme, theme_kwargs)
 
         question_type = self.get_question_type(question)
-
+        # get plot title
+        if plot_title is True:
+            plot_title = self.get_label(question)
+        if legend_title is True:
+            legend_title = self.get_label(compare_with)
+        if compare_with:
+            # load necessary data for comparison
+            if not answer_sequence:
+                answer_sequence = self.get_answer_sequence(
+                    question, add_questions=add_questions, totalbar=totalbar
+                )
+            plot_data_list, answer_sequence = self.create_comparison_data(
+                question, compare_with, answer_sequence, add_questions=add_questions
+            )
         if question_type == "single-choice":
             counts_df = self.count(question, labels=True)
 
             if "title" not in non_theme_kwargs:
                 non_theme_kwargs.update({"title": counts_df.columns[0]})
+            if compare_with:
+                if totalbar:
+                    totalbar_data = np.unique(
+                        self.get_responses(compare_with, labels=True, drop_other=True),
+                        return_counts=True,
+                    )
+                else:
+                    totalbar_data = None
+                fig, ax = simple_comparison_plot(
+                    plot_data_list,
+                    totalbar=totalbar_data,
+                    suppress_answers=suppress_answers,
+                    ignore_no_answer=ignore_no_answer,
+                    bar_positions=bar_positions,
+                    threshold_percentage=threshold_percentage,
+                    legend_columns=legend_columns,
+                    plot_title=plot_title,
+                    plot_title_position=plot_title_position,
+                    legend_title=legend_title,
+                    answer_sequence=answer_sequence,
+                )
 
-            fig, ax = single_choice_bar_plot(
-                x=counts_df.index.values,
-                y=pd.Series(counts_df.iloc[:, 0], name="Number of Responses"),
-                theme=theme,
-                **non_theme_kwargs,
-            )
+            else:
+                fig, ax = single_choice_bar_plot(
+                    x=counts_df.index.values,
+                    y=pd.Series(counts_df.iloc[:, 0], name="Number of Responses"),
+                    theme=theme,
+                    **non_theme_kwargs,
+                )
         elif question_type == "multiple-choice":
             counts_df = self.count(
                 question, labels=True, percents=True, add_totals=True
@@ -510,12 +602,6 @@ class LimeSurvey:
                 calc_fig_size=True,
                 **non_theme_kwargs,
             )
-        else:
-            raise NotImplementedError(
-                "Only single choice fields are available."
-                f"Please use matplotlib directly with"
-                f"`servey.get_responses({question})` or `servey.count({question})`"
-            )
 
         # Save to a file
         if save:
@@ -528,8 +614,102 @@ class LimeSurvey:
             fullpath = os.path.join(self.output_folder, filename)
             fig.savefig(fullpath)
             print(f"Saved plot to {fullpath}")
-
         return fig, ax
+
+    def check_plot_implemented(self, question, compare_with=None, add_questions=[]):
+        """
+        Check if question type and/or combination of questions for
+        compare_with is already implemented and working
+        """
+        supported_plots = ["single-choice", "multiple-choice", "array"]
+        supported_comparisons = [("single-choice", "single-choice")]
+        all_plots = [question]
+        if compare_with:
+            all_plots.append(compare_with)
+        all_plots = all_plots + add_questions
+        question_types = [self.get_question_type(plot) for plot in all_plots]
+        count = 0
+        for question_type in question_types:
+            if question_type not in supported_plots:
+                plot = all_plots[count]
+                print(f"{plot} is unsupported questiontype")
+                raise NotImplementedError(
+                    """
+                    Question type not yet implemented
+                    """
+                )
+            count = count + 1
+        if compare_with:
+            tuple_list = [(question, compare_with)]
+            for i in add_questions:
+                tuple_list.append((question, i))
+            for i in tuple_list:
+                question_type_tuple = (
+                    self.get_question_type(i[0]),
+                    self.get_question_type(i[1]),
+                )
+                if question_type_tuple not in supported_comparisons:
+                    raise NotImplementedError(f"Comparison {i} not yet implemented")
+
+    def get_answer_sequence(self, question, add_questions=[], totalbar=False):
+        """
+        Create answer sequence from given questions to keep sequence in
+        plot consistent if answers that were never chosen are suppressed
+        """
+        answer_sequence = [
+            list(self.count(question, labels=True).index.values.astype(str))
+        ]
+        for entry in add_questions:
+            answer_sequence.append(
+                list(self.count(entry, labels=True).index.values.astype(str))
+            )
+        if totalbar:
+            answer_sequence[0].insert(0, "Total")
+        return answer_sequence
+
+    def create_comparison_data(
+        self, question, compare_with, answer_sequence, add_questions=[]
+    ):
+        """
+        Load and combine necessary data for the plot functions.
+        depending on the wanted (question/add_question_entry,compare_with) tuple
+        """
+        plot_data_list = []
+        if self.get_question_type(compare_with) == "single-choice":
+            # create Dataarray from all existing combinations of
+            # question and compare_with
+            plot_data_list.append(
+                pd.concat(
+                    [
+                        self.get_responses(question, labels=True, drop_other=True),
+                        self.get_responses(compare_with, labels=True, drop_other=True),
+                    ],
+                    axis=1,
+                ).values
+            )
+            # remove combinations that do not occure from answer_sequence
+            for answer in answer_sequence[0].copy():
+                if all([answer not in plot_data_list[0][:, 0], answer != "Total"]):
+                    answer_sequence[0].remove(answer)
+        if add_questions:
+            # add combinations for additional questions with
+            # 'compare_with' question
+            for entry, answerlist in zip(add_questions, answer_sequence[1:]):
+                if self.get_question_type(compare_with) == "single-choice":
+                    next_plot_data = pd.concat(
+                        [
+                            self.get_responses(entry, labels=True, drop_other=True),
+                            self.get_responses(
+                                compare_with, labels=True, drop_other=True
+                            ),
+                        ],
+                        axis=1,
+                    ).values
+                    plot_data_list.append(next_plot_data)
+                for answer in answerlist.copy():
+                    if answer not in next_plot_data[:, 0]:
+                        answerlist.remove(answer)
+        return plot_data_list, answer_sequence
 
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)
