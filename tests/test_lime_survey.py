@@ -37,9 +37,9 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
         """Test initialisation with default cmap option for plotting"""
 
         survey = LimeSurvey(
-            structure_file=self.structure_file,
             theme={"palette": "Reds"},
             output_folder="somefolder",
+            structure_file=self.structure_file,
         )
         expected_theme = DEFAULT_THEME.copy()
         expected_theme["palette"] = "Reds"
@@ -536,6 +536,221 @@ class TestLimeSurveyplot(BaseTestLimeSurvey2021WithResponsesCase):
             rc={"font.sans-serif": "Tahoma"},
             palette="colorblind",
         )
+
+
+class TestLimeSurveyGetItem(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test LimeSurvey __getitem__ method"""
+
+    def test_str(self):
+        """Test __getitem__ for str input"""
+
+        filtered_survey = self.survey[self.single_choice_column]
+
+        ref = [
+            "A1",
+            "A1",
+            "A3",
+            "A2",
+            np.nan,
+            "A1",
+            "A1",
+            "A1",
+            "A1",
+            "A1",
+            np.nan,
+            "A1",
+            "A1",
+            "A1",
+            "A1",
+            np.nan,
+            "A1",
+            "A1",
+            "A1",
+            "A4",
+            "A3",
+            "A5",
+            "A5",
+            "A1",
+            "A3",
+            "A1",
+            "A1",
+            "A3",
+            "A1",
+            "A3",
+            "A3",
+            np.nan,
+            "A3",
+            "A5",
+            "A3",
+            "A3",
+        ]
+
+        np.testing.assert_equal(list(filtered_survey.responses.values[:, 0]), ref)
+
+    def test_list(self):
+        """Test __getitem__ for list of str input"""
+
+        filtered_survey = self.survey[[self.array_column, self.single_choice_column]]
+
+        ref = [
+            "A2",
+            "A1",
+            "A3",
+            "A1",
+            np.nan,
+            "A2",
+            "A1",
+            "A1",
+            "A2",
+            "A2",
+            np.nan,
+            "A1",
+            "A2",
+            "A3",
+            "A2",
+            np.nan,
+            "A3",
+            "A2",
+            "A1",
+            np.nan,
+            "A3",
+            "A2",
+            np.nan,
+            "A4",
+            "A3",
+            "A3",
+            "A3",
+            "A1",
+            "A2",
+            "A3",
+            "A1",
+            np.nan,
+            "A3",
+            "A3",
+            "A3",
+            "A3",
+        ]
+
+        np.testing.assert_equal(list(filtered_survey.responses.values[:, 2]), ref)
+
+    def test_single_choice(self):
+        """Test __getitem__ for single-choice question"""
+
+        filtered_survey = self.survey[self.survey.responses.loc[:, "A3"] == "A3"]
+
+        np.testing.assert_equal(np.array(filtered_survey.responses.index), [4, 37])
+        np.testing.assert_equal(filtered_survey.responses.values[:, 7], ["A11", "A7"])
+
+    def test_multiple_choice(self):
+        """Test __getitem__ for multiple-choice question"""
+
+        filtered_survey = self.survey[self.survey.responses.loc[:, "A10_SQ005"] == "Y"]
+
+        np.testing.assert_equal(np.array(filtered_survey.responses.index), [31, 45])
+        np.testing.assert_equal(filtered_survey.responses.values[:, 7], ["A10", "A7"])
+
+    def test_array(self):
+        """Test __getitem__ for array question"""
+
+        filtered_survey = self.survey[self.survey.responses.loc[:, "C1_SQ005"] == "A5"]
+
+        np.testing.assert_equal(np.array(filtered_survey.responses.index), [10, 39, 45])
+        np.testing.assert_equal(
+            filtered_survey.responses.values[:, 7], ["A8", "A9", "A7"]
+        )
+
+    def test_list_choices(self):
+        """Test __getitem__ for list of choices to one question"""
+
+        filtered_survey = self.survey[
+            (self.survey.responses.loc[:, "B2"] == "A2")
+            | (self.survey.responses.loc[:, "B2"] == "A5")
+        ]
+
+        np.testing.assert_equal(np.array(filtered_survey.responses.index), [28, 38, 39])
+        np.testing.assert_equal(
+            filtered_survey.responses.values[:, 7], ["A25", "A32", "A9"]
+        )
+
+    def test_list_questions(self):
+        """Test __getitem__ for list of choices to one question"""
+
+        filtered_survey = self.survey[
+            (self.survey.responses.loc[:, "A11"] == "A1")
+            & (
+                (self.survey.responses.loc[:, "B9b_SQ001"] == "Y")
+                | (self.survey.responses.loc[:, "B9b_SQ002"] == "Y")
+            )
+        ]
+
+        np.testing.assert_equal(np.array(filtered_survey.responses.index), [5, 21, 46])
+        np.testing.assert_equal(
+            filtered_survey.responses.values[:, 7], ["A38", "A11", "A8"]
+        )
+
+    def test_tuple(self):
+        """Test __getitem__ for tuple input"""
+
+        filtered_survey = self.survey[
+            self.survey.responses[self.single_choice_column] == "A5", "A5"
+        ]
+
+        ref = ["A25", "A4", "A7"]
+
+        np.testing.assert_equal(filtered_survey.responses.values[:, 0], ref)
+
+    def test_tuple_list(self):
+        """Test __getitem__ for tuple input with list as second element"""
+
+        filtered_survey = self.survey[
+            self.survey.responses[self.single_choice_column] == "A5",
+            [self.array_column, self.multiple_choice_column],
+        ]
+
+        ref = [np.nan, np.nan, "Y"]
+
+        np.testing.assert_equal(list(filtered_survey.responses.values[:, 6]), ref)
+
+
+class TestLimeSurveyQuery(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test LimeSurvey query method"""
+
+    def test_single_choice(self):
+        """Test query for single-choice question"""
+
+        filtered_survey = self.survey.query("A3 == 'A3'")
+
+        np.testing.assert_equal(list(filtered_survey.responses.index), [4, 37])
+
+    def test_multiple_choice(self):
+        """Test query for multiple-choice question"""
+
+        filtered_survey = self.survey.query("A10_SQ005 == 'Y'")
+
+        np.testing.assert_equal(list(filtered_survey.responses.index), [31, 45])
+
+    def test_array(self):
+        """Test query for array question"""
+
+        filtered_survey = self.survey.query("C1_SQ005 == 'A5'")
+
+        np.testing.assert_equal(list(filtered_survey.responses.index), [10, 39, 45])
+
+    def test_list_choices(self):
+        """Test query for list of choices to one question"""
+
+        filtered_survey = self.survey.query("B2 == 'A2' | B2 ==  'A5'")
+
+        np.testing.assert_equal(list(filtered_survey.responses.index), [28, 38, 39])
+
+    def test_list_questions(self):
+        """Test query for list of choices to one question"""
+
+        filtered_survey = self.survey.query(
+            "A11 == 'A1' & (B9b_SQ001 == 'Y' | B9b_SQ002 == 'Y')"
+        )
+
+        np.testing.assert_equal(list(filtered_survey.responses.index), [5, 21, 46])
 
 
 if __name__ == "__main__":
