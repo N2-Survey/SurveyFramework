@@ -62,7 +62,7 @@ s.get_responses("A6", labels=True, drop_other=True)
 s.get_responses("B1", labels=True)
 # Alternatively, get responses for one or more questions
 # returning a LimeSurvey object, to perform follow-up operations
-s[["A6", "B6"]]
+s2 = s[["A6", "B6"]]
 
 # Get questions starting with "A"..
 s.questions[s.questions.index.str.startswith("A")]
@@ -72,11 +72,11 @@ s.get_choices("A6")
 
 # Filter by answers to specific questions
 # e.g. entries where the response to Question A3 is A5
-s[s.responses["A3"] == "A5"]
+s_filtered = s[s.responses["A3"] == "A5"]
 # Alternatively, apply multiple filter conditions
 # e.g. entries where the response to Question A6 is A3
 # OR that to Question B2 is A5
-s.query("A6 == 'A3' | B2 == 'A5'")
+s_filtered = s.query("A6 == 'A3' | B2 == 'A5'")
 # Both methods return a LimeSurvey object, upon which
 # similar operations can be performed again and plot 
 # functions can also be called
