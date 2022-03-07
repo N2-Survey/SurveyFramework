@@ -568,6 +568,8 @@ class LimeSurvey:
         plot_title: Union[str, bool] = True,
         plot_title_position: tuple = (()),
         save: Union[str, bool] = False,
+        file_format: str = "png",
+        dpi: Union[str, float] = "figure",
         answer_sequence: list = [],
         legend_title: Union[str, bool] = None,
         kind: str = None,
@@ -608,6 +610,10 @@ class LimeSurvey:
                 and 'legend_columns'
             'save': save plot as png either with question indicator as name
                 if True or as string if string is added here
+                'file_format': if you want to save the file as .pdf rather
+                    then as png
+                'dpi': well... resolution in dotsperinch if you want to specify
+                    else, the resolution is taken from the figure
             'answer_sequence': getting the answers in the right order made the
             inclusion of an answer_sequence variable necessary, which also
             can be used if you want to give the order of bars yourself,
@@ -720,15 +726,15 @@ class LimeSurvey:
 
         # Save to a file
         if save:
-            # default file name is the question-ID, default format is *.png
-            filename = f"{question}.png"
-            if isinstance(save, str):
-                filename = save
-            # Make a valid file name
-            filename = _clean_file_name(filename)
-            fullpath = os.path.join(self.output_folder, filename)
-            fig.savefig(fullpath)
-            print(f"Saved plot to {fullpath}")
+            self.save_plot(
+                fig,
+                question,
+                compare_with=compare_with,
+                add_questions=add_questions,
+                save=save,
+                file_format=file_format,
+                dpi=dpi,
+            )
         return fig, ax
 
     def save_plot(
