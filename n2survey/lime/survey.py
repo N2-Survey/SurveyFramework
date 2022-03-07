@@ -572,6 +572,7 @@ class LimeSurvey:
         dpi: Union[str, float] = "figure",
         answer_sequence: list = [],
         legend_title: Union[str, bool] = None,
+        legend_sequence: list = [],
         kind: str = None,
         **kwargs,
     ):
@@ -643,11 +644,16 @@ class LimeSurvey:
             legend_title = self.get_label(compare_with)
         if compare_with:
             # load necessary data for comparison
+            if not legend_sequence:
+                legend_sequence = list(self.count(
+                    compare_with,labels=True
+                    ).index.values.astype(str))
             if not answer_sequence:
                 answer_sequence = self.get_answer_sequence(
                     question, add_questions=add_questions, totalbar=totalbar
                 )
-            plot_data_list, answer_sequence = self.create_comparison_data(
+            (plot_data_list,
+             answer_sequence) = self.create_comparison_data(
                 question, compare_with, answer_sequence, add_questions=add_questions
             )
         if question_type == "single-choice":
@@ -675,6 +681,7 @@ class LimeSurvey:
                     plot_title_position=plot_title_position,
                     legend_title=legend_title,
                     answer_sequence=answer_sequence,
+                    legend_sequence=legend_sequence
                 )
 
             else:
