@@ -194,6 +194,7 @@ def simple_comparison_plot(
     plot_title_position: tuple = (()),
     legend_title: str = None,
     answer_sequence: list = [],
+    legend_sequence: list = [],
 ):
     """
     Plot correlations from the np.ndarray arrays in plot_data_list with the
