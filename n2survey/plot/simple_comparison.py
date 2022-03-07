@@ -221,7 +221,6 @@ def simple_comparison_plot(
     (x, y) = sort_data(answer_sequence, x, y)
     # sort y to follow legend_sequence
     count = 0
-    print(y)
     for entry in y.copy():
         legend_name, sorted_data = sort_data(legend_sequence, entry[:, 0], entry[:, 1])
         y[count] = np.append(
@@ -230,7 +229,6 @@ def simple_comparison_plot(
             axis=1,
         )
         count = count + 1
-    print(y)
     # %% Prepare/Define figure
     fig, ax = plt.subplots()
     # %% split up y to list of answers of question 2 and list of percentages
