@@ -219,6 +219,18 @@ def simple_comparison_plot(
     )
     # sort x and y to follow answer_sequence
     (x, y) = sort_data(answer_sequence, x, y)
+    # sort y to follow legend_sequence
+    count = 0
+    print(y)
+    for entry in y.copy():
+        legend_name, sorted_data = sort_data(legend_sequence, entry[:, 0], entry[:, 1])
+        y[count] = np.append(
+            np.reshape(legend_name, newshape=(-1, 1)),
+            np.reshape(sorted_data, newshape=(-1, 1)),
+            axis=1,
+        )
+        count = count + 1
+    print(y)
     # %% Prepare/Define figure
     fig, ax = plt.subplots()
     # %% split up y to list of answers of question 2 and list of percentages
@@ -227,7 +239,13 @@ def simple_comparison_plot(
     for entry in y:
         q2_answers.append(entry[:, 0])
         percentages.append(entry[:, 1].astype(np.float64))
-    all_answers = np.unique(np.concatenate(np.array(q2_answers, dtype=object)))
+    all_answers = legend_sequence.copy()
+    existing_answers = np.unique(np.concatenate(np.array(q2_answers, dtype=object)))
+    count = 0
+    for entry in all_answers.copy():
+        if entry not in existing_answers:
+            all_answers.pop(count)
+        count = count + 1
     percentage_all = []
     for (percentage, q2_answer) in zip(percentages, q2_answers):
         count = 0
