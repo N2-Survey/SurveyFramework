@@ -731,6 +731,39 @@ class LimeSurvey:
             print(f"Saved plot to {fullpath}")
         return fig, ax
 
+    def save_plot(
+        self,
+        fig,
+        question,
+        compare_with: str = None,
+        add_questions: list = [],
+        save: Union[str, bool] = False,
+        file_format: str = "png",
+        dpi: Union[str, float] = "figure",
+    ):
+        """
+        creates 'filename' from 'question' and, if given, 'compare_with' and
+        'add_questions' and saves file to output_folder if 'save' is True.
+        'save' = string: string replaces savename of plot
+        'file_format': can be changed from pixelbased .png to .pdf
+        (vector graphics --> loss free scalable)
+        'dpi': specifies resolution in dots per inch for .png
+        """
+        if isinstance(save, str):
+            filename = save
+        else:
+            filename = f"{question}"
+            for entry in add_questions:
+                filename = filename + f"_{entry}"
+            if compare_with:
+                filename = filename + f"_vs_{compare_with}"
+            filename = filename + f".{file_format}"
+        filename = _clean_file_name(filename)
+        fullpath = os.path.join(self.output_folder, filename)
+        fig.savefig(fullpath, dpi=dpi)
+        print(f"Saved plot to {fullpath}")
+        return True
+
     def check_plot_implemented(self, question, compare_with=None, add_questions=[]):
         """
         Check if question type and/or combination of questions for
