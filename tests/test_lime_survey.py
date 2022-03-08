@@ -763,8 +763,8 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
 
         ref = pd.DataFrame(
             data={
-                "total_state_anxiety_score": [50.0, 100 / 3, 130 / 3],
-                "state_anxiety_class": pd.Categorical(
+                "D1_score": [50.0, 100 / 3, 130 / 3],
+                "D1_class": pd.Categorical(
                     ["high anxiety", "no or low anxiety", "moderate anxiety"],
                     categories=[
                         "no or low anxiety",
@@ -787,8 +787,8 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
 
         ref = pd.DataFrame(
             data={
-                "total_trait_anxiety_score": [47.5, 32.5, 50.0],
-                "trait_anxiety_class": pd.Categorical(
+                "D2_score": [47.5, 32.5, 50.0],
+                "D2_class": pd.Categorical(
                     ["high anxiety", "no or low anxiety", "high anxiety"],
                     categories=[
                         "no or low anxiety",
@@ -811,8 +811,8 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
 
         ref = pd.DataFrame(
             data={
-                "total_depression_score": [8.0, 5.0, 8.0],
-                "depression_class": pd.Categorical(
+                "D3_score": [8.0, 5.0, 8.0],
+                "D3_class": pd.Categorical(
                     ["mild depression", "mild depression", "mild depression"],
                     categories=[
                         "no to minimal depression",
