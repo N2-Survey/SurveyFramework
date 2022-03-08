@@ -95,6 +95,32 @@ class LimeSurvey:
     na_label: str = "No Answer"
     theme: dict = None
     output_folder: str = None
+    additional_questions = {
+        "state_anxiety_score": {
+            "label": "What is the state anxiety score?",
+            "type": "free",
+        },
+        "state_anxiety_class": {
+            "label": "What is the state anxiety class?",
+            "type": "single-choice",
+        },
+        "trait_anxiety_score": {
+            "label": "What is the trait anxiety score?",
+            "type": "free",
+        },
+        "trait_anxiety_class": {
+            "label": "What is the trait anxiety class?",
+            "type": "single-choice",
+        },
+        "depression_score": {
+            "label": "What is the depression score?",
+            "type": "free",
+        },
+        "depression_class": {
+            "label": "What is the depression class?",
+            "type": "single-choice",
+        },
+    }
 
     def __init__(
         self,
@@ -852,6 +878,26 @@ class LimeSurvey:
 
         return questions_subdf
 
+    def add_question(self, name, responses: pd.DataFrame = None, **kwargs):
+        """Add question to self.questions DataFrame
+
+        Args:
+            name:
+            responses:
+        """
+
+        self.questions = pd.concat([self.questions, pd.DataFrame([kwargs], index=name)])
+
+        if responses is not None:
+            self.add_responses(responses=responses, question=name)
+
+    def add_responses(self, responses, question=None):
+        """Add responses to specified question in self.responses DataFrame"""
+
+        if question is not None:
+            responses = responses.rename(columns={zip(responses.columns, question)})
+        self.responses = pd.concat([self.responses, responses], axis=1)
+
     def get_question_type(self, question: str) -> str:
         """Get question type and validate it
 
@@ -1083,10 +1129,11 @@ class LimeSurvey:
 
 
 if __name__ == "__main__":
-    s = LimeSurvey("/home/dawaifu/SurveyFramework/data/survey_structure_2021.xml")
-    s.read_responses("/home/dawaifu/SurveyFramework/data/dummy_data_2021_codeonly.csv")
-    # print(s.questions.loc["D1_SQ001", :])
-    s.rate_mental_health("D1", attach_class=True)
+    s = LimeSurvey("/home/dawei/SurveyFramework/data/survey_structure_2021.xml")
+    s.read_responses("/home/dawei/SurveyFramework/data/dummy_data_2021_codeonly.csv")
+    print(s.questions["type"].value_counts())
+    # print(s.questions.loc["A6", :])
+    # s.rate_mental_health("D1", attach_class=True)
     # print(s.count("D1", labels=False, add_totals=True, dropna=True))
-    print(s.count("D1", dropna=True, labels=True))
+    # print(s.count("D1", dropna=True, labels=True))
     # s.plot("D1_class", save=True)
