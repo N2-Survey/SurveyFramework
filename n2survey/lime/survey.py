@@ -977,8 +977,23 @@ class LimeSurvey:
 
         return choices_dict
 
-    def rate_mental_health(self, question, condition):
-        """Calculate State/Trait Anxiety or Depression score based on responses to question.
+    def rate_mental_health(
+        self,
+        question: str,
+        condition: str = None,
+        attach_score: bool = False,
+        attach_class: bool = True,
+    ) -> pd.DataFrame:
+        """Calculate State/Trait Anxiety or Depression score based on responses to
+            question based on the following references:
+                K. Kroenke, R. L. Spitzer, J. B. W. William, and B. Löwe., The
+                    Patient Health Questionnaire somatic, anxiety,and depressive
+                    symptom scales: a systematic review. General Hospital
+                    Psychiatry, 32(4):345–359, 2010.
+                T. M. Marteau and H. Bekker., The development of a six-item short-
+                    form of the state scale of the spielberger state-trait anxiety
+                    inventory (STAI). British Journal of Clinical Psychology,
+                    31(3):301–306, 1992.
 
         Args:
             question (str): Question ID to use for calculation
@@ -991,7 +1006,7 @@ class LimeSurvey:
 
 
         Returns:
-            df: Mental health condition ratings and classifications
+            pd.DataFrame: Mental health condition ratings and classifications
         """
 
         question_label = self.get_label(question + "_SQ001")
