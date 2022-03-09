@@ -568,8 +568,11 @@ class LimeSurvey:
         plot_title: Union[str, bool] = True,
         plot_title_position: tuple = (()),
         save: Union[str, bool] = False,
+        file_format: str = "png",
+        dpi: Union[str, float] = "figure",
         answer_sequence: list = [],
         legend_title: Union[str, bool] = None,
+        legend_sequence: list = [],
         kind: str = None,
         **kwargs,
     ):
@@ -608,6 +611,10 @@ class LimeSurvey:
                 and 'legend_columns'
             'save': save plot as png either with question indicator as name
                 if True or as string if string is added here
+                'file_format': if you want to save the file as .pdf rather
+                    then as png
+                'dpi': well... resolution in dotsperinch if you want to specify
+                    else, the resolution is taken from the figure
             'answer_sequence': getting the answers in the right order made the
             inclusion of an answer_sequence variable necessary, which also
             can be used if you want to give the order of bars yourself,
@@ -637,11 +644,15 @@ class LimeSurvey:
             legend_title = self.get_label(compare_with)
         if compare_with:
             # load necessary data for comparison
+            if not legend_sequence:
+                legend_sequence = list(
+                    self.count(compare_with, labels=True).index.values.astype(str)
+                )
             if not answer_sequence:
                 answer_sequence = self.get_answer_sequence(
                     question, add_questions=add_questions, totalbar=totalbar
                 )
-            plot_data_list, answer_sequence = self.create_comparison_data(
+            (plot_data_list, answer_sequence) = self.create_comparison_data(
                 question, compare_with, answer_sequence, add_questions=add_questions
             )
         if question_type == "single-choice":
@@ -669,6 +680,7 @@ class LimeSurvey:
                     plot_title_position=plot_title_position,
                     legend_title=legend_title,
                     answer_sequence=answer_sequence,
+                    legend_sequence=legend_sequence,
                 )
 
             else:
@@ -720,16 +732,49 @@ class LimeSurvey:
 
         # Save to a file
         if save:
-            # default file name is the question-ID, default format is *.png
-            filename = f"{question}.png"
-            if isinstance(save, str):
-                filename = save
-            # Make a valid file name
-            filename = _clean_file_name(filename)
-            fullpath = os.path.join(self.output_folder, filename)
-            fig.savefig(fullpath)
-            print(f"Saved plot to {fullpath}")
+            self.save_plot(
+                fig,
+                question,
+                compare_with=compare_with,
+                add_questions=add_questions,
+                save=save,
+                file_format=file_format,
+                dpi=dpi,
+            )
         return fig, ax
+
+    def save_plot(
+        self,
+        fig,
+        question,
+        compare_with: str = None,
+        add_questions: list = [],
+        save: Union[str, bool] = False,
+        file_format: str = "png",
+        dpi: Union[str, float] = "figure",
+    ):
+        """
+        creates 'filename' from 'question' and, if given, 'compare_with' and
+        'add_questions' and saves file to output_folder if 'save' is True.
+        'save' = string: string replaces savename of plot
+        'file_format': can be changed from pixelbased .png to .pdf
+        (vector graphics --> loss free scalable)
+        'dpi': specifies resolution in dots per inch for .png
+        """
+        if isinstance(save, str):
+            filename = save
+        else:
+            filename = f"{question}"
+            for entry in add_questions:
+                filename = filename + f"_{entry}"
+            if compare_with:
+                filename = filename + f"_vs_{compare_with}"
+            filename = filename + f".{file_format}"
+        filename = _clean_file_name(filename)
+        fullpath = os.path.join(self.output_folder, filename)
+        fig.savefig(fullpath, dpi=dpi)
+        print(f"Saved plot to {fullpath}")
+        return True
 
     def check_plot_implemented(self, question, compare_with=None, add_questions=[]):
         """

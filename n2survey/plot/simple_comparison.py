@@ -97,16 +97,26 @@ def form_bar_positions(df, bar_positions=False, totalbar=None, suppress_answers=
     bar_positions_complete = bar_positions or [0]
     count = 0
     number_of_answers = 0
+    total_bar_position_add = 0
+    if all([totalbar, bar_positions_complete == [0]]):
+        # necessary because I switch off total_bar later on to suppress the plot
+        # of multiple total_bars.... could probably be cleaner solved -->
+        # beautyfying code issue
+        total_bar_position_add = 0.5
     for answer_combinations in df:
+        # calculate percentages
         percentage_correlated_answers = get_percentages(
             answer_combinations, totalbar=totalbar
         )
         for answer in suppress_answers:
+            # remove suppressed answers
             if answer not in percentage_correlated_answers:
                 print(f"{answer} does not exist for this question")
             else:
                 percentage_correlated_answers.pop(answer)
         number_of_answers = number_of_answers + len(percentage_correlated_answers)
+        # set totalbar to None to not recalculate multiple total bars, since
+        # they are all the same 'compare_with' question answers
         totalbar = None
         if count > 0 and len(bar_positions_complete) == number_of_answers - len(
             percentage_correlated_answers
@@ -114,6 +124,11 @@ def form_bar_positions(df, bar_positions=False, totalbar=None, suppress_answers=
             bar_positions_complete.append(max(bar_positions_complete) + 1.5)
         while len(bar_positions_complete) < number_of_answers:
             bar_positions_complete.append(max(bar_positions_complete) + 1)
+        count = count + 1
+    # add space between total_bar and other bars
+    count = 1
+    for position in bar_positions_complete[1:].copy():
+        bar_positions_complete[count] = position + total_bar_position_add
         count = count + 1
     return bar_positions_complete
 
@@ -179,6 +194,7 @@ def simple_comparison_plot(
     plot_title_position: tuple = (()),
     legend_title: str = None,
     answer_sequence: list = [],
+    legend_sequence: list = [],
 ):
     """
     Plot correlations from the np.ndarray arrays in plot_data_list with the
@@ -203,6 +219,16 @@ def simple_comparison_plot(
     )
     # sort x and y to follow answer_sequence
     (x, y) = sort_data(answer_sequence, x, y)
+    # sort y to follow legend_sequence
+    count = 0
+    for entry in y.copy():
+        legend_name, sorted_data = sort_data(legend_sequence, entry[:, 0], entry[:, 1])
+        y[count] = np.append(
+            np.reshape(legend_name, newshape=(-1, 1)),
+            np.reshape(sorted_data, newshape=(-1, 1)),
+            axis=1,
+        )
+        count = count + 1
     # %% Prepare/Define figure
     fig, ax = plt.subplots()
     # %% split up y to list of answers of question 2 and list of percentages
@@ -211,7 +237,13 @@ def simple_comparison_plot(
     for entry in y:
         q2_answers.append(entry[:, 0])
         percentages.append(entry[:, 1].astype(np.float64))
-    all_answers = np.unique(np.concatenate(np.array(q2_answers, dtype=object)))
+    all_answers = legend_sequence.copy()
+    existing_answers = np.unique(np.concatenate(np.array(q2_answers, dtype=object)))
+    count = 0
+    for entry in all_answers.copy():
+        if entry not in existing_answers:
+            all_answers.pop(count)
+        count = count + 1
     percentage_all = []
     for (percentage, q2_answer) in zip(percentages, q2_answers):
         count = 0
