@@ -309,6 +309,20 @@ class TestLimeSurveyAddResponses(BaseTestLimeSurvey2021Case):
             msg="Series not equal",
         )
 
+    def test_add_responses_with_question(self):
+        """Test adding responses with question name"""
+
+        survey = LimeSurvey(structure_file=self.structure_file)
+        survey.read_responses(responses_file=self.responses_file)
+        my_responses = pd.Series({2: "1", 3: "2", 4: "3"}, name="X69")
+        survey.add_responses(my_responses, question="A42")
+
+        self.assert_series_equal(
+            pd.Series({2: "1", 3: "2", 4: "3", 5: np.nan, 6: np.nan}, name="A42"),
+            survey.responses.loc[[2, 3, 4, 5, 6], "A42"],
+            msg="Series not equal",
+        )
+
 
 class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
     """Test LimeSurvey get response"""

@@ -708,7 +708,7 @@ class LimeSurvey:
                 question, compare_with, answer_sequence, add_questions=add_questions
             )
         if question_type == "single-choice":
-            counts_df = self.count(question, labels=True, dropna=True)
+            counts_df = self.count(question, labels=True)
 
             if "title" not in non_theme_kwargs:
                 non_theme_kwargs.update({"title": counts_df.columns[0]})
@@ -1104,9 +1104,12 @@ class LimeSurvey:
 
         Args:
             question (str): Question ID to use for calculation
-            condition (str, optional): Default None. Which kind of mental health
-                condition to rate, "state_anxiety", "trait_anxiety", or "depression".
-                If not specified, the condition is automatically infered.
+            condition (str, optional): Which kind of mental health condition to rate,
+                "state_anxiety", "trait_anxiety", or "depression". If not specified,
+                the condition is automatically infered. Default None.
+            keep_subscores (bool, optional): Whether to include scores from subquestions
+                in the output DataFrame, or only total score and classification.
+                Default False.
 
         Returns:
             pd.DataFrame: Mental health condition ratings and classifications
