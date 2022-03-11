@@ -27,6 +27,47 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
         question_df = pd.DataFrame(structure_dict["questions"])
         question_df = question_df.set_index("name")
         question_df["is_contingent"] = question_df.contingent_of_name.notnull()
+        transformation_questions = {
+            "state_anxiety_score": {
+                "label": "What is the state anxiety score?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "state_anxiety_class": {
+                "label": "What is the state anxiety class?",
+                "type": "single-choice",
+                "is_contingent": False,
+            },
+            "trait_anxiety_score": {
+                "label": "What is the trait anxiety score?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "trait_anxiety_class": {
+                "label": "What is the trait anxiety class?",
+                "type": "single-choice",
+                "is_contingent": False,
+            },
+            "depression_score": {
+                "label": "What is the depression score?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "depression_class": {
+                "label": "What is the depression class?",
+                "type": "single-choice",
+                "is_contingent": False,
+            },
+        }
+        question_df = pd.concat(
+            [
+                question_df,
+                pd.DataFrame(
+                    data=transformation_questions.values(),
+                    index=transformation_questions.keys(),
+                ),
+            ]
+        )
 
         self.assertEqual(survey.sections, section_df)
         self.assertEqual(survey.questions, question_df)
@@ -58,6 +99,64 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
         self.assertEqual(bool(not_in_structure), False)
+
+    def test_transformation_questions(self):
+        """Test adding responses to transformation questions in read_responses"""
+
+        mental_health_questions = {
+            "state_anxiety": "D1",
+            "trait_anxiety": "D2",
+            "depression": "D3",
+        }
+
+        survey = LimeSurvey(structure_file=self.structure_file)
+        survey.read_responses(
+            responses_file=self.responses_file,
+            transformation_questions=mental_health_questions,
+        )
+
+        ref = pd.DataFrame(
+            data={
+                "state_anxiety_score": [50.0, 100 / 3, 130 / 3],
+                "state_anxiety_class": pd.Categorical(
+                    ["high anxiety", "no or low anxiety", "moderate anxiety"],
+                    categories=[
+                        "no or low anxiety",
+                        "moderate anxiety",
+                        "high anxiety",
+                    ],
+                    ordered=True,
+                ),
+                "trait_anxiety_score": [47.5, 32.5, 50.0],
+                "trait_anxiety_class": pd.Categorical(
+                    ["high anxiety", "no or low anxiety", "high anxiety"],
+                    categories=[
+                        "no or low anxiety",
+                        "moderate anxiety",
+                        "high anxiety",
+                    ],
+                    ordered=True,
+                ),
+                "depression_score": [8.0, 5.0, 8.0],
+                "depression_class": pd.Categorical(
+                    ["mild depression", "mild depression", "mild depression"],
+                    categories=[
+                        "no to minimal depression",
+                        "mild depression",
+                        "moderate depression",
+                        "moderately severe depression",
+                        "severe depression",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+
+        self.assert_df_equal(
+            survey.responses.iloc[:3, -6:], ref, msg="DataFrames not equal."
+        )
 
     def test_single_choice_dtype(self):
         """Test data for single choice questions is unordered categorical dtype"""
@@ -134,6 +233,80 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
                 self.survey.lime_system_info[categorical_columns].dtypes == "category"
             ).all(),
             True,
+        )
+
+
+class TestLimeSurveyAddQuestion(BaseTestLimeSurvey2021Case):
+    """Test LimeSurvey add_question"""
+
+    def test_add_question_without_responses(self):
+        """Test adding question without responses"""
+
+        survey = LimeSurvey(structure_file=self.structure_file)
+        survey.read_responses(responses_file=self.responses_file)
+        survey.add_question(
+            name="X69",
+            type="single-choice",
+            label="Not a great question",
+            choices={"A1": "Yes", "A2": "Also yes", "A3": "Why not"},
+        )
+
+        ref = pd.Series(
+            {
+                "label": "Not a great question",
+                "format": np.nan,
+                "choices": {"A1": "Yes", "A2": "Also yes", "A3": "Why not"},
+                "question_group": np.nan,
+                "question_label": np.nan,
+                "question_description": np.nan,
+                "type": "single-choice",
+                "section_id": np.nan,
+                "contingent_of_name": np.nan,
+                "contingent_of_choice": np.nan,
+                "is_contingent": False,
+            },
+            name="X69",
+        )
+
+        self.assert_series_equal(
+            ref, survey.questions.loc["X69"], msg="Series not equal"
+        )
+
+    def test_add_question_with_responses(self):
+        """Test adding question with responses"""
+
+        survey = LimeSurvey(structure_file=self.structure_file)
+        survey.read_responses(responses_file=self.responses_file)
+        my_responses = pd.Series({2: "1", 3: "2", 4: "3"})
+        survey.add_question(
+            name="X69",
+            type="free",
+            label="Another not great question",
+            responses=my_responses,
+        )
+
+        self.assert_series_equal(
+            pd.Series({2: "1", 3: "2", 4: "3", 5: np.nan, 6: np.nan}, name="X69"),
+            survey.responses.loc[[2, 3, 4, 5, 6], "X69"],
+            msg="Series not equal",
+        )
+
+
+class TestLimeSurveyAddResponses(BaseTestLimeSurvey2021Case):
+    """Test LimeSurvey add_responses"""
+
+    def test_add_responses_without_question(self):
+        """Test adding responses without question name"""
+
+        survey = LimeSurvey(structure_file=self.structure_file)
+        survey.read_responses(responses_file=self.responses_file)
+        my_responses = pd.Series({2: "1", 3: "2", 4: "3"}, name="X69")
+        survey.add_responses(my_responses)
+
+        self.assert_series_equal(
+            pd.Series({2: "1", 3: "2", 4: "3", 5: np.nan, 6: np.nan}, name="X69"),
+            survey.responses.loc[[2, 3, 4, 5, 6], "X69"],
+            msg="Series not equal",
         )
 
 
@@ -763,8 +936,8 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
 
         ref = pd.DataFrame(
             data={
-                "D1_score": [50.0, 100 / 3, 130 / 3],
-                "D1_class": pd.Categorical(
+                "state_anxiety_score": [50.0, 100 / 3, 130 / 3],
+                "state_anxiety_class": pd.Categorical(
                     ["high anxiety", "no or low anxiety", "moderate anxiety"],
                     categories=[
                         "no or low anxiety",
@@ -787,8 +960,8 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
 
         ref = pd.DataFrame(
             data={
-                "D2_score": [47.5, 32.5, 50.0],
-                "D2_class": pd.Categorical(
+                "trait_anxiety_score": [47.5, 32.5, 50.0],
+                "trait_anxiety_class": pd.Categorical(
                     ["high anxiety", "no or low anxiety", "high anxiety"],
                     categories=[
                         "no or low anxiety",
@@ -811,8 +984,8 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
 
         ref = pd.DataFrame(
             data={
-                "D3_score": [8.0, 5.0, 8.0],
-                "D3_class": pd.Categorical(
+                "depression_score": [8.0, 5.0, 8.0],
+                "depression_class": pd.Categorical(
                     ["mild depression", "mild depression", "mild depression"],
                     categories=[
                         "no to minimal depression",
