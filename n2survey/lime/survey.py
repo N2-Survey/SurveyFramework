@@ -173,7 +173,12 @@ class LimeSurvey:
         self.sections = section_df
         self.questions = question_df
 
-    def read_responses(self, responses_file: str) -> None:
+        for question, info in self.additional_questions.items():
+            self.add_question(question, **info)
+
+    def read_responses(
+        self, responses_file: str, transformation_questions: dict = None
+    ) -> None:
         """Read responses CSV file
 
         Args:
@@ -270,6 +275,27 @@ class LimeSurvey:
 
         self.responses = question_responses
         self.lime_system_info = system_info
+
+        if transformation_questions:
+            state_anxiety_question = transformation_questions.get("state_anxiety")
+            trait_anxiety_question = transformation_questions.get("trait_anxiety")
+            depression_question = transformation_questions.get("depression")
+            if state_anxiety_question:
+                self.add_responses(
+                    self.rate_mental_health(
+                        state_anxiety_question, condition="state_anxiety"
+                    )
+                )
+            if trait_anxiety_question:
+                self.add_responses(
+                    self.rate_mental_health(
+                        trait_anxiety_question, condition="trait_anxiety"
+                    )
+                )
+            if depression_question:
+                self.add_responses(
+                    self.rate_mental_health(depression_question, condition="depression")
+                )
 
     def __copy__(self):
         """Create a shallow copy of the LimeSurvey instance
@@ -878,24 +904,61 @@ class LimeSurvey:
 
         return questions_subdf
 
-    def add_question(self, name, responses: pd.DataFrame = None, **kwargs):
+    def add_question(
+        self, name: str, responses: Union[pd.Series, pd.DataFrame] = None, **kwargs
+    ):
         """Add question to self.questions DataFrame
 
         Args:
-            name:
-            responses:
+            name (str): Name (id) of the question to add, e.g. "A12"
+            responses (pd.Series or pd.DataFrame, optional): responses
+                to the question to be added
+            **kwargs (optional): Attributes of the question to be added,
+                e.g. type="single-choice", choices={"A1": "Yes", "A2": "No"}
         """
 
-        self.questions = pd.concat([self.questions, pd.DataFrame([kwargs], index=name)])
+        # Add "is_contingent" attribute if not specified
+        # as this attribute cannot be empty
+        if not kwargs.get("is_contingent"):
+            kwargs["is_contingent"] = False
 
+        self.questions = pd.concat(
+            [self.questions, pd.DataFrame([kwargs], index=[name])]
+        )
+
+        # Add responses to self.responses if given
         if responses is not None:
             self.add_responses(responses=responses, question=name)
 
-    def add_responses(self, responses, question=None):
-        """Add responses to specified question in self.responses DataFrame"""
+    def add_responses(
+        self,
+        responses: Union[pd.Series, pd.DataFrame],
+        question: Union[list, str] = None,
+    ):
+        """Add responses to specified question to self.responses DataFrame
 
+        Args:
+            responses (pd.Series or pd.DataFrame): responses to be added
+                to self.responses
+            question (list or str, optional): Name (id) of question to which
+                the responses correspond. If not given, the column/Series name
+                is taken as the name
+        """
+
+        # Rename the column(s)/Series if question is specified
         if question is not None:
-            responses = responses.rename(columns={zip(responses.columns, question)})
+            if isinstance(question, str):
+                question = [question]
+            if isinstance(responses, pd.DataFrame):
+                responses = responses.rename(
+                    columns={
+                        column: name
+                        for column, name in zip(responses.columns, question)
+                    }
+                )
+            if isinstance(responses, pd.Series):
+                responses.name = question[0]
+
         self.responses = pd.concat([self.responses, responses], axis=1)
 
     def get_question_type(self, question: str) -> str:
@@ -981,8 +1044,7 @@ class LimeSurvey:
         self,
         question: str,
         condition: str = None,
-        attach_score: bool = False,
-        attach_class: bool = True,
+        keep_subscores: bool = False,
     ) -> pd.DataFrame:
         """Calculate State/Trait Anxiety or Depression score based on responses to
             question based on the following references:
@@ -997,13 +1059,9 @@ class LimeSurvey:
 
         Args:
             question (str): Question ID to use for calculation
-            condition (str): Which kind of mental health condition to rate, "state",
-                "trait", or "depression"
-            attach_score (bool): Whether to attach the calculated score to the
-                responses DataFrame. Default: False
-            attach_class (bool): Whether to attach the calculated class to the
-                responses DataFrame. Default: True
-
+            condition (str, optional): Default None. Which kind of mental health
+                condition to rate, "state_anxiety", "trait_anxiety", or "depression".
+                If not specified, the condition is automatically infered.
 
         Returns:
             pd.DataFrame: Mental health condition ratings and classifications
@@ -1013,9 +1071,9 @@ class LimeSurvey:
         # Infer condition type if not provided
         if condition is None:
             if "I feel calm" in question_label:
-                condition = "state"
+                condition = "state_anxiety"
             elif "calm, cool and collected" in question_label:
-                condition = "trait"
+                condition = "trait_anxiety"
             elif "interest or pleasure" in question_label:
                 condition = "depression"
             else:
@@ -1024,7 +1082,7 @@ class LimeSurvey:
                 )
 
         # Set up condition-specific parameters
-        if condition == "state":
+        if condition == "state_anxiety":
             if "I feel calm" not in question_label:
                 raise ValueError("Question incompatible with specified condition type.")
             base_score = 10 / 3
@@ -1032,7 +1090,7 @@ class LimeSurvey:
             label = "state_anxiety"
             classification_boundaries = [0, 37, 44, 80]
             classes = ["no or low anxiety", "moderate anxiety", "high anxiety"]
-        elif condition == "trait":
+        elif condition == "trait_anxiety":
             if "calm, cool and collected" not in question_label:
                 raise ValueError("Question incompatible with specified condition type.")
             base_score = 5 / 2
@@ -1104,51 +1162,16 @@ class LimeSurvey:
             )
 
         # Calculate total anxiety or depression scores
-        df[f"{question}_score"] = df.sum(axis=1, skipna=False)
+        df[f"{label}_score"] = df.sum(axis=1, skipna=False)
 
         # Classify into categories
-        df[f"{question}_class"] = pd.cut(
-            df[f"{question}_score"],
+        df[f"{label}_class"] = pd.cut(
+            df[f"{label}_score"],
             bins=classification_boundaries,
             labels=classes,
         )
 
-        # Concatenate onto responses DataFrame from the right
-        if attach_score:
-            self.responses = pd.concat(
-                [self.responses, df.loc[:, f"{question}_score"]], axis=1
-            )
-            score_column = self.questions.loc[f"{question}_SQ001"].copy()
-            score_column.name = f"{question}_score"
-            score_column["label"] = f"Total {label.replace('_', ' ')} score"
-            score_column["choices"] = None
-            score_column["type"] = "free"
-            self.questions = self.questions.append(score_column)
-        if attach_class:
-            self.responses = pd.concat(
-                [self.responses, df.loc[:, f"{question}_class"]], axis=1
-            )
-            class_column = self.questions.loc[f"{question}_SQ001"].copy()
-            class_column.name = f"{question}_class"
-            class_column["label"] = f"{label.replace('_', ' ')} category"
-            class_column["choices"] = None
-            class_column["type"] = "single-choice"
-            # print(score_column)
-            # print(class_column)
-            self.questions = self.questions.append(class_column)
-            # print(type(self.questions.loc[f"{question}_score", "choices"]))
-            # print(self.questions.iloc[-3:])
-            # print(self.get_question(question).index)
+        if not keep_subscores:
+            df = df.drop(df.columns[:-2], axis=1)
 
         return df
-
-
-if __name__ == "__main__":
-    s = LimeSurvey("/home/dawei/SurveyFramework/data/survey_structure_2021.xml")
-    s.read_responses("/home/dawei/SurveyFramework/data/dummy_data_2021_codeonly.csv")
-    print(s.questions["type"].value_counts())
-    # print(s.questions.loc["A6", :])
-    # s.rate_mental_health("D1", attach_class=True)
-    # print(s.count("D1", labels=False, add_totals=True, dropna=True))
-    # print(s.count("D1", dropna=True, labels=True))
-    # s.plot("D1_class", save=True)
