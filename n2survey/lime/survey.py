@@ -1109,7 +1109,7 @@ class LimeSurvey:
                 If not specified, the condition is automatically infered.
 
         Returns:
-            df: Mental health condition ratings and classifications
+            pd.DataFrame: Mental health condition ratings and classifications
         """
 
         question_label = self.get_label(question + "_SQ001")
