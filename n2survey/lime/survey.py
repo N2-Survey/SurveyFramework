@@ -1314,6 +1314,68 @@ class LimeSurvey:
 
         new_data.insert(0, "organisation", organisation)
 
+    def export_to_file(
+        self,
+        organisation: str,
+        rename_columns: dict = {},
+        directory: str = None,
+        verbose: bool = True,
+    ):
+        """Export aggregate data for question to file
+
+        Args:
+            organisation (str): Name of the organisation to which the
+                exported data belong
+            rename_columns (dict, optional): Dict of columns to rename
+            directory (str, optional): File path to which to
+                save csv file. Default is the current working directory.
+            verbose (bool, optional): Whether to display checks for similarity
+                after random permutation. Default is True
+
+        """
+        # If no dierctory specified, use current working direction
+        if not directory:
+            directory = os.getcwd()
+
+        data = self.responses.copy()
+        columns_to_drop = []
+        # Drop question about affiliation, always "A2"
+        if "A2" in data.columns:
+            columns_to_drop.append("A2")
+        # Drop questions with free input
+        columns_to_drop = (
+            columns_to_drop
+            + self.questions[self.questions["format"] == "longtext"].index.to_list()
+        )
+        data.drop(columns=columns_to_drop, inplace=True)
+        new_data = data.copy()
+        # Randomly permute values in each column
+        for column in data.columns:
+            new_data[column] = rng.permutation(data[column])
+
+        # Display similarity statistics after permutation
+        if verbose:
+            print(f"There are in total {data.shape[0]} response entries")
+            print(data.shape[1])
+            unchanged = data[data == new_data]
+            unchanged_rows = unchanged.count(axis="columns") / data.shape[1]
+            print(
+                f"of which {unchanged_rows[unchanged_rows > 0.1].shape[0]} entries after random permutation have at least 10% of columns identical to before."
+            )
+            print(
+                f"Over all entries, the average percentage of columns identical to before permutation is {round(unchanged_rows.mean() * 100)}%."
+            )
+            unchanged_columns = unchanged.count()
+            print(
+                f"The top five questions with the most identical entries are \n{unchanged_columns[unchanged_columns > 0].sort_values(ascending=False).head(5)}"
+            )
+
+        # Rename columns if dict given
+        if rename_columns:
+            new_data = new_data.rename(columns=rename_columns)
+
+        new_data.insert(0, "organisation", organisation)
+
         # Generate file name if not given
         if not directory.endswith(".csv"):
             directory = os.path.join(directory, f"{organisation}-anonymised-data.csv")
