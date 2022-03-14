@@ -1020,9 +1020,8 @@ class LimeSurvey:
         # Display similarity statistics after permutation
         if verbose:
             print(f"There are in total {data.shape[0]} response entries")
-            print(data.shape[1])
             unchanged = data[data == new_data]
-            unchanged_rows = unchanged.count(axis="columns") / data.shape[1]
+            unchanged_rows = unchanged.count(axis="columns") / new_data.shape[1]
             print(
                 f"of which {unchanged_rows[unchanged_rows > 0.1].shape[0]} entries after random permutation have at least 10% of columns identical to before."
             )
