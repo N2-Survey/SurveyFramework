@@ -18,6 +18,8 @@ from n2survey.plot import (
 
 __all__ = ["LimeSurvey", "DEFAULT_THEME", "QUESTION_TYPES"]
 
+rng = np.random.default_rng()
+
 DEFAULT_THEME = {
     "context": "notebook",
     "style": "darkgrid",
@@ -87,7 +89,6 @@ def deep_dict_update(source: dict, update_dict: dict) -> dict:
         else:
             source[key] = val
     return source
-rng = np.random.default_rng()
 
 
 class LimeSurvey:
