@@ -652,8 +652,8 @@ class LimeSurvey:
                 answer_sequence = self.get_answer_sequence(
                     question, add_questions=add_questions, totalbar=totalbar
                 )
-            (plot_data_list, answer_sequence) = self.create_comparison_data(
-                question, compare_with, answer_sequence, add_questions=add_questions
+            plot_data_list = self.create_comparison_data(
+                question, compare_with, add_questions=add_questions
             )
         if question_type == "single-choice":
             counts_df = self.count(question, labels=True)
@@ -827,9 +827,7 @@ class LimeSurvey:
             answer_sequence[0].insert(0, "Total")
         return answer_sequence
 
-    def create_comparison_data(
-        self, question, compare_with, answer_sequence, add_questions=[]
-    ):
+    def create_comparison_data(self, question, compare_with, add_questions=[]):
         """
         Load and combine necessary data for the plot functions.
         depending on the wanted (question/add_question_entry,compare_with) tuple
@@ -848,16 +846,12 @@ class LimeSurvey:
                             ),
                         ],
                         axis=1,
-                    ).values
+                    )
                 )
-                # remove combinations that do not occure from answer_sequence
-                for answer in answer_sequence[0].copy():
-                    if all([answer not in plot_data_list[0][:, 0], answer != "Total"]):
-                        answer_sequence[0].remove(answer)
             if add_questions:
                 # add combinations for additional questions with
                 # 'compare_with' question
-                for entry, answerlist in zip(add_questions, answer_sequence[1:]):
+                for entry in add_questions:
                     if self.get_question_type(compare_with) == "single-choice":
                         next_plot_data = pd.concat(
                             [
@@ -867,12 +861,9 @@ class LimeSurvey:
                                 ),
                             ],
                             axis=1,
-                        ).values
+                        )
                         plot_data_list.append(next_plot_data)
-                    for answer in answerlist.copy():
-                        if answer not in next_plot_data[:, 0]:
-                            answerlist.remove(answer)
-        return plot_data_list, answer_sequence
+        return plot_data_list
 
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)

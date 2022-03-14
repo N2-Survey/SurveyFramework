@@ -200,6 +200,17 @@ def simple_comparison_plot(
     Plot correlations from the np.ndarray arrays in plot_data_list with the
     existing answer combinations and applies the given specifications.
     """
+    # change plot data from pandas dataframe to arrays
+    count = 0
+    print(answer_sequence)
+    for df, answerlist in zip(plot_data_list.copy(), answer_sequence):
+        array = df.values
+        # remove combinations that do not occure from answer_sequence
+        for answer in answerlist.copy():
+            if all([answer not in array[:, 0], answer != "Total"]):
+                answerlist.remove(answer)
+        plot_data_list[count] = array
+        count = count + 1
     # form x-axis with answers to first question and y-axis with
     # percentages of second question correlated to each answer of the first
     # question.
