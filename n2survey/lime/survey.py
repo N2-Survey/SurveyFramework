@@ -1266,6 +1266,7 @@ class LimeSurvey:
     def export_to_file(
         self,
         organisation: str,
+        drop_columns: Union[str, list] = [],
         rename_columns: dict = {},
         directory: str = None,
         verbose: bool = True,
@@ -1275,6 +1276,8 @@ class LimeSurvey:
         Args:
             organisation (str): Name of the organisation to which the
                 exported data belong
+            drop_columns (str or list, optional): One or list of columns
+                to remove in addition to free inputs
             rename_columns (dict, optional): Dict of columns to rename
             directory (str, optional): File path to which to
                 save csv file. Default is the current working directory.
@@ -1288,15 +1291,17 @@ class LimeSurvey:
 
         data = self.responses.copy()
         columns_to_drop = []
-        # Drop question about affiliation, always "A2"
-        if "A2" in data.columns:
-            columns_to_drop.append("A2")
+        # Drop user specified questions
+        if drop_columns:
+            if isinstance(drop_columns, str):
+                drop_columns = [drop_columns]
+            columns_to_drop = columns_to_drop + drop_columns
         # Drop questions with free input
         columns_to_drop = (
             columns_to_drop
             + self.questions[self.questions["format"] == "longtext"].index.to_list()
         )
-        print(columns_to_drop)
+
         data.drop(columns=columns_to_drop, inplace=True)
         new_data = data.copy()
         # Randomly permute values in each column
