@@ -103,6 +103,11 @@ class LimeSurvey:
         "state_anxiety_class": {
             "label": "What is the state anxiety class?",
             "type": "single-choice",
+            "choices": {
+                "A1": "no or low anxiety",
+                "A2": "moderate anxiety",
+                "A3": "high anxiety",
+            },
         },
         "trait_anxiety_score": {
             "label": "What is the trait anxiety score?",
@@ -111,6 +116,11 @@ class LimeSurvey:
         "trait_anxiety_class": {
             "label": "What is the trait anxiety class?",
             "type": "single-choice",
+            "choices": {
+                "A1": "no or low anxiety",
+                "A2": "moderate anxiety",
+                "A3": "high anxiety",
+            },
         },
         "depression_score": {
             "label": "What is the depression score?",
@@ -119,6 +129,13 @@ class LimeSurvey:
         "depression_class": {
             "label": "What is the depression class?",
             "type": "single-choice",
+            "choices": {
+                "A1": "no to minimal depression",
+                "A2": "mild depression",
+                "A3": "moderate depression",
+                "A4": "moderately severe depression",
+                "A5": "severe depression",
+            },
         },
     }
 
@@ -1138,6 +1155,8 @@ class LimeSurvey:
             label = "state_anxiety"
             classification_boundaries = [0, 37, 44, 80]
             classes = ["no or low anxiety", "moderate anxiety", "high anxiety"]
+            choice_codes = ["A1", "A2", "A3"]
+
         elif condition == "trait_anxiety":
             if "calm, cool and collected" not in question_label:
                 raise ValueError("Question incompatible with specified condition type.")
@@ -1155,6 +1174,7 @@ class LimeSurvey:
             label = "trait_anxiety"
             classification_boundaries = [0, 37, 44, 80]
             classes = ["no or low anxiety", "moderate anxiety", "high anxiety"]
+            choice_codes = ["A1", "A2", "A3"]
         elif condition == "depression":
             if "interest or pleasure" not in question_label:
                 raise ValueError("Question incompatible with specified condition type.")
@@ -1169,6 +1189,7 @@ class LimeSurvey:
                 "moderately severe depression",
                 "severe depression",
             ]
+            choice_codes = ["A1", "A2", "A3", "A4", "A5"]
         else:
             raise ValueError(
                 "Unsupported condition type. Please consult your friendly local psychiatrist."
@@ -1198,6 +1219,9 @@ class LimeSurvey:
             "neg": neg_direction_scores,
             "freq": frequency_scores,
         }
+        invert_dict = {
+            the_class: code for code, the_class in zip(choice_codes, classes)
+        }
 
         # Map responses from code to text then to score
         df = pd.DataFrame()
@@ -1217,7 +1241,7 @@ class LimeSurvey:
             df[f"{label}_score"],
             bins=classification_boundaries,
             labels=classes,
-        )
+        ).map(invert_dict, na_action="ignore")
 
         if not keep_subscores:
             df = df.drop(df.columns[:-2], axis=1)

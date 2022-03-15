@@ -36,6 +36,11 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
             "state_anxiety_class": {
                 "label": "What is the state anxiety class?",
                 "type": "single-choice",
+                "choices": {
+                    "A1": "no or low anxiety",
+                    "A2": "moderate anxiety",
+                    "A3": "high anxiety",
+                },
                 "is_contingent": False,
             },
             "trait_anxiety_score": {
@@ -46,6 +51,11 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
             "trait_anxiety_class": {
                 "label": "What is the trait anxiety class?",
                 "type": "single-choice",
+                "choices": {
+                    "A1": "no or low anxiety",
+                    "A2": "moderate anxiety",
+                    "A3": "high anxiety",
+                },
                 "is_contingent": False,
             },
             "depression_score": {
@@ -56,6 +66,13 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
             "depression_class": {
                 "label": "What is the depression class?",
                 "type": "single-choice",
+                "choices": {
+                    "A1": "no to minimal depression",
+                    "A2": "mild depression",
+                    "A3": "moderate depression",
+                    "A4": "moderately severe depression",
+                    "A5": "severe depression",
+                },
                 "is_contingent": False,
             },
         }
@@ -119,33 +136,33 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
             data={
                 "state_anxiety_score": [50.0, 100 / 3, 130 / 3],
                 "state_anxiety_class": pd.Categorical(
-                    ["high anxiety", "no or low anxiety", "moderate anxiety"],
+                    ["A3", "A1", "A2"],
                     categories=[
-                        "no or low anxiety",
-                        "moderate anxiety",
-                        "high anxiety",
+                        "A1",
+                        "A2",
+                        "A3",
                     ],
                     ordered=True,
                 ),
                 "trait_anxiety_score": [47.5, 32.5, 50.0],
                 "trait_anxiety_class": pd.Categorical(
-                    ["high anxiety", "no or low anxiety", "high anxiety"],
+                    ["A3", "A1", "A3"],
                     categories=[
-                        "no or low anxiety",
-                        "moderate anxiety",
-                        "high anxiety",
+                        "A1",
+                        "A2",
+                        "A3",
                     ],
                     ordered=True,
                 ),
                 "depression_score": [8.0, 5.0, 8.0],
                 "depression_class": pd.Categorical(
-                    ["mild depression", "mild depression", "mild depression"],
+                    ["A2", "A2", "A2"],
                     categories=[
-                        "no to minimal depression",
-                        "mild depression",
-                        "moderate depression",
-                        "moderately severe depression",
-                        "severe depression",
+                        "A1",
+                        "A2",
+                        "A3",
+                        "A4",
+                        "A5",
                     ],
                     ordered=True,
                 ),
@@ -952,11 +969,11 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
             data={
                 "state_anxiety_score": [50.0, 100 / 3, 130 / 3],
                 "state_anxiety_class": pd.Categorical(
-                    ["high anxiety", "no or low anxiety", "moderate anxiety"],
+                    ["A3", "A1", "A2"],
                     categories=[
-                        "no or low anxiety",
-                        "moderate anxiety",
-                        "high anxiety",
+                        "A1",
+                        "A2",
+                        "A3",
                     ],
                     ordered=True,
                 ),
@@ -976,11 +993,11 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
             data={
                 "trait_anxiety_score": [47.5, 32.5, 50.0],
                 "trait_anxiety_class": pd.Categorical(
-                    ["high anxiety", "no or low anxiety", "high anxiety"],
+                    ["A3", "A1", "A3"],
                     categories=[
-                        "no or low anxiety",
-                        "moderate anxiety",
-                        "high anxiety",
+                        "A1",
+                        "A2",
+                        "A3",
                     ],
                     ordered=True,
                 ),
@@ -1000,13 +1017,13 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
             data={
                 "depression_score": [8.0, 5.0, 8.0],
                 "depression_class": pd.Categorical(
-                    ["mild depression", "mild depression", "mild depression"],
+                    ["A2", "A2", "A2"],
                     categories=[
-                        "no to minimal depression",
-                        "mild depression",
-                        "moderate depression",
-                        "moderately severe depression",
-                        "severe depression",
+                        "A1",
+                        "A2",
+                        "A3",
+                        "A4",
+                        "A5",
                     ],
                     ordered=True,
                 ),
