@@ -179,14 +179,24 @@ class LimeSurvey:
         )
         responses = responses.rename(columns=dict(zip(columns, renamed_columns)))
 
-        # Identify columns for survey questions
-        first_question = columns.get_loc("datestamp") + 1
-        last_question = columns.get_loc("interviewtime") - 1
-        question_columns = renamed_columns[first_question : last_question + 1]
+        if "datestamp" in columns:
+            # CSV file is unprocessed data
+            raw_data = True
 
-        # Split df into question responses and timing info
-        question_responses = responses.loc[:, question_columns]
-        system_info = responses.iloc[:, ~renamed_columns.isin(question_columns)]
+            # Identify columns for survey questions
+            first_question = columns.get_loc("datestamp") + 1
+            last_question = columns.get_loc("interviewtime") - 1
+            question_columns = renamed_columns[first_question : last_question + 1]
+
+            # Split df into question responses and timing info
+            question_responses = responses.loc[:, question_columns]
+            system_info = responses.iloc[:, ~renamed_columns.isin(question_columns)]
+
+        else:
+            # CSV file is previously processed data
+            raw_data = False
+            question_responses = responses
+            system_info = pd.DataFrame()
 
         # Set correct categories for categorical fields
         for column in self.questions.index:
@@ -199,33 +209,34 @@ class LimeSurvey:
                     .cat.set_categories(choices.keys())
                 )
 
-        # Add missing columns for multiple-choice questions with contingent question
-        # A contingent question of a multiple-choice question typically looks like this:
-        # <response varName="B1T">
-        # <fixed>
-        #  <category>
-        #    <label>Other</label>
-        #   <value>Y</value>
-        #   <contingentQuestion varName="B1other">
-        #    <text>Other</text>
-        #     ...
-        # For some reason, LimeSurvey does not export values for the parent <response> (B1T in this case).
-        # So, here we add those columns artificially based on the contingent question values.
-        multiple_choice_questions = self.questions.index[
-            (self.questions["type"] == "multiple-choice")
-            & self.questions["contingent_of_name"].notnull()
-        ]
-        for question in multiple_choice_questions:
-            question_responses.insert(
-                question_responses.columns.get_loc(question),
-                self.questions.loc[question, "contingent_of_name"],
-                # Fill in new column based on "{question_id}other" column data
-                pd.Categorical(
-                    question_responses[question].where(
-                        question_responses[question].isnull(), "Y"
-                    )
-                ),
-            )
+        if raw_data:
+            # Add missing columns for multiple-choice questions with contingent question
+            # A contingent question of a multiple-choice question typically looks like this:
+            # <response varName="B1T">
+            # <fixed>
+            #  <category>
+            #    <label>Other</label>
+            #   <value>Y</value>
+            #   <contingentQuestion varName="B1other">
+            #    <text>Other</text>
+            #     ...
+            # For some reason, LimeSurvey does not export values for the parent <response> (B1T in this case).
+            # So, here we add those columns artificially based on the contingent question values.
+            multiple_choice_questions = self.questions.index[
+                (self.questions["type"] == "multiple-choice")
+                & self.questions["contingent_of_name"].notnull()
+            ]
+            for question in multiple_choice_questions:
+                question_responses.insert(
+                    question_responses.columns.get_loc(question),
+                    self.questions.loc[question, "contingent_of_name"],
+                    # Fill in new column based on "{question_id}other" column data
+                    pd.Categorical(
+                        question_responses[question].where(
+                            question_responses[question].isnull(), "Y"
+                        )
+                    ),
+                )
 
         # Validate data structure
         # Check for columns not listed in survey structure df
@@ -1011,6 +1022,7 @@ class LimeSurvey:
             columns_to_drop
             + self.questions[self.questions["format"] == "longtext"].index.to_list()
         )
+        print(columns_to_drop)
         data.drop(columns=columns_to_drop, inplace=True)
         new_data = data.copy()
         # Randomly permute values in each column
