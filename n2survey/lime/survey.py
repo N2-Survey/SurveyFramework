@@ -1021,6 +1021,11 @@ class LimeSurvey:
         if drop_columns:
             if isinstance(drop_columns, str):
                 drop_columns = [drop_columns]
+            nonexistent = set(drop_columns) - set(data.columns)
+            if nonexistent:
+                raise KeyError(
+                    f"The following columns are not found in responses DataFrame: {nonexistent}"
+                )
             columns_to_drop = columns_to_drop + drop_columns
         # Drop questions with free input
         columns_to_drop = (
