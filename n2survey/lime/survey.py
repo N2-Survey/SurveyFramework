@@ -782,7 +782,10 @@ class LimeSurvey:
         compare_with is already implemented and working
         """
         supported_plots = ["single-choice", "multiple-choice", "array"]
-        supported_comparisons = [("single-choice", "single-choice")]
+        supported_comparisons = [
+            ("single-choice", "single-choice"),
+            ("multiple-choice", "single-choice"),
+        ]
         all_plots = [question]
         if compare_with:
             all_plots.append(compare_with)
