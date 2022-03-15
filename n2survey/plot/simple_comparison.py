@@ -2,6 +2,7 @@ from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 __all__ = ["simple_comparison_plot"]
 
@@ -195,6 +196,7 @@ def simple_comparison_plot(
     legend_title: str = None,
     answer_sequence: list = [],
     legend_sequence: list = [],
+    theme=None,
 ):
     """
     Plot correlations from the np.ndarray arrays in plot_data_list with the
@@ -241,6 +243,8 @@ def simple_comparison_plot(
         )
         count = count + 1
     # %% Prepare/Define figure
+    if theme is not None:
+        sns.set_theme(**theme)
     fig, ax = plt.subplots()
     # %% split up y to list of answers of question 2 and list of percentages
     q2_answers = []

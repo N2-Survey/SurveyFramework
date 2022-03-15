@@ -12,6 +12,7 @@ from n2survey.lime.structure import read_lime_questionnaire_structure
 from n2survey.plot import (
     likert_bar_plot,
     multiple_choice_bar_plot,
+    multiple_simple_comparison_plot,
     simple_comparison_plot,
     single_choice_bar_plot,
 )
@@ -655,19 +656,20 @@ class LimeSurvey:
             plot_data_list = self.create_comparison_data(
                 question, compare_with, add_questions=add_questions
             )
+            # create total bar data if needed
+            if totalbar:
+                totalbar_data = self.create_total_bar_data(
+                    question_type=question_type, compare_with=compare_with
+                )
+            else:
+                totalbar_data = None
         if question_type == "single-choice":
             counts_df = self.count(question, labels=True)
 
             if "title" not in non_theme_kwargs:
                 non_theme_kwargs.update({"title": counts_df.columns[0]})
             if compare_with:
-                if totalbar:
-                    totalbar_data = np.unique(
-                        self.get_responses(compare_with, labels=True, drop_other=True),
-                        return_counts=True,
-                    )
-                else:
-                    totalbar_data = None
+
                 fig, ax = simple_comparison_plot(
                     plot_data_list,
                     totalbar=totalbar_data,
@@ -681,6 +683,7 @@ class LimeSurvey:
                     legend_title=legend_title,
                     answer_sequence=answer_sequence,
                     legend_sequence=legend_sequence,
+                    theme=theme,
                 )
 
             else:
@@ -691,15 +694,32 @@ class LimeSurvey:
                     **non_theme_kwargs,
                 )
         elif question_type == "multiple-choice":
-            counts_df = self.count(
-                question, labels=True, percents=True, add_totals=True
-            )
-            counts_df.loc[:, "Total"] = self.responses.shape[0]
-            counts_df.iloc[-1, :] = np.nan
-            counts_df.iloc[:, 0] = counts_df.iloc[:, 0].astype("float64")
-            fig, ax = multiple_choice_bar_plot(
-                counts_df, theme=theme, **non_theme_kwargs
-            )
+            if compare_with:
+                fig, ax = multiple_simple_comparison_plot(
+                    plot_data_list,
+                    totalbar=totalbar_data,
+                    suppress_answers=suppress_answers,
+                    ignore_no_answer=ignore_no_answer,
+                    bar_positions=bar_positions,
+                    threshold_percentage=threshold_percentage,
+                    legend_columns=legend_columns,
+                    plot_title=plot_title,
+                    plot_title_position=plot_title_position,
+                    legend_title=legend_title,
+                    answer_sequence=answer_sequence,
+                    legend_sequence=legend_sequence,
+                    theme=theme,
+                )
+            else:
+                counts_df = self.count(
+                    question, labels=True, percents=True, add_totals=True
+                )
+                counts_df.loc[:, "Total"] = self.responses.shape[0]
+                counts_df.iloc[-1, :] = np.nan
+                counts_df.iloc[:, 0] = counts_df.iloc[:, 0].astype("float64")
+                fig, ax = multiple_choice_bar_plot(
+                    counts_df, theme=theme, **non_theme_kwargs
+                )
         elif question_type == "array":
             display_title = True
             display_no_answer = False
@@ -867,6 +887,13 @@ class LimeSurvey:
                         )
                         plot_data_list.append(next_plot_data)
         return plot_data_list
+
+    def create_total_bar_data(self, question_type, compare_with):
+        totalbar_data = np.unique(
+            self.get_responses(compare_with, labels=True, drop_other=True),
+            return_counts=True,
+        )
+        return totalbar_data
 
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)
