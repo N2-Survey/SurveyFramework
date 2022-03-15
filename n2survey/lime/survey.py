@@ -695,7 +695,8 @@ class LimeSurvey:
                 )
         elif question_type == "multiple-choice":
             if compare_with:
-                fig, ax = multiple_simple_comparison_plot(
+                # fig, ax =
+                multiple_simple_comparison_plot(
                     plot_data_list,
                     totalbar=totalbar_data,
                     suppress_answers=suppress_answers,
@@ -886,6 +887,21 @@ class LimeSurvey:
                             axis=1,
                         )
                         plot_data_list.append(next_plot_data)
+        if self.get_question_type(question) == "multiple-choice":
+            if self.get_question_type(compare_with) == "single-choice":
+                # create Dataarray from all existing combinations of
+                # question and compare_with
+                plot_data_list.append(
+                    pd.concat(
+                        [
+                            self.get_responses(question, labels=True, drop_other=True),
+                            self.get_responses(
+                                compare_with, labels=True, drop_other=True
+                            ),
+                        ],
+                        axis=1,
+                    )
+                )
         return plot_data_list
 
     def create_total_bar_data(self, question_type, compare_with):
