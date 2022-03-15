@@ -194,12 +194,14 @@ class LimeSurvey:
             self.add_question(question, **info)
 
     def read_responses(
-        self, responses_file: str, transformation_questions: dict = None
+        self, responses_file: str, transformation_questions: dict = {}
     ) -> None:
         """Read responses CSV file
 
         Args:
             responses_file (str): Path to the responses CSV file
+            transformation_questions (dict, optional): Dict of questions
+                requiring transformation of raw data, e.g. {'depression': 'D3'}
 
         """
 
@@ -293,26 +295,28 @@ class LimeSurvey:
         self.responses = question_responses
         self.lime_system_info = system_info
 
-        if transformation_questions:
-            state_anxiety_question = transformation_questions.get("state_anxiety")
-            trait_anxiety_question = transformation_questions.get("trait_anxiety")
-            depression_question = transformation_questions.get("depression")
-            if state_anxiety_question:
-                self.add_responses(
-                    self.rate_mental_health(
-                        state_anxiety_question, condition="state_anxiety"
-                    )
-                )
-            if trait_anxiety_question:
-                self.add_responses(
-                    self.rate_mental_health(
-                        trait_anxiety_question, condition="trait_anxiety"
-                    )
-                )
-            if depression_question:
-                self.add_responses(
-                    self.rate_mental_health(depression_question, condition="depression")
-                )
+        for transform, question in transformation_questions.items():
+            self.add_responses(self.transform_question(question, transform))
+
+    def transform_question(self, question: str, transform: str):
+        """Perform transformation on responses to given question
+
+        Args:
+            question (str): Question to transform
+            transform (str): Type of transform to perform
+
+        Returns:
+            pd.DataFrame: Transformed DataFrame to be concatenated to self.responses
+        """
+
+        transform_dict = {
+            "state_anxiety": "mental_health",
+            "trait_anxiety": "mental_health",
+            "depression": "mental_health",
+        }
+
+        if transform_dict.get(transform) == "mental_health":
+            return self.rate_mental_health(question, condition=transform)
 
     def __copy__(self):
         """Create a shallow copy of the LimeSurvey instance

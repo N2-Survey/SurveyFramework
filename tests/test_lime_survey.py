@@ -253,6 +253,88 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
 
+class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test LimeSurvey transform_question"""
+
+    def test_mental_health_transforms(self):
+        """Test transforming three types of mental health questions"""
+
+        state_anxiety_transformed = self.survey.transform_question(
+            "D1", "state_anxiety"
+        )
+        trait_anxiety_transformed = self.survey.transform_question(
+            "D2", "trait_anxiety"
+        )
+        depression_transformed = self.survey.transform_question("D3", "depression")
+
+        state_anxiety_ref = pd.DataFrame(
+            data={
+                "state_anxiety_score": [50.0, 100 / 3, 130 / 3],
+                "state_anxiety_class": pd.Categorical(
+                    ["A3", "A1", "A2"],
+                    categories=[
+                        "A1",
+                        "A2",
+                        "A3",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[2, 3, 4],
+        )
+        state_anxiety_ref.index.name = "id"
+
+        trait_anxiety_ref = pd.DataFrame(
+            data={
+                "trait_anxiety_score": [47.5, 32.5, 50.0],
+                "trait_anxiety_class": pd.Categorical(
+                    ["A3", "A1", "A3"],
+                    categories=[
+                        "A1",
+                        "A2",
+                        "A3",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[2, 3, 4],
+        )
+        trait_anxiety_ref.index.name = "id"
+
+        depression_ref = pd.DataFrame(
+            data={
+                "depression_score": [8.0, 5.0, 8.0],
+                "depression_class": pd.Categorical(
+                    ["A2", "A2", "A2"],
+                    categories=[
+                        "A1",
+                        "A2",
+                        "A3",
+                        "A4",
+                        "A5",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[2, 3, 4],
+        )
+        depression_ref.index.name = "id"
+
+        self.assert_df_equal(
+            state_anxiety_transformed.iloc[:3],
+            state_anxiety_ref,
+            msg="Series not equal",
+        )
+        self.assert_df_equal(
+            trait_anxiety_transformed.iloc[:3],
+            trait_anxiety_ref,
+            msg="Series not equal",
+        )
+        self.assert_df_equal(
+            depression_transformed.iloc[:3], depression_ref, msg="Series not equal"
+        )
+
+
 class TestLimeSurveyAddQuestion(BaseTestLimeSurvey2021Case):
     """Test LimeSurvey add_question"""
 
