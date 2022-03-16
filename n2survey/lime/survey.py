@@ -1271,7 +1271,7 @@ class LimeSurvey:
         directory: str = None,
         verbose: bool = True,
     ):
-        """Export aggregate data for question to file
+        """Export anonymised data for question to file
 
         Args:
             organisation (str): Name of the organisation to which the
