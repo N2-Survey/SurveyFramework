@@ -18,6 +18,7 @@ from n2survey.plot import (
 
 __all__ = ["LimeSurvey", "DEFAULT_THEME", "QUESTION_TYPES"]
 
+
 DEFAULT_THEME = {
     "context": "notebook",
     "style": "darkgrid",
@@ -87,6 +88,9 @@ def deep_dict_update(source: dict, update_dict: dict) -> dict:
         else:
             source[key] = val
     return source
+
+
+rng = np.random.default_rng()
 
 
 class LimeSurvey:
@@ -227,14 +231,24 @@ class LimeSurvey:
         )
         responses = responses.rename(columns=dict(zip(columns, renamed_columns)))
 
-        # Identify columns for survey questions
-        first_question = columns.get_loc("datestamp") + 1
-        last_question = columns.get_loc("interviewtime") - 1
-        question_columns = renamed_columns[first_question : last_question + 1]
+        if "datestamp" in columns:
+            # CSV file is unprocessed data
+            raw_data = True
 
-        # Split df into question responses and timing info
-        question_responses = responses.loc[:, question_columns]
-        system_info = responses.iloc[:, ~renamed_columns.isin(question_columns)]
+            # Identify columns for survey questions
+            first_question = columns.get_loc("datestamp") + 1
+            last_question = columns.get_loc("interviewtime") - 1
+            question_columns = renamed_columns[first_question : last_question + 1]
+
+            # Split df into question responses and timing info
+            question_responses = responses.loc[:, question_columns]
+            system_info = responses.iloc[:, ~renamed_columns.isin(question_columns)]
+
+        else:
+            # CSV file is previously processed data
+            raw_data = False
+            question_responses = responses
+            system_info = pd.DataFrame()
 
         # Set correct categories for categorical fields
         for column in self.questions.index:
@@ -247,33 +261,34 @@ class LimeSurvey:
                     .cat.set_categories(choices.keys())
                 )
 
-        # Add missing columns for multiple-choice questions with contingent question
-        # A contingent question of a multiple-choice question typically looks like this:
-        # <response varName="B1T">
-        # <fixed>
-        #  <category>
-        #    <label>Other</label>
-        #   <value>Y</value>
-        #   <contingentQuestion varName="B1other">
-        #    <text>Other</text>
-        #     ...
-        # For some reason, LimeSurvey does not export values for the parent <response> (B1T in this case).
-        # So, here we add those columns artificially based on the contingent question values.
-        multiple_choice_questions = self.questions.index[
-            (self.questions["type"] == "multiple-choice")
-            & self.questions["contingent_of_name"].notnull()
-        ]
-        for question in multiple_choice_questions:
-            question_responses.insert(
-                question_responses.columns.get_loc(question),
-                self.questions.loc[question, "contingent_of_name"],
-                # Fill in new column based on "{question_id}other" column data
-                pd.Categorical(
-                    question_responses[question].where(
-                        question_responses[question].isnull(), "Y"
-                    )
-                ),
-            )
+        if raw_data:
+            # Add missing columns for multiple-choice questions with contingent question
+            # A contingent question of a multiple-choice question typically looks like this:
+            # <response varName="B1T">
+            # <fixed>
+            #  <category>
+            #    <label>Other</label>
+            #   <value>Y</value>
+            #   <contingentQuestion varName="B1other">
+            #    <text>Other</text>
+            #     ...
+            # For some reason, LimeSurvey does not export values for the parent <response> (B1T in this case).
+            # So, here we add those columns artificially based on the contingent question values.
+            multiple_choice_questions = self.questions.index[
+                (self.questions["type"] == "multiple-choice")
+                & self.questions["contingent_of_name"].notnull()
+            ]
+            for question in multiple_choice_questions:
+                question_responses.insert(
+                    question_responses.columns.get_loc(question),
+                    self.questions.loc[question, "contingent_of_name"],
+                    # Fill in new column based on "{question_id}other" column data
+                    pd.Categorical(
+                        question_responses[question].where(
+                            question_responses[question].isnull(), "Y"
+                        )
+                    ),
+                )
 
         # Validate data structure
         # Check for columns not listed in survey structure df
@@ -1252,3 +1267,83 @@ class LimeSurvey:
             df = df.drop(df.columns[:-2], axis=1)
 
         return df
+
+    def export_to_file(
+        self,
+        organisation: str,
+        drop_columns: Union[str, list] = [],
+        rename_columns: dict = {},
+        directory: str = None,
+        verbose: bool = True,
+    ):
+        """Export anonymised data for question to file
+
+        Args:
+            organisation (str): Name of the organisation to which the
+                exported data belong
+            drop_columns (str or list, optional): One or list of columns
+                to remove in addition to free inputs
+            rename_columns (dict, optional): Dict of columns to rename
+            directory (str, optional): File path to which to
+                save csv file. Default is the current working directory.
+            verbose (bool, optional): Whether to display checks for similarity
+                after random permutation. Default is True
+
+        """
+        # If no dierctory specified, use current working direction
+        if not directory:
+            directory = os.getcwd()
+
+        data = self.responses.copy()
+        columns_to_drop = []
+        # Drop user specified questions
+        if drop_columns:
+            if isinstance(drop_columns, str):
+                drop_columns = [drop_columns]
+            nonexistent = set(drop_columns) - set(data.columns)
+            if nonexistent:
+                raise KeyError(
+                    f"The following columns are not found in responses DataFrame: {nonexistent}"
+                )
+            columns_to_drop = columns_to_drop + drop_columns
+        # Drop questions with free input
+        columns_to_drop = (
+            columns_to_drop
+            + self.questions[self.questions["format"] == "longtext"].index.to_list()
+        )
+
+        data.drop(columns=columns_to_drop, inplace=True)
+        new_data = data.copy()
+        # Randomly permute values in each column
+        for column in data.columns:
+            new_data[column] = rng.permutation(data[column])
+
+        # Display similarity statistics after permutation
+        if verbose:
+            print(f"There are in total {data.shape[0]} response entries")
+            unchanged = data[data == new_data]
+            unchanged_rows = unchanged.count(axis="columns") / new_data.shape[1]
+            print(
+                f"of which {unchanged_rows[unchanged_rows > 0.1].shape[0]} entries after random permutation have at least 10% of columns identical to before."
+            )
+            print(
+                f"Over all entries, the average percentage of columns identical to before permutation is {round(unchanged_rows.mean() * 100)}%."
+            )
+            unchanged_columns = unchanged.count()
+            print(
+                f"The top five questions with the most identical entries are \n{unchanged_columns[unchanged_columns > 0].sort_values(ascending=False).head(5)}"
+            )
+
+        # Rename columns if dict given
+        if rename_columns:
+            new_data = new_data.rename(columns=rename_columns)
+
+        new_data.insert(0, "organisation", organisation)
+
+        # Generate file name if not given
+        if not directory.endswith(".csv"):
+            directory = os.path.join(directory, f"{organisation}-anonymised-data.csv")
+
+        new_data.to_csv(directory)
+
+        print("\nData exported!")
