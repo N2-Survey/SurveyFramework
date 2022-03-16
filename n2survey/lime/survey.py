@@ -1265,6 +1265,8 @@ class LimeSurvey:
         if not keep_subscores:
             df = df.drop(df.columns[:-2], axis=1)
 
+        return df
+
     def export_to_file(
         self,
         organisation: str,
