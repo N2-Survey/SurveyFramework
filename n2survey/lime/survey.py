@@ -19,6 +19,7 @@ from n2survey.plot import (
 
 __all__ = ["LimeSurvey", "DEFAULT_THEME", "QUESTION_TYPES"]
 
+
 DEFAULT_THEME = {
     "context": "notebook",
     "style": "darkgrid",
@@ -90,12 +91,58 @@ def deep_dict_update(source: dict, update_dict: dict) -> dict:
     return source
 
 
+rng = np.random.default_rng()
+
+
 class LimeSurvey:
     """Base LimeSurvey class"""
 
     na_label: str = "No Answer"
     theme: dict = None
     output_folder: str = None
+    additional_questions = {
+        "state_anxiety_score": {
+            "label": "What is the state anxiety score?",
+            "type": "free",
+        },
+        "state_anxiety_class": {
+            "label": "What is the state anxiety class?",
+            "type": "single-choice",
+            "choices": {
+                "A1": "no or low anxiety",
+                "A2": "moderate anxiety",
+                "A3": "high anxiety",
+            },
+        },
+        "trait_anxiety_score": {
+            "label": "What is the trait anxiety score?",
+            "type": "free",
+        },
+        "trait_anxiety_class": {
+            "label": "What is the trait anxiety class?",
+            "type": "single-choice",
+            "choices": {
+                "A1": "no or low anxiety",
+                "A2": "moderate anxiety",
+                "A3": "high anxiety",
+            },
+        },
+        "depression_score": {
+            "label": "What is the depression score?",
+            "type": "free",
+        },
+        "depression_class": {
+            "label": "What is the depression class?",
+            "type": "single-choice",
+            "choices": {
+                "A1": "no to minimal depression",
+                "A2": "mild depression",
+                "A3": "moderate depression",
+                "A4": "moderately severe depression",
+                "A5": "severe depression",
+            },
+        },
+    }
 
     def __init__(
         self,
@@ -148,11 +195,18 @@ class LimeSurvey:
         self.sections = section_df
         self.questions = question_df
 
-    def read_responses(self, responses_file: str) -> None:
+        for question, info in self.additional_questions.items():
+            self.add_question(question, **info)
+
+    def read_responses(
+        self, responses_file: str, transformation_questions: dict = {}
+    ) -> None:
         """Read responses CSV file
 
         Args:
             responses_file (str): Path to the responses CSV file
+            transformation_questions (dict, optional): Dict of questions
+                requiring transformation of raw data, e.g. {'depression': 'D3'}
 
         """
 
@@ -178,14 +232,24 @@ class LimeSurvey:
         )
         responses = responses.rename(columns=dict(zip(columns, renamed_columns)))
 
-        # Identify columns for survey questions
-        first_question = columns.get_loc("datestamp") + 1
-        last_question = columns.get_loc("interviewtime") - 1
-        question_columns = renamed_columns[first_question : last_question + 1]
+        if "datestamp" in columns:
+            # CSV file is unprocessed data
+            raw_data = True
 
-        # Split df into question responses and timing info
-        question_responses = responses.loc[:, question_columns]
-        system_info = responses.iloc[:, ~renamed_columns.isin(question_columns)]
+            # Identify columns for survey questions
+            first_question = columns.get_loc("datestamp") + 1
+            last_question = columns.get_loc("interviewtime") - 1
+            question_columns = renamed_columns[first_question : last_question + 1]
+
+            # Split df into question responses and timing info
+            question_responses = responses.loc[:, question_columns]
+            system_info = responses.iloc[:, ~renamed_columns.isin(question_columns)]
+
+        else:
+            # CSV file is previously processed data
+            raw_data = False
+            question_responses = responses
+            system_info = pd.DataFrame()
 
         # Set correct categories for categorical fields
         for column in self.questions.index:
@@ -198,33 +262,34 @@ class LimeSurvey:
                     .cat.set_categories(choices.keys())
                 )
 
-        # Add missing columns for multiple-choice questions with contingent question
-        # A contingent question of a multiple-choice question typically looks like this:
-        # <response varName="B1T">
-        # <fixed>
-        #  <category>
-        #    <label>Other</label>
-        #   <value>Y</value>
-        #   <contingentQuestion varName="B1other">
-        #    <text>Other</text>
-        #     ...
-        # For some reason, LimeSurvey does not export values for the parent <response> (B1T in this case).
-        # So, here we add those columns artificially based on the contingent question values.
-        multiple_choice_questions = self.questions.index[
-            (self.questions["type"] == "multiple-choice")
-            & self.questions["contingent_of_name"].notnull()
-        ]
-        for question in multiple_choice_questions:
-            question_responses.insert(
-                question_responses.columns.get_loc(question),
-                self.questions.loc[question, "contingent_of_name"],
-                # Fill in new column based on "{question_id}other" column data
-                pd.Categorical(
-                    question_responses[question].where(
-                        question_responses[question].isnull(), "Y"
-                    )
-                ),
-            )
+        if raw_data:
+            # Add missing columns for multiple-choice questions with contingent question
+            # A contingent question of a multiple-choice question typically looks like this:
+            # <response varName="B1T">
+            # <fixed>
+            #  <category>
+            #    <label>Other</label>
+            #   <value>Y</value>
+            #   <contingentQuestion varName="B1other">
+            #    <text>Other</text>
+            #     ...
+            # For some reason, LimeSurvey does not export values for the parent <response> (B1T in this case).
+            # So, here we add those columns artificially based on the contingent question values.
+            multiple_choice_questions = self.questions.index[
+                (self.questions["type"] == "multiple-choice")
+                & self.questions["contingent_of_name"].notnull()
+            ]
+            for question in multiple_choice_questions:
+                question_responses.insert(
+                    question_responses.columns.get_loc(question),
+                    self.questions.loc[question, "contingent_of_name"],
+                    # Fill in new column based on "{question_id}other" column data
+                    pd.Categorical(
+                        question_responses[question].where(
+                            question_responses[question].isnull(), "Y"
+                        )
+                    ),
+                )
 
         # Validate data structure
         # Check for columns not listed in survey structure df
@@ -245,6 +310,29 @@ class LimeSurvey:
 
         self.responses = question_responses
         self.lime_system_info = system_info
+
+        for transform, question in transformation_questions.items():
+            self.add_responses(self.transform_question(question, transform))
+
+    def transform_question(self, question: str, transform: str):
+        """Perform transformation on responses to given question
+
+        Args:
+            question (str): Question to transform
+            transform (str): Type of transform to perform
+
+        Returns:
+            pd.DataFrame: Transformed DataFrame to be concatenated to self.responses
+        """
+
+        transform_dict = {
+            "state_anxiety": "mental_health",
+            "trait_anxiety": "mental_health",
+            "depression": "mental_health",
+        }
+
+        if transform_dict.get(transform) == "mental_health":
+            return self.rate_mental_health(question, condition=transform)
 
     def __copy__(self):
         """Create a shallow copy of the LimeSurvey instance
@@ -937,6 +1025,63 @@ class LimeSurvey:
 
         return questions_subdf
 
+    def add_question(
+        self, name: str, responses: Union[pd.Series, pd.DataFrame] = None, **kwargs
+    ):
+        """Add question to self.questions DataFrame
+
+        Args:
+            name (str): Name (id) of the question to add, e.g. "A12"
+            responses (pd.Series or pd.DataFrame, optional): responses
+                to the question to be added
+            **kwargs (optional): Attributes of the question to be added,
+                e.g. type="single-choice", choices={"A1": "Yes", "A2": "No"}
+        """
+
+        # Add "is_contingent" attribute if not specified
+        # as this attribute cannot be empty
+        if not kwargs.get("is_contingent"):
+            kwargs["is_contingent"] = False
+
+        self.questions = pd.concat(
+            [self.questions, pd.DataFrame([kwargs], index=[name])]
+        )
+
+        # Add responses to self.responses if given
+        if responses is not None:
+            self.add_responses(responses=responses, question=name)
+
+    def add_responses(
+        self,
+        responses: Union[pd.Series, pd.DataFrame],
+        question: Union[list, str] = None,
+    ):
+        """Add responses to specified question to self.responses DataFrame
+
+        Args:
+            responses (pd.Series or pd.DataFrame): responses to be added
+                to self.responses
+            question (list or str, optional): Name (id) of question to which
+                the responses correspond. If not given, the column/Series name
+                is taken as the name
+        """
+
+        # Rename the column(s)/Series if question is specified
+        if question is not None:
+            if isinstance(question, str):
+                question = [question]
+            if isinstance(responses, pd.DataFrame):
+                responses = responses.rename(
+                    columns={
+                        column: name
+                        for column, name in zip(responses.columns, question)
+                    }
+                )
+            if isinstance(responses, pd.Series):
+                responses.name = question[0]
+
+        self.responses = pd.concat([self.responses, responses], axis=1)
+
     def get_question_type(self, question: str) -> str:
         """Get question type and validate it
 
@@ -1015,3 +1160,229 @@ class LimeSurvey:
             choices_dict = question_info.choices[0]
 
         return choices_dict
+
+    def rate_mental_health(
+        self,
+        question: str,
+        condition: str = None,
+        keep_subscores: bool = False,
+    ) -> pd.DataFrame:
+        """Calculate State/Trait Anxiety or Depression score based on responses to
+            question based on the following references:
+                K. Kroenke, R. L. Spitzer, J. B. W. William, and B. Löwe., The
+                    Patient Health Questionnaire somatic, anxiety,and depressive
+                    symptom scales: a systematic review. General Hospital
+                    Psychiatry, 32(4):345–359, 2010.
+                T. M. Marteau and H. Bekker., The development of a six-item short-
+                    form of the state scale of the spielberger state-trait anxiety
+                    inventory (STAI). British Journal of Clinical Psychology,
+                    31(3):301–306, 1992.
+
+        Args:
+            question (str): Question ID to use for calculation
+            condition (str, optional): Which kind of mental health condition to rate,
+                "state_anxiety", "trait_anxiety", or "depression". If not specified,
+                the condition is automatically infered. Default None.
+            keep_subscores (bool, optional): Whether to include scores from subquestions
+                in the output DataFrame, or only total score and classification.
+                Default False.
+
+        Returns:
+            pd.DataFrame: Mental health condition ratings and classifications
+        """
+
+        question_label = self.get_label(question + "_SQ001")
+        # Infer condition type if not provided
+        if condition is None:
+            if "I feel calm" in question_label:
+                condition = "state_anxiety"
+            elif "calm, cool and collected" in question_label:
+                condition = "trait_anxiety"
+            elif "interest or pleasure" in question_label:
+                condition = "depression"
+            else:
+                raise ValueError(
+                    "Question incompatible with any supported condition type."
+                )
+
+        # Set up condition-specific parameters
+        if condition == "state_anxiety":
+            if "I feel calm" not in question_label:
+                raise ValueError("Question incompatible with specified condition type.")
+            base_score = 10 / 3
+            conversion = ["pos", "neg", "neg", "pos", "pos", "neg"]
+            label = "state_anxiety"
+            classification_boundaries = [0, 37, 44, 80]
+            classes = ["no or low anxiety", "moderate anxiety", "high anxiety"]
+            choice_codes = ["A1", "A2", "A3"]
+
+        elif condition == "trait_anxiety":
+            if "calm, cool and collected" not in question_label:
+                raise ValueError("Question incompatible with specified condition type.")
+            base_score = 5 / 2
+            conversion = [
+                "pos",
+                "neg",
+                "neg",
+                "pos",
+                "neg",
+                "neg",
+                "pos",
+                "neg",
+            ]
+            label = "trait_anxiety"
+            classification_boundaries = [0, 37, 44, 80]
+            classes = ["no or low anxiety", "moderate anxiety", "high anxiety"]
+            choice_codes = ["A1", "A2", "A3"]
+        elif condition == "depression":
+            if "interest or pleasure" not in question_label:
+                raise ValueError("Question incompatible with specified condition type.")
+            base_score = 1
+            conversion = ["freq" for i in range(8)]
+            label = "depression"
+            classification_boundaries = [0, 4, 9, 14, 19, 24]
+            classes = [
+                "no to minimal depression",
+                "mild depression",
+                "moderate depression",
+                "moderately severe depression",
+                "severe depression",
+            ]
+            choice_codes = ["A1", "A2", "A3", "A4", "A5"]
+        else:
+            raise ValueError(
+                "Unsupported condition type. Please consult your friendly local psychiatrist."
+            )
+
+        # Set up score conversion dicts
+        pos_direction_scores = {
+            "Not at all": 4 * base_score,
+            "Somewhat": 3 * base_score,
+            "Moderately": 2 * base_score,
+            "Very much": 1 * base_score,
+        }
+        neg_direction_scores = {
+            "Not at all": 1 * base_score,
+            "Somewhat": 2 * base_score,
+            "Moderately": 3 * base_score,
+            "Very much": 4 * base_score,
+        }
+        frequency_scores = {
+            "Not at all": 0 * base_score,
+            "Several days": 1 * base_score,
+            "More than half the days": 2 * base_score,
+            "Nearly every day": 3 * base_score,
+        }
+        conversion_dicts = {
+            "pos": pos_direction_scores,
+            "neg": neg_direction_scores,
+            "freq": frequency_scores,
+        }
+        invert_dict = {
+            the_class: code for code, the_class in zip(choice_codes, classes)
+        }
+
+        # Map responses from code to text then to score
+        df = pd.DataFrame()
+        data = self.get_responses(question, labels=False)
+        for column, conversion in zip(data.columns, conversion):
+            df[f"{column}_score"] = (
+                data[column]
+                .map(self.get_choices(question))
+                .map(conversion_dicts[conversion], na_action="ignore")
+            )
+
+        # Calculate total anxiety or depression scores
+        df[f"{label}_score"] = df.sum(axis=1, skipna=False)
+
+        # Classify into categories
+        df[f"{label}_class"] = pd.cut(
+            df[f"{label}_score"],
+            bins=classification_boundaries,
+            labels=classes,
+        ).map(invert_dict, na_action="ignore")
+
+        if not keep_subscores:
+            df = df.drop(df.columns[:-2], axis=1)
+
+        return df
+
+    def export_to_file(
+        self,
+        organisation: str,
+        drop_columns: Union[str, list] = [],
+        rename_columns: dict = {},
+        directory: str = None,
+        verbose: bool = True,
+    ):
+        """Export anonymised data for question to file
+
+        Args:
+            organisation (str): Name of the organisation to which the
+                exported data belong
+            drop_columns (str or list, optional): One or list of columns
+                to remove in addition to free inputs
+            rename_columns (dict, optional): Dict of columns to rename
+            directory (str, optional): File path to which to
+                save csv file. Default is the current working directory.
+            verbose (bool, optional): Whether to display checks for similarity
+                after random permutation. Default is True
+
+        """
+        # If no dierctory specified, use current working direction
+        if not directory:
+            directory = os.getcwd()
+
+        data = self.responses.copy()
+        columns_to_drop = []
+        # Drop user specified questions
+        if drop_columns:
+            if isinstance(drop_columns, str):
+                drop_columns = [drop_columns]
+            nonexistent = set(drop_columns) - set(data.columns)
+            if nonexistent:
+                raise KeyError(
+                    f"The following columns are not found in responses DataFrame: {nonexistent}"
+                )
+            columns_to_drop = columns_to_drop + drop_columns
+        # Drop questions with free input
+        columns_to_drop = (
+            columns_to_drop
+            + self.questions[self.questions["format"] == "longtext"].index.to_list()
+        )
+
+        data.drop(columns=columns_to_drop, inplace=True)
+        new_data = data.copy()
+        # Randomly permute values in each column
+        for column in data.columns:
+            new_data[column] = rng.permutation(data[column])
+
+        # Display similarity statistics after permutation
+        if verbose:
+            print(f"There are in total {data.shape[0]} response entries")
+            unchanged = data[data == new_data]
+            unchanged_rows = unchanged.count(axis="columns") / new_data.shape[1]
+            print(
+                f"of which {unchanged_rows[unchanged_rows > 0.1].shape[0]} entries after random permutation have at least 10% of columns identical to before."
+            )
+            print(
+                f"Over all entries, the average percentage of columns identical to before permutation is {round(unchanged_rows.mean() * 100)}%."
+            )
+            unchanged_columns = unchanged.count()
+            print(
+                f"The top five questions with the most identical entries are \n{unchanged_columns[unchanged_columns > 0].sort_values(ascending=False).head(5)}"
+            )
+
+        # Rename columns if dict given
+        if rename_columns:
+            new_data = new_data.rename(columns=rename_columns)
+
+        new_data.insert(0, "organisation", organisation)
+
+        # Generate file name if not given
+        if not directory.endswith(".csv"):
+            directory = os.path.join(directory, f"{organisation}-anonymised-data.csv")
+
+        new_data.to_csv(directory)
+
+        print("\nData exported!")
