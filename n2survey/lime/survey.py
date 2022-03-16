@@ -754,6 +754,7 @@ class LimeSurvey:
                     legend_title=legend_title,
                     answer_sequence=answer_sequence,
                     legend_sequence=legend_sequence,
+                    theme=theme,
                 )
 
             else:
