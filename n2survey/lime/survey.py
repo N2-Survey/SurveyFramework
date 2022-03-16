@@ -18,7 +18,6 @@ from n2survey.plot import (
 
 __all__ = ["LimeSurvey", "DEFAULT_THEME", "QUESTION_TYPES"]
 
-rng = np.random.default_rng()
 
 DEFAULT_THEME = {
     "context": "notebook",
