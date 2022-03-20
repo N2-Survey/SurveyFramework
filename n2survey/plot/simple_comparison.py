@@ -204,7 +204,6 @@ def simple_comparison_plot(
     """
     # change plot data from pandas dataframe to arrays
     count = 0
-    print(answer_sequence)
     for df, answerlist in zip(plot_data_list.copy(), answer_sequence):
         array = df.values
         # remove combinations that do not occure from answer_sequence

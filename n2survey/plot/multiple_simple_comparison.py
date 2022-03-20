@@ -7,7 +7,9 @@ Created on Tue Mar 15 18:50:01 2022
 """
 from typing import Union
 
+import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 __all__ = ["multiple_simple_comparison_plot"]
 
@@ -32,12 +34,14 @@ def multiple_simple_comparison_plot(
     Plots correlations between multiple choice answers and the answers of
     simple choice answers.
     """
-    print(answer_sequence[0])
-    total_participants = plot_data_list[0].shape[0]
+    # print(answer_sequence)
     (x, y) = form_x_and_y(
         plot_data_list, totalbar=totalbar, suppress_answers=suppress_answers
     )
-    brakk
+    # %% Prepare/Define figure
+    if theme is not None:
+        sns.set_theme(**theme)
+    fig, ax = plt.subplots()
     return True
 
 
@@ -50,30 +54,31 @@ def form_x_and_y(array, totalbar=None, suppress_answers=[]):
     main 'question'.
     It filters out the answers specified by suppress_answers.
     """
-    x = []
     percentages_for_comparison = []
+    answers = []
+    count = 0
     for entry in array:
-        x.append(np.array(entry.columns))
+        answers.append(entry.count().index.values.astype(str))
         percentages_for_comparison.append(
             get_percentages(entry.values, totalbar=totalbar)
         )
+        for answer in suppress_answers:
+            if answer not in answers[count]:
+                print(f"{answer} does not exist for this question")
+            else:
+                remove_index = np.where(answers[count] == answer)[0][0]
+                answers[count] = np.delete(answers[count], remove_index)
+                for i in percentages_for_comparison[count].copy():
+                    percentages_for_comparison[count][i] = np.delete(
+                        percentages_for_comparison[count][i], remove_index
+                    )
+                brakk
+
+        count = count + 1
     print(x)
+    brakk
     print(percentages_for_comparison)
     print(percentages_for_comparison[0]["Woman"])
-    brakk
-    for answer in suppress_answers:
-        if answer not in percentage_correlated_answers:
-            print(f"{answer} does not exist for this question")
-        else:
-            percentage_correlated_answers.pop(answer)
-    percentages_for_comparison.append(percentage_correlated_answers.copy())
-
-    x = []
-    y = []
-    for percentage_correlated_answers in percentages_for_comparison:
-        for entry in percentage_correlated_answers:
-            x.append(entry)
-            y.append(percentage_correlated_answers[entry])
     return x, y
 
 
