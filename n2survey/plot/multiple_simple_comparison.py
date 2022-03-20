@@ -34,14 +34,21 @@ def multiple_simple_comparison_plot(
     Plots correlations between multiple choice answers and the answers of
     simple choice answers.
     """
-    # print(answer_sequence)
+    # form x and y from plot_data_lists
     (x, y) = form_x_and_y(
         plot_data_list, totalbar=totalbar, suppress_answers=suppress_answers
     )
+    print(x)
+    print(y)
+    x_axis = np.arange(len(x))
     # %% Prepare/Define figure
     if theme is not None:
         sns.set_theme(**theme)
     fig, ax = plt.subplots()
+    # %% plot
+    # positionlist = calculate_barpositions_per_answer()
+    for entry, positionlist in zip(y, positionlist):
+        plt.bar(x_axis - separator, list(y[entry]), label=entry)
     return True
 
 
@@ -72,13 +79,15 @@ def form_x_and_y(array, totalbar=None, suppress_answers=[]):
                     percentages_for_comparison[count][i] = np.delete(
                         percentages_for_comparison[count][i], remove_index
                     )
-                brakk
 
         count = count + 1
-    print(x)
-    brakk
-    print(percentages_for_comparison)
-    print(percentages_for_comparison[0]["Woman"])
+    x = [answers[0]]
+    for answer_list in answers[1:]:
+        for answer in answer_list:
+            x.append(answer)
+    y = [percentages_for_comparison[0]]
+    for percentages in percentages_for_comparison[1:]:
+        y.append(percentages)
     return x, y
 
 
@@ -94,8 +103,10 @@ def get_percentages(array, totalbar=None):
     for entry in np.unique(array[:, -1]):
         entry_subset = array[np.where(array[:, -1] == entry)][:, :-1]
         total = entry_subset.shape[0]
-        percentage[entry] = np.round(
+        calculated_percentages = np.round(
             np.count_nonzero(entry_subset, axis=0) / total * 100, decimals=1
         )
+        if not np.all((calculated_percentages == 0)):
+            percentage[entry] = calculated_percentages
 
     return percentage
