@@ -253,11 +253,9 @@ def simple_comparison_plot(
         percentages.append(entry[:, 1].astype(np.float64))
     all_answers = legend_sequence.copy()
     existing_answers = np.unique(np.concatenate(np.array(q2_answers, dtype=object)))
-    count = 0
     for entry in all_answers.copy():
         if entry not in existing_answers:
-            all_answers.pop(count)
-        count = count + 1
+            all_answers.pop(all_answers.index(entry))
     percentage_all = []
     for (percentage, q2_answer) in zip(percentages, q2_answers):
         count = 0
