@@ -783,8 +783,7 @@ class LimeSurvey:
                 )
         elif question_type == "multiple-choice":
             if compare_with:
-                # fig, ax =
-                multiple_simple_comparison_plot(
+                fig, ax = multiple_simple_comparison_plot(
                     plot_data_list,
                     totalbar=totalbar_data,
                     suppress_answers=suppress_answers,
