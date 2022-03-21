@@ -19,7 +19,7 @@ def multiple_simple_comparison_plot(
     suppress_answers: list = [],
     ignore_no_answer: bool = True,
     totalbar: np.ndarray = None,
-    bar_positions: Union[list, bool] = False,
+    bar_positions: list = [],
     threshold_percentage: float = 0,
     bar_width: float = 0.8,
     legend_columns: int = 2,
@@ -38,18 +38,46 @@ def multiple_simple_comparison_plot(
     (x, y) = form_x_and_y(
         plot_data_list, totalbar=totalbar, suppress_answers=suppress_answers
     )
-    print(x)
-    print(y)
-    x_axis = np.arange(len(x))
     # %% Prepare/Define figure
     if theme is not None:
         sns.set_theme(**theme)
     fig, ax = plt.subplots()
     # %% plot
-    # positionlist = calculate_barpositions_per_answer()
-    for entry, positionlist in zip(y, positionlist):
-        plt.bar(x_axis - separator, list(y[entry]), label=entry)
-    return True
+    bar_width = 0.8
+    positionlist_per_answer = form_single_answer_bar_positions(y, bar_width)
+    bar_positions = np.arange(len(x))
+    # bar_positions_complete = form_bar_positions(
+    #   plot_data_list,
+    #  bar_positions,
+    # totalbar=totalbar,
+    # suppress_answers=suppress_answers,
+    # )
+    fig, ax = plot_multi_bars_per_answer(
+        fig, ax, x, y, bar_positions, positionlist_per_answer
+    )
+    return fig, ax
+
+
+def plot_multi_bars_per_answer(fig, ax, x, y, bar_positions, positionlist_per_answer):
+    for entry, offset_from_xtick in zip(y, positionlist_per_answer):
+        ax.bar(bar_positions + offset_from_xtick, list(y[entry]), label=entry)
+        plt.xticks(bar_positions, x)
+    plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment="right")
+    return fig, ax
+
+
+def form_single_answer_bar_positions(y, bar_width):
+    """
+    calculates the offset of multiple bars given in dictionary 'y'
+    to a single x-position, depending on 'bar_width'
+    """
+    number_of_bars = len(y)
+    space_per_answer = bar_width * number_of_bars
+    bar_positions_per_answer = np.arange(
+        -space_per_answer / 2 + 0.5 * bar_width, space_per_answer / 2, bar_width
+    )
+    print(bar_positions_per_answer)
+    return bar_positions_per_answer
 
 
 def form_x_and_y(array, totalbar=None, suppress_answers=[]):
@@ -63,9 +91,10 @@ def form_x_and_y(array, totalbar=None, suppress_answers=[]):
     """
     percentages_for_comparison = []
     answers = []
+
     count = 0
     for entry in array:
-        answers.append(entry.count().index.values.astype(str))
+        answers.append(entry.count().index.values[0:-1].astype(str))
         percentages_for_comparison.append(
             get_percentages(entry.values, totalbar=totalbar)
         )
@@ -79,15 +108,23 @@ def form_x_and_y(array, totalbar=None, suppress_answers=[]):
                     percentages_for_comparison[count][i] = np.delete(
                         percentages_for_comparison[count][i], remove_index
                     )
-
         count = count + 1
-    x = [answers[0]]
+    x = answers[0]
     for answer_list in answers[1:]:
         for answer in answer_list:
             x.append(answer)
-    y = [percentages_for_comparison[0]]
+    y = percentages_for_comparison[0]
     for percentages in percentages_for_comparison[1:]:
-        y.append(percentages)
+        for answer in percentages:
+            if answer in y:
+                print(f"double answer: {answer}")
+                raise NotImplementedError(
+                    """
+                    only single occurence of answers supported at the moment
+                    """
+                )
+            else:
+                y[answer] = percentages[answer]
     return x, y
 
 
