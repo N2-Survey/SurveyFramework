@@ -11,6 +11,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
+from .comparison_shared_functions import (form_bar_positions,
+                                          form_single_answer_bar_positions,
+                                          filter_answer_sequence,
+                                          sort_data,
+                                          calculate_title_pad)
+
 __all__ = ["multiple_simple_comparison_plot"]
 
 
@@ -38,47 +44,59 @@ def multiple_simple_comparison_plot(
     (x, y) = form_x_and_y(
         plot_data_list, totalbar=totalbar, suppress_answers=suppress_answers
     )
+    # remove answers not in x from answer_sequence
+    answer_sequence = filter_answer_sequence(x, answer_sequence)
+    # sort x-axis (and of course y-values) by answer sequence
+    for entry in y.copy():
+        _,y[entry] = sort_data(answer_sequence,x,list(y[entry]))
+    x,_ = sort_data(answer_sequence, x, y)
+    # remove legend entries not in y 
+    legend_sequence = filter_answer_sequence([entry for entry in y], [legend_sequence])
     # %% Prepare/Define figure
     if theme is not None:
         sns.set_theme(**theme)
     fig, ax = plt.subplots()
     # %% plot
-    bar_width = 0.8
     positionlist_per_answer = form_single_answer_bar_positions(y, bar_width)
-    bar_positions = np.arange(len(x))
-    # bar_positions_complete = form_bar_positions(
-    #   plot_data_list,
-    #  bar_positions,
-    # totalbar=totalbar,
-    # suppress_answers=suppress_answers,
-    # )
+    bar_positions_complete = form_bar_positions(
+        x, y, bar_width=bar_width, totalbar=totalbar
+        )
     fig, ax = plot_multi_bars_per_answer(
-        fig, ax, x, y, bar_positions, positionlist_per_answer
+        fig, ax, x, y, bar_positions_complete,
+        positionlist_per_answer,
+        legend_sequence=legend_sequence, legend_columns = legend_columns,
+        plot_title = plot_title, legend_title=legend_title,
+        plot_title_position = plot_title_position
     )
     return fig, ax
 
-
-def plot_multi_bars_per_answer(fig, ax, x, y, bar_positions, positionlist_per_answer):
-    for entry, offset_from_xtick in zip(y, positionlist_per_answer):
+def plot_multi_bars_per_answer(fig, ax, x, y, bar_positions,
+                               positionlist_per_answer,
+                               legend_sequence, legend_columns=2,
+                               legend_title: str = None,
+                               plot_title = None, plot_title_position: tuple = (())):
+    for entry, offset_from_xtick in zip(legend_sequence, positionlist_per_answer):
         ax.bar(bar_positions + offset_from_xtick, list(y[entry]), label=entry)
         plt.xticks(bar_positions, x)
     plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment="right")
-    return fig, ax
-
-
-def form_single_answer_bar_positions(y, bar_width):
-    """
-    calculates the offset of multiple bars given in dictionary 'y'
-    to a single x-position, depending on 'bar_width'
-    """
-    number_of_bars = len(y)
-    space_per_answer = bar_width * number_of_bars
-    bar_positions_per_answer = np.arange(
-        -space_per_answer / 2 + 0.5 * bar_width, space_per_answer / 2, bar_width
+    ax.legend(
+        legend_sequence,
+        loc = (0.1,1),
+        ncol=legend_columns,
+        frameon=False,
+        title=legend_title,
     )
-    print(bar_positions_per_answer)
-    return bar_positions_per_answer
-
+    if plot_title:
+        if plot_title_position:
+            ax.text(plot_title_position[0], plot_title_position[1], plot_title)
+        else:
+            ax.set_title(
+                plot_title,
+                pad=calculate_title_pad(
+                    legend_sequence, legend_columns, legend_title=legend_title
+                ),
+            )
+    return fig, ax
 
 def form_x_and_y(array, totalbar=None, suppress_answers=[]):
     """
