@@ -11,11 +11,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from .comparison_shared_functions import (form_bar_positions,
-                                          form_single_answer_bar_positions,
-                                          filter_answer_sequence,
-                                          sort_data,
-                                          calculate_title_pad)
+from .comparison_shared_functions import (
+    calculate_title_pad,
+    filter_answer_sequence,
+    form_bar_positions,
+    form_single_answer_bar_positions,
+    sort_data,
+)
 
 __all__ = ["multiple_simple_comparison_plot"]
 
@@ -40,17 +42,23 @@ def multiple_simple_comparison_plot(
     Plots correlations between multiple choice answers and the answers of
     simple choice answers.
     """
+    if ignore_no_answer:
+        suppress_answers.append("I don't know")
+        suppress_answers.append("I don't know.")
     # form x and y from plot_data_lists
     (x, y) = form_x_and_y(
         plot_data_list, totalbar=totalbar, suppress_answers=suppress_answers
     )
+    print(y)
     # remove answers not in x from answer_sequence
     answer_sequence = filter_answer_sequence(x, answer_sequence)
     # sort x-axis (and of course y-values) by answer sequence
     for entry in y.copy():
-        _,y[entry] = sort_data(answer_sequence,x,list(y[entry]))
-    x,_ = sort_data(answer_sequence, x, y)
-    # remove legend entries not in y 
+        _, y[entry] = sort_data(answer_sequence, x, list(y[entry]))
+    x, _ = sort_data(answer_sequence, x, y)
+    # remove legend entries not in y
+    if totalbar:
+        legend_sequence.insert(0, "Total")
     legend_sequence = filter_answer_sequence([entry for entry in y], [legend_sequence])
     # %% Prepare/Define figure
     if theme is not None:
@@ -60,28 +68,43 @@ def multiple_simple_comparison_plot(
     positionlist_per_answer = form_single_answer_bar_positions(y, bar_width)
     bar_positions_complete = form_bar_positions(
         x, y, bar_width=bar_width, totalbar=totalbar
-        )
+    )
     fig, ax = plot_multi_bars_per_answer(
-        fig, ax, x, y, bar_positions_complete,
+        fig,
+        ax,
+        x,
+        y,
+        bar_positions_complete,
         positionlist_per_answer,
-        legend_sequence=legend_sequence, legend_columns = legend_columns,
-        plot_title = plot_title, legend_title=legend_title,
-        plot_title_position = plot_title_position
+        legend_sequence=legend_sequence,
+        legend_columns=legend_columns,
+        plot_title=plot_title,
+        legend_title=legend_title,
+        plot_title_position=plot_title_position,
     )
     return fig, ax
 
-def plot_multi_bars_per_answer(fig, ax, x, y, bar_positions,
-                               positionlist_per_answer,
-                               legend_sequence, legend_columns=2,
-                               legend_title: str = None,
-                               plot_title = None, plot_title_position: tuple = (())):
+
+def plot_multi_bars_per_answer(
+    fig,
+    ax,
+    x,
+    y,
+    bar_positions,
+    positionlist_per_answer,
+    legend_sequence,
+    legend_columns=2,
+    legend_title: str = None,
+    plot_title=None,
+    plot_title_position: tuple = (()),
+):
     for entry, offset_from_xtick in zip(legend_sequence, positionlist_per_answer):
         ax.bar(bar_positions + offset_from_xtick, list(y[entry]), label=entry)
         plt.xticks(bar_positions, x)
     plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment="right")
     ax.legend(
         legend_sequence,
-        loc = (0.1,1),
+        loc=(0.1, 1),
         ncol=legend_columns,
         frameon=False,
         title=legend_title,
@@ -97,6 +120,7 @@ def plot_multi_bars_per_answer(fig, ax, x, y, bar_positions,
                 ),
             )
     return fig, ax
+
 
 def form_x_and_y(array, totalbar=None, suppress_answers=[]):
     """
@@ -143,6 +167,10 @@ def form_x_and_y(array, totalbar=None, suppress_answers=[]):
                 )
             else:
                 y[answer] = percentages[answer]
+    # add totalbar if wanted, total is the average of the other percentages for
+    # every answer of 'question'
+    if totalbar:
+        y["Total"] = np.round(sum(y.values()) / len(y), decimals=1)
     return x, y
 
 
