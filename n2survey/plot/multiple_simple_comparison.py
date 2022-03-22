@@ -39,6 +39,7 @@ def multiple_simple_comparison_plot(
     legend_sequence: list = [],
     theme=None,
     calculate_aspect_ratio: bool = True,
+    remove_unchosen_answers: bool = True,
 ):
     print(theme)
     """
@@ -67,6 +68,7 @@ def multiple_simple_comparison_plot(
     bar_positions_complete = form_bar_positions(
         x, y, bar_width=bar_width, totalbar=totalbar
     )
+    # %%% calculate dimensions of figure
     if theme is not None:
         if calculate_aspect_ratio:
             width = aspect_ratio_from_arguments(
@@ -88,7 +90,7 @@ def multiple_simple_comparison_plot(
         y,
         bar_positions_complete,
         positionlist_per_answer,
-        legend_sequence=legend_sequence,
+        legend_sequence,
         legend_columns=legend_columns,
         plot_title=plot_title,
         legend_title=legend_title,
@@ -96,6 +98,11 @@ def multiple_simple_comparison_plot(
         threshold_percentage=threshold_percentage,
         bar_width=bar_width,
     )
+    # enlarge y-axis maximum due to bar labels
+    new_y_axis_size = 1.05 * ax.get_ylim()[1]
+    if theme is not None:
+        new_y_axis_size = new_y_axis_size * theme["font_scale"]
+    ax.set_ylim(top=new_y_axis_size)
     return fig, ax
 
 
@@ -142,6 +149,8 @@ def plot_multi_bars_per_answer(
         frameon=False,
         title=legend_title,
     )
+    # set y-axis to invisible
+    ax.axes.get_yaxis().set_visible(False)
     if plot_title:
         if plot_title_position:
             ax.text(plot_title_position[0], plot_title_position[1], plot_title)
@@ -152,6 +161,7 @@ def plot_multi_bars_per_answer(
                     legend_sequence, legend_columns, legend_title=legend_title
                 ),
             )
+    fig.tight_layout()
     return fig, ax
 
 
