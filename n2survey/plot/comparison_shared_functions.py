@@ -31,12 +31,14 @@ def aspect_ratio_from_arguments(
     """
     distance_between_answers = answer_distance or (0.5 * bar_width)
     distance_between_bars = bar_distance or (0.25 * bar_width)
-    font_scale_multiplier = 0.5 * theme["font_scale"]
     width = (
         len(bar_positions_complete) * len(positionlist_per_answer) * bar_width
         + distance_between_answers * len(bar_positions_complete)
         + distance_between_bars * len(positionlist_per_answer)
-    ) * font_scale_multiplier
+    ) * 0.4
+    if theme["font_scale"] > bar_width:
+        width = width / bar_width * 0.8 * theme["font_scale"]
+    print(width)
     return width
 
 
