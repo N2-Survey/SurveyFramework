@@ -42,6 +42,7 @@ def multiple_simple_comparison_plot(
     Plots correlations between multiple choice answers and the answers of
     simple choice answers.
     """
+    print(plot_data_list)
     if ignore_no_answer:
         suppress_answers.append("I don't know")
         suppress_answers.append("I don't know.")
@@ -49,7 +50,6 @@ def multiple_simple_comparison_plot(
     (x, y) = form_x_and_y(
         plot_data_list, totalbar=totalbar, suppress_answers=suppress_answers
     )
-    print(y)
     # remove answers not in x from answer_sequence
     answer_sequence = filter_answer_sequence(x, answer_sequence)
     # sort x-axis (and of course y-values) by answer sequence
@@ -64,6 +64,7 @@ def multiple_simple_comparison_plot(
     if theme is not None:
         sns.set_theme(**theme)
     fig, ax = plt.subplots()
+    fig.set_tight_layout(True)
     # %% plot
     positionlist_per_answer = form_single_answer_bar_positions(y, bar_width)
     bar_positions_complete = form_bar_positions(
@@ -101,6 +102,10 @@ def plot_multi_bars_per_answer(
     for entry, offset_from_xtick in zip(legend_sequence, positionlist_per_answer):
         ax.bar(bar_positions + offset_from_xtick, list(y[entry]), label=entry)
         plt.xticks(bar_positions, x)
+        # labels = percentage.astype(str)
+        # labels[np.where(labels.astype(np.float64) <= threshold_percentage)] = ""
+        # ax.bar_label(ax.containers[count], labels, fmt="%s", label_type="center")
+        # count = count + 1
     plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment="right")
     ax.legend(
         legend_sequence,
@@ -167,10 +172,6 @@ def form_x_and_y(array, totalbar=None, suppress_answers=[]):
                 )
             else:
                 y[answer] = percentages[answer]
-    # add totalbar if wanted, total is the average of the other percentages for
-    # every answer of 'question'
-    if totalbar:
-        y["Total"] = np.round(sum(y.values()) / len(y), decimals=1)
     return x, y
 
 
@@ -181,7 +182,7 @@ def get_percentages(array, totalbar=None):
     After that it adds the totalbar, if wanted, then it calculates a dictionary
     with the percentages for each combination+the totalbar if wanted
     """
-    # get possible combinations (combi) and count how often they occure (no_of)
+    # get possible combinations and count how often they occure
     percentage = {}
     for entry in np.unique(array[:, -1]):
         entry_subset = array[np.where(array[:, -1] == entry)][:, :-1]
@@ -191,5 +192,12 @@ def get_percentages(array, totalbar=None):
         )
         if not np.all((calculated_percentages == 0)):
             percentage[entry] = calculated_percentages
-
+    if totalbar:
+        total_participants = len(array)
+        total_question_answers = np.round(
+            np.count_nonzero(array[:, :-1], axis=0) / total_participants * 100,
+            decimals=1,
+        )
+        percentage["Total"] = total_question_answers
+        totalbar = False
     return percentage
