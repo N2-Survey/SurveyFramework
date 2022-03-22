@@ -13,10 +13,38 @@ __all__ = [
     "form_single_answer_bar_positions",
     "filter_answer_sequence",
     "calculate_title_pad",
+    "aspect_ratio_from_arguments",
 ]
 
 
+def aspect_ratio_from_arguments(
+    bar_positions_complete,
+    positionlist_per_answer,
+    theme,
+    bar_width,
+    answer_distance=None,
+    bar_distance=None,
+):
+    """
+    calculates the width of the plot, depending on total number of bars,
+    distance between group of bars, bar thickness etc.
+    """
+    distance_between_answers = answer_distance or (0.5 * bar_width)
+    distance_between_bars = bar_distance or (0.25 * bar_width)
+    font_scale_multiplier = 0.5 * theme["font_scale"]
+    width = (
+        len(bar_positions_complete) * len(positionlist_per_answer) * bar_width
+        + distance_between_answers * len(bar_positions_complete)
+        + distance_between_bars * len(positionlist_per_answer)
+    ) * font_scale_multiplier
+    return width
+
+
 def calculate_title_pad(labels, legend_columns, legend_title: str = None):
+    """
+    calculates the height of the title above the plot depending on number
+    of legend entries and number of columns that are reserved for the legend.
+    """
     pad = int(len(labels) / legend_columns) * 20 + 20
     if legend_title:
         pad = pad + 20
