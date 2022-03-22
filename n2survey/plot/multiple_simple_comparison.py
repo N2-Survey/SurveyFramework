@@ -12,6 +12,7 @@ import numpy as np
 import seaborn as sns
 
 from .comparison_shared_functions import (
+    aspect_ratio_from_arguments,
     calculate_title_pad,
     filter_answer_sequence,
     form_bar_positions,
@@ -37,12 +38,13 @@ def multiple_simple_comparison_plot(
     answer_sequence: list = [],
     legend_sequence: list = [],
     theme=None,
+    calculate_aspect_ratio: bool = True,
 ):
+    print(theme)
     """
     Plots correlations between multiple choice answers and the answers of
     simple choice answers.
     """
-    print(plot_data_list)
     if ignore_no_answer:
         suppress_answers.append("I don't know")
         suppress_answers.append("I don't know.")
@@ -60,16 +62,25 @@ def multiple_simple_comparison_plot(
     if totalbar:
         legend_sequence.insert(0, "Total")
     legend_sequence = filter_answer_sequence([entry for entry in y], [legend_sequence])
-    # %% Prepare/Define figure
-    if theme is not None:
-        sns.set_theme(**theme)
-    fig, ax = plt.subplots()
-    fig.set_tight_layout(True)
-    # %% plot
+    # %% Prepare/Define figure and calculate dimensions
     positionlist_per_answer = form_single_answer_bar_positions(y, bar_width)
     bar_positions_complete = form_bar_positions(
         x, y, bar_width=bar_width, totalbar=totalbar
     )
+    if theme is not None:
+        if calculate_aspect_ratio:
+            width = aspect_ratio_from_arguments(
+                bar_positions_complete, positionlist_per_answer, theme, bar_width
+            )
+            height = theme["rc"]["figure.figsize"][1]
+        else:
+            width, height = theme["rc"]["figure.figsize"]
+        theme["rc"]["figure.figsize"] = (width, height)
+        sns.set_theme(**theme)
+    fig, ax = plt.subplots()
+    fig.set_tight_layout(True)
+    # %% plot
+
     fig, ax = plot_multi_bars_per_answer(
         fig,
         ax,
@@ -82,6 +93,8 @@ def multiple_simple_comparison_plot(
         plot_title=plot_title,
         legend_title=legend_title,
         plot_title_position=plot_title_position,
+        threshold_percentage=threshold_percentage,
+        bar_width=bar_width,
     )
     return fig, ax
 
@@ -98,14 +111,29 @@ def plot_multi_bars_per_answer(
     legend_title: str = None,
     plot_title=None,
     plot_title_position: tuple = (()),
+    threshold_percentage: float = 0,
+    bar_width: float = 0.8,
 ):
+    count = 0
     for entry, offset_from_xtick in zip(legend_sequence, positionlist_per_answer):
-        ax.bar(bar_positions + offset_from_xtick, list(y[entry]), label=entry)
+        ax.bar(
+            bar_positions + offset_from_xtick,
+            list(y[entry]),
+            label=entry,
+            width=bar_width,
+        )
         plt.xticks(bar_positions, x)
-        # labels = percentage.astype(str)
-        # labels[np.where(labels.astype(np.float64) <= threshold_percentage)] = ""
-        # ax.bar_label(ax.containers[count], labels, fmt="%s", label_type="center")
-        # count = count + 1
+        labels = np.array(y[entry]).astype(str)
+        labels[np.where(labels.astype(np.float64) <= threshold_percentage)] = ""
+        ax.bar_label(
+            ax.containers[count],
+            labels,
+            fmt="%s",
+            label_type="edge",
+            rotation=90,
+            padding=2,
+        )
+        count = count + 1
     plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment="right")
     ax.legend(
         legend_sequence,
