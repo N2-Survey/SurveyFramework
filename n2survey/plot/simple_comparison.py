@@ -245,6 +245,7 @@ def simple_comparison_plot(
     if theme is not None:
         sns.set_theme(**theme)
     fig, ax = plt.subplots()
+    fig.set_tight_layout(True)
     # %% split up y to list of answers of question 2 and list of percentages
     q2_answers = []
     percentages = []
