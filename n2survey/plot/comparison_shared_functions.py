@@ -22,8 +22,8 @@ def aspect_ratio_from_arguments(
     positionlist_per_answer,
     theme,
     bar_width,
-    answer_distance=None,
-    bar_distance=None,
+    answer_distance: float = None,
+    bar_distance: float = None,
 ):
     """
     calculates the width of the plot, depending on total number of bars,
@@ -97,10 +97,10 @@ def sort_data(sequence, x, y):
 def form_bar_positions(
     x,
     y,
-    bar_width=0.8,
-    totalbar=None,
-    bar_positions=[],
-    additional_question_start_indizes=[],
+    bar_width: float = 0.8,
+    totalbar: bool = False,
+    bar_positions: list = [],
+    additional_question_start_indizes: list = [],
 ):
     bar_positions_complete = bar_positions or [0]
     no_bars_per_answer = len(y)

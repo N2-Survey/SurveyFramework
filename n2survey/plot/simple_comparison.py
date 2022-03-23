@@ -7,7 +7,7 @@ import seaborn as sns
 __all__ = ["simple_comparison_plot"]
 
 
-def get_percentages(array, totalbar=None):
+def get_percentages(array, totalbar: bool = None):
     """
     Calculate the total number of combinations from the given
     array of answer combinations.
@@ -46,7 +46,7 @@ def get_percentages(array, totalbar=None):
     return percentage
 
 
-def form_x_and_y(df, totalbar=None, suppress_answers=[]):
+def form_x_and_y(df, totalbar: bool = None, suppress_answers: list = []):
     """
     Split up the array given to it to x and y components for
     the plot.
@@ -80,7 +80,9 @@ def form_x_and_y(df, totalbar=None, suppress_answers=[]):
     return x, y
 
 
-def form_bar_positions(df, bar_positions=False, totalbar=None, suppress_answers=[]):
+def form_bar_positions(
+    df, bar_positions: list = [], totalbar: bool = None, suppress_answers: list = []
+):
     """
     Form a complete list of bar positions for all bars, also the not
     specified ones.
@@ -187,7 +189,7 @@ def simple_comparison_plot(
     suppress_answers: list = [],
     ignore_no_answer: bool = True,
     totalbar: np.ndarray = None,
-    bar_positions: Union[list, bool] = False,
+    bar_positions: list = [],
     threshold_percentage: float = 0,
     bar_width: float = 0.8,
     legend_columns: int = 2,
