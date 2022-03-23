@@ -40,7 +40,6 @@ def multiple_simple_comparison_plot(
     legend_sequence: list = [],
     theme=None,
     calculate_aspect_ratio: bool = True,
-    remove_unchosen_answers: bool = True,
     maximum_length_x_axis_answers=20,
 ):
     """

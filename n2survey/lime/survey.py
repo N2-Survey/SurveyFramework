@@ -663,6 +663,8 @@ class LimeSurvey:
         answer_sequence: list = [],
         legend_title: Union[str, bool] = None,
         legend_sequence: list = [],
+        calculate_aspect_ratio: bool = True,
+        maximum_length_x_axis_answers=20,
         kind: str = None,
         **kwargs,
     ):
@@ -683,7 +685,6 @@ class LimeSurvey:
                     if string: string as legend title
                 'legend_sequence': define the order of the legend if you want,
                     else the sequence is the same as the question answers.
-
             'bar_width':
                 define width of the bars in barplots
             'totalbar':
@@ -722,7 +723,12 @@ class LimeSurvey:
                 can be used if you want to give the order of bars yourself,
                 just add in a list with the answers as entries in the order you
                 want
-
+            'calculate_aspect_ratio': True or False, if False, aspect ratio is
+                taken from theme, if True aspect ratio of picture is calculated
+                from number of bars and 'bar_width'
+            'maximum_length_x_axis_answers': parameter for word wrapping of the 
+                answers plotted on x-axis, standard 20 --> no line longer then
+                20 characters
         """
         if kind is not None:
             raise NotImplementedError(
@@ -761,6 +767,8 @@ class LimeSurvey:
                 answer_sequence=answer_sequence,
                 legend_title=legend_title,
                 legend_sequence=legend_sequence,
+                calculate_aspect_ratio=calculate_aspect_ratio,
+                maximum_length_x_axis_answers=maximum_length_x_axis_answers,
                 **kwargs,
             )
         elif question_type == "single-choice":
@@ -845,6 +853,8 @@ class LimeSurvey:
         answer_sequence: list = [],
         legend_title: Union[str, bool] = None,
         legend_sequence: list = [],
+        calculate_aspect_ratio: bool=True,
+        maximum_length_x_axis_answers: float=20,
         kind: str = None,
         **kwargs,
     ):
@@ -904,6 +914,8 @@ class LimeSurvey:
                 legend_title=legend_title,
                 answer_sequence=answer_sequence,
                 legend_sequence=legend_sequence,
+                calculate_aspect_ratio=calculate_aspect_ratio,
+                maximum_length_x_axis_answers=maximum_length_x_axis_answers,
                 theme=theme,
             )
         return fig, ax
