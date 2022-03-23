@@ -5,6 +5,7 @@ Created on Tue Mar 15 18:50:01 2022
 
 @author: theflike
 """
+from textwrap import wrap
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -40,8 +41,8 @@ def multiple_simple_comparison_plot(
     theme=None,
     calculate_aspect_ratio: bool = True,
     remove_unchosen_answers: bool = True,
+    maximum_length_x_axis_answers=20,
 ):
-    print(theme)
     """
     Plots correlations between multiple choice answers and the answers of
     simple choice answers.
@@ -59,11 +60,14 @@ def multiple_simple_comparison_plot(
     for entry in y.copy():
         _, y[entry] = sort_data(answer_sequence, x, list(y[entry]))
     x, _ = sort_data(answer_sequence, x, y)
+    # wrap text in x-axis
+    x = ["\n".join(wrap(entry, width=maximum_length_x_axis_answers)) for entry in x]
     # remove legend entries not in y
     if totalbar:
         legend_sequence.insert(0, "Total")
     legend_sequence = filter_answer_sequence([entry for entry in y], [legend_sequence])
-    # %% Prepare/Define figure and calculate dimensions
+
+    # %% Prepare/Define figure
     positionlist_per_answer = form_single_answer_bar_positions(y, bar_width)
     bar_positions_complete = form_bar_positions(
         x, y, bar_width=bar_width, totalbar=totalbar
