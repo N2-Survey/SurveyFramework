@@ -723,10 +723,11 @@ class LimeSurvey:
                 can be used if you want to give the order of bars yourself,
                 just add in a list with the answers as entries in the order you
                 want
+
             'calculate_aspect_ratio': True or False, if False, aspect ratio is
                 taken from theme, if True aspect ratio of picture is calculated
                 from number of bars and 'bar_width'
-            'maximum_length_x_axis_answers': parameter for word wrapping of the 
+            'maximum_length_x_axis_answers': parameter for word wrapping of the
                 answers plotted on x-axis, standard 20 --> no line longer then
                 20 characters
         """
@@ -853,8 +854,8 @@ class LimeSurvey:
         answer_sequence: list = [],
         legend_title: Union[str, bool] = None,
         legend_sequence: list = [],
-        calculate_aspect_ratio: bool=True,
-        maximum_length_x_axis_answers: float=20,
+        calculate_aspect_ratio: bool = True,
+        maximum_length_x_axis_answers: float = 20,
         kind: str = None,
         **kwargs,
     ):
