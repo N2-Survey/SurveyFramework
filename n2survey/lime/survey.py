@@ -141,6 +141,36 @@ class LimeSurvey:
                 "A5": "severe depression",
             },
         },
+        "formal_supervision_score": {
+            "label": "What is the formal supervision score?",
+            "type": "free",
+        },
+        "formal_supervision_class": {
+            "label": "What is the formal supervision class?",
+            "type": "single-choice",
+            "choices": {
+                "A1": "very satisfied",
+                "A2": "rather satisfied",
+                "A3": "neither satisfied nor dissatisfied",
+                "A4": "rather dissatisfied",
+                "A5": "very dissatisfied",
+            },
+        },
+        "direct_supervision_score": {
+            "label": "What is the direct supervision score?",
+            "type": "free",
+        },
+        "direct_supervision_class": {
+            "label": "What is the direct supervision class?",
+            "type": "single-choice",
+            "choices": {
+                "A1": "very satisfied",
+                "A2": "rather satisfied",
+                "A3": "neither satisfied nor dissatisfied",
+                "A4": "rather dissatisfied",
+                "A5": "very dissatisfied",
+            },
+        },
     }
 
     def __init__(
@@ -328,10 +358,14 @@ class LimeSurvey:
             "state_anxiety": "mental_health",
             "trait_anxiety": "mental_health",
             "depression": "mental_health",
+            "formal_supervision": "supervision",
+            "direct_supervision": "supervision",
         }
 
         if transform_dict.get(transform) == "mental_health":
             return self.rate_mental_health(question, condition=transform)
+        if transform_dict.get(transform) == "supervision":
+            return self.rate_supervision(question, condition=transform)
 
     def __copy__(self):
         """Create a shallow copy of the LimeSurvey instance
@@ -1121,6 +1155,99 @@ class LimeSurvey:
             choices_dict = question_info.choices[0]
 
         return choices_dict
+
+    def rate_supervision(
+        self,
+        question: str,
+        condition: str = None,
+        keep_subscores: bool = False,
+    ) -> pd.DataFrame:
+        """Calculate average direct/formal supervision rating
+
+        Args:
+            question (str): Question ID to use for calculation
+            condition (str, optional): Which kind of supervision condition to rate,
+                "formal_supervision", "direct_supervision". If not specified,
+                the condition is automatically infered. Default None.
+            keep_subscores (bool, optional): Whether to include scores from subquestions
+                in the output DataFrame, or only total score and classification.
+                Default False.
+
+        Returns:
+            pd.DataFrame: Supervision ratings and classifications
+        """
+        question_label = self.get_label(question)
+        # Infer condition type if not provided
+        if condition is None:
+            if "formal supervisor" in question_label:
+                condition = "formal_supervision"
+            elif "direct supervisor" in question_label:
+                condition = "direct_supervision"
+            else:
+                raise ValueError(
+                    "Question incompatible with any supported condition type."
+                )
+
+        # Set up condition-specific parameters
+        if condition == "formal_supervision":
+            if "formal supervisor" not in question_label:
+                raise ValueError("Question incompatible with specified condition type.")
+            label = "formal_supervision"
+        elif condition == "direct_supervision":
+            if "direct supervisor" not in question_label:
+                raise ValueError("Question incompatible with specified condition type.")
+            label = "direct_supervision"
+        else:
+            raise ValueError(
+                "Unsupported condition type. Please consult your supervisor of choice."
+            )
+        # High score corresponds to high satisfaction
+        classes = [
+            "very dissatisfied",
+            "rather dissatisfied",
+            "neither satisfied nor dissatisfied",
+            "rather satisfied",
+            "very satisfied",
+        ]
+        classification_boundaries = [0, 1.5, 2.5, 3.5, 4.5, 5]
+        choice_codes = ["A5", "A4", "A3", "A2", "A1"]
+        conversion = ["supervision" for i in range(13)]
+        # Set up score conversion dicts
+        scores_supervision = {
+            "Fully agree": 5,
+            "Partially agree": 4,
+            "Neither agree nor disagree": 3,
+            "Partially disagree": 2,
+            "Fully disagree": 1,
+        }
+        conversion_dicts = {"supervision": scores_supervision}
+        invert_dict = {
+            the_class: code for code, the_class in zip(choice_codes, classes)
+        }
+        # Map responses from code to text then to score
+        df = pd.DataFrame()
+        data = self.get_responses(question, labels=False)
+        for column, conversion in zip(data.columns, conversion):
+            df[f"{column}_score"] = (
+                data[column]
+                .map(self.get_choices(question))
+                .map(conversion_dicts[conversion], na_action="ignore")
+            )
+
+        # Calculate mean rating (ignoring NaN)
+        df[f"{label}_score"] = df.mean(axis=1, skipna=True)
+
+        # Classify into categories
+        df[f"{label}_class"] = pd.cut(
+            df[f"{label}_score"],
+            bins=classification_boundaries,
+            labels=classes,
+        ).map(invert_dict, na_action="ignore")
+
+        if not keep_subscores:
+            df = df.drop(df.columns[:-2], axis=1)
+
+        return df
 
     def rate_mental_health(
         self,
