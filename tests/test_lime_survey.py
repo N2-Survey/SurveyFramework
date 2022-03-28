@@ -75,6 +75,40 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
                 },
                 "is_contingent": False,
             },
+            "formal_supervision_score": {
+                "label": "What is the formal supervision score?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "formal_supervision_class": {
+                "label": "What is the formal supervision class?",
+                "type": "single-choice",
+                "choices": {
+                    "A1": "very satisfied",
+                    "A2": "rather satisfied",
+                    "A3": "neither satisfied nor dissatisfied",
+                    "A4": "rather dissatisfied",
+                    "A5": "very dissatisfied",
+                },
+                "is_contingent": False,
+            },
+            "direct_supervision_score": {
+                "label": "What is the direct supervision score?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "direct_supervision_class": {
+                "label": "What is the direct supervision class?",
+                "type": "single-choice",
+                "choices": {
+                    "A1": "very satisfied",
+                    "A2": "rather satisfied",
+                    "A3": "neither satisfied nor dissatisfied",
+                    "A4": "rather dissatisfied",
+                    "A5": "very dissatisfied",
+                },
+                "is_contingent": False,
+            },
         }
         question_df = pd.concat(
             [
