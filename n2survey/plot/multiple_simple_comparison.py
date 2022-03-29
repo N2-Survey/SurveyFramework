@@ -135,8 +135,9 @@ def plot_multi_bars_per_answer(
             width=bar_width,
         )
         plt.xticks(bar_positions, x)
-        labels = np.array(y[entry]).astype(str)
-        labels[np.where(labels.astype(np.float64) <= threshold_percentage)] = ""
+        label_values = (np.array(y[entry])).astype(str)
+        labels = np.array([i + "%" for i in label_values])
+        labels[np.where(label_values.astype(np.float64) <= threshold_percentage)] = ""
         ax.bar_label(
             ax.containers[count],
             labels,

@@ -278,8 +278,9 @@ def simple_comparison_plot(
         )
         plt.xticks(bar_positions_complete, x)
         bottom = bottom + percentage
-        labels = percentage.astype(str)
-        labels[np.where(labels.astype(np.float64) <= threshold_percentage)] = ""
+        label_values = percentage.astype(str)
+        labels = np.array([i + "%" for i in label_values])
+        labels[np.where(label_values.astype(np.float64) <= threshold_percentage)] = ""
         ax.bar_label(ax.containers[count], labels, fmt="%s", label_type="center")
         count = count + 1
     labels = all_answers
