@@ -42,7 +42,7 @@ def aspect_ratio_from_arguments(
     return width
 
 
-def calculate_title_pad(labels, legend_columns, legend_title: str = None):
+def calculate_title_pad(labels, legend_columns, theme=None, legend_title: str = None):
     """
     calculates the height of the title above the plot depending on number
     of legend entries and number of columns that are reserved for the legend.
@@ -50,6 +50,8 @@ def calculate_title_pad(labels, legend_columns, legend_title: str = None):
     pad = int(len(labels) / legend_columns) * 20 + 20
     if legend_title:
         pad = pad + 20
+    if theme:
+        pad = pad * theme["font_scale"]
     return pad
 
 

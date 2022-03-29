@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
+from .comparison_shared_functions import calculate_title_pad
+
 __all__ = ["simple_comparison_plot"]
 
 
@@ -177,13 +179,6 @@ def sort_data(sequence, x, y):
     return x_sorted, y_sorted
 
 
-def calculate_title_pad(labels, legend_columns, legend_title: Union[str, bool] = None):
-    pad = int(len(labels) / legend_columns) * 20 + 20
-    if legend_title:
-        pad = pad + 20
-    return pad
-
-
 def simple_comparison_plot(
     plot_data_list,
     suppress_answers: list = [],
@@ -303,7 +298,7 @@ def simple_comparison_plot(
             ax.set_title(
                 plot_title,
                 pad=calculate_title_pad(
-                    labels, legend_columns, legend_title=legend_title
+                    labels, legend_columns, theme=theme, legend_title=legend_title
                 ),
             )
     # scale

@@ -94,6 +94,7 @@ def multiple_simple_comparison_plot(
         bar_positions_complete,
         positionlist_per_answer,
         legend_sequence,
+        theme=theme,
         legend_columns=legend_columns,
         plot_title=plot_title,
         legend_title=legend_title,
@@ -117,6 +118,7 @@ def plot_multi_bars_per_answer(
     bar_positions,
     positionlist_per_answer,
     legend_sequence,
+    theme=None,
     legend_columns=2,
     legend_title: str = None,
     plot_title=None,
@@ -161,7 +163,10 @@ def plot_multi_bars_per_answer(
             ax.set_title(
                 plot_title,
                 pad=calculate_title_pad(
-                    legend_sequence, legend_columns, legend_title=legend_title
+                    legend_sequence,
+                    legend_columns,
+                    theme=theme,
+                    legend_title=legend_title,
                 ),
             )
     fig.tight_layout()
