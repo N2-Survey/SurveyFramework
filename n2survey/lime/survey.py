@@ -8,6 +8,8 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 
+from n2survey.transformation import *
+
 from n2survey.lime.structure import read_lime_questionnaire_structure
 from n2survey.plot import (
     likert_bar_plot,
