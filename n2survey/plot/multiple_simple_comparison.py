@@ -41,14 +41,14 @@ def multiple_simple_comparison_plot(
     theme=None,
     calculate_aspect_ratio: bool = True,
     maximum_length_x_axis_answers=20,
+    show_zeroes: bool = True,
 ):
     """
     Plots correlations between multiple choice answers and the answers of
     simple choice answers.
     """
     if ignore_no_answer:
-        suppress_answers.append("I don't know")
-        suppress_answers.append("I don't know.")
+        suppress_answers.append("No Answer")
     # form x and y from plot_data_lists
     (x, y) = form_x_and_y(
         plot_data_list, totalbar=totalbar, suppress_answers=suppress_answers
@@ -71,6 +71,7 @@ def multiple_simple_comparison_plot(
     bar_positions_complete = form_bar_positions(
         x, y, bar_width=bar_width, totalbar=totalbar
     )
+    # plt.rc('text', usetex=True) --> makes cm-super necessary for latex in plots
     # %%% calculate dimensions of figure
     if theme is not None:
         if calculate_aspect_ratio:
@@ -101,6 +102,7 @@ def multiple_simple_comparison_plot(
         plot_title_position=plot_title_position,
         threshold_percentage=threshold_percentage,
         bar_width=bar_width,
+        show_zeroes=show_zeroes,
     )
     # enlarge y-axis maximum due to bar labels
     new_y_axis_size = 1.05 * ax.get_ylim()[1]
@@ -125,6 +127,7 @@ def plot_multi_bars_per_answer(
     plot_title_position: tuple = (()),
     threshold_percentage: float = 0,
     bar_width: float = 0.8,
+    show_zeroes: bool = True,
 ):
     count = 0
     for entry, offset_from_xtick in zip(legend_sequence, positionlist_per_answer):
@@ -136,8 +139,10 @@ def plot_multi_bars_per_answer(
         )
         plt.xticks(bar_positions, x)
         label_values = (np.array(y[entry])).astype(str)
-        labels = np.array([i + "%" for i in label_values])
+        labels = np.array([i + "%" for i in label_values], dtype=object)
         labels[np.where(label_values.astype(np.float64) <= threshold_percentage)] = ""
+        if show_zeroes:
+            labels[np.where(label_values.astype(np.float64) == 0)] = r"________0%"
         ax.bar_label(
             ax.containers[count],
             labels,

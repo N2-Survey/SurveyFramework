@@ -664,7 +664,8 @@ class LimeSurvey:
         legend_title: Union[str, bool] = None,
         legend_sequence: list = [],
         calculate_aspect_ratio: bool = True,
-        maximum_length_x_axis_answers=20,
+        maximum_length_x_axis_answers: int = 20,
+        show_zeroes: bool = True,
         kind: str = None,
         **kwargs,
     ):
@@ -770,6 +771,7 @@ class LimeSurvey:
                 legend_sequence=legend_sequence,
                 calculate_aspect_ratio=calculate_aspect_ratio,
                 maximum_length_x_axis_answers=maximum_length_x_axis_answers,
+                show_zeroes=show_zeroes,
                 **kwargs,
             )
         elif question_type == "single-choice":
@@ -857,6 +859,7 @@ class LimeSurvey:
         calculate_aspect_ratio: bool = True,
         maximum_length_x_axis_answers: float = 20,
         kind: str = None,
+        show_zeroes: bool = True,
         **kwargs,
     ):
         """
@@ -918,6 +921,7 @@ class LimeSurvey:
                 calculate_aspect_ratio=calculate_aspect_ratio,
                 maximum_length_x_axis_answers=maximum_length_x_axis_answers,
                 theme=theme,
+                show_zeroes=show_zeroes,
             )
         return fig, ax
 
