@@ -731,6 +731,7 @@ class LimeSurvey:
             'maximum_length_x_axis_answers': parameter for word wrapping of the
                 answers plotted on x-axis, standard 20 --> no line longer then
                 20 characters
+            'show_zeroes': Plots lines for every 0% bar
         """
         if kind is not None:
             raise NotImplementedError(

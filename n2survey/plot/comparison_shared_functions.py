@@ -99,21 +99,21 @@ def sort_data(sequence, x, y):
 def form_bar_positions(
     x,
     y,
+    positionlist_per_answer: list = [0],
     bar_width: float = 0.8,
     totalbar: bool = False,
     bar_positions: list = [],
     additional_question_start_indizes: list = [],
-    distance_between_bars: float = 0.0,
+    distance_between_bars: float = None,
 ):
     bar_positions_complete = bar_positions or [0]
     no_bars_per_answer = len(y)
+    space_per_answer = max(positionlist_per_answer) - min(positionlist_per_answer)
+    if not distance_between_bars:
+        distance_between_bars = 1.5 * space_per_answer / no_bars_per_answer
     while len(bar_positions_complete) < len(x):
         bar_positions_complete.append(
-            (
-                max(bar_positions_complete)
-                + distance_between_bars
-                + bar_width * no_bars_per_answer
-            )
+            (max(bar_positions_complete) + distance_between_bars + space_per_answer)
         )
     return bar_positions_complete
 

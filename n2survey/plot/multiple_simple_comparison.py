@@ -71,7 +71,12 @@ def multiple_simple_comparison_plot(
         y, bar_width, bar_positions_per_answer=bar_positions
     )
     bar_positions_complete = form_bar_positions(
-        x, y, bar_width=bar_width, totalbar=totalbar, distance_between_bars=2
+        x,
+        y,
+        bar_width=bar_width,
+        totalbar=totalbar,
+        distance_between_bars=2,
+        positionlist_per_answer=list(positionlist_per_answer),
     )
     # plt.rc('text', usetex=True) --> makes cm-super necessary for latex in plots
     # %%% calculate dimensions of figure
