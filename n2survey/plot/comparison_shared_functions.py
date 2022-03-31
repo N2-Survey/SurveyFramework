@@ -103,24 +103,35 @@ def form_bar_positions(
     totalbar: bool = False,
     bar_positions: list = [],
     additional_question_start_indizes: list = [],
+    distance_between_bars: float = 0.0,
 ):
     bar_positions_complete = bar_positions or [0]
     no_bars_per_answer = len(y)
     while len(bar_positions_complete) < len(x):
         bar_positions_complete.append(
-            max(bar_positions_complete) + 1 + bar_width * no_bars_per_answer
+            (
+                max(bar_positions_complete)
+                + distance_between_bars
+                + bar_width * no_bars_per_answer
+            )
         )
     return bar_positions_complete
 
 
-def form_single_answer_bar_positions(y, bar_width):
+def form_single_answer_bar_positions(y, bar_width, bar_positions_per_answer: list = []):
     """
     calculates the offset of multiple bars given in dictionary 'y'
     to a single x-position, depending on 'bar_width'
     """
     number_of_bars = len(y)
     space_per_answer = bar_width * number_of_bars
-    bar_positions_per_answer = np.arange(
-        -space_per_answer / 2 + 0.5 * bar_width, space_per_answer / 2, bar_width
-    )
+    if bar_positions_per_answer:
+        while len(bar_positions_per_answer) < number_of_bars:
+            bar_positions_per_answer.append(bar_positions_per_answer[-1] + bar_width)
+        bar_positions_per_answer = np.array(bar_positions_per_answer)
+
+    else:
+        bar_positions_per_answer = np.arange(
+            -space_per_answer / 2 + 0.5 * bar_width, space_per_answer / 2, bar_width
+        )
     return bar_positions_per_answer

@@ -67,9 +67,11 @@ def multiple_simple_comparison_plot(
     legend_sequence = filter_answer_sequence([entry for entry in y], [legend_sequence])
 
     # %% Prepare/Define figure
-    positionlist_per_answer = form_single_answer_bar_positions(y, bar_width)
+    positionlist_per_answer = form_single_answer_bar_positions(
+        y, bar_width, bar_positions_per_answer=bar_positions
+    )
     bar_positions_complete = form_bar_positions(
-        x, y, bar_width=bar_width, totalbar=totalbar
+        x, y, bar_width=bar_width, totalbar=totalbar, distance_between_bars=2
     )
     # plt.rc('text', usetex=True) --> makes cm-super necessary for latex in plots
     # %%% calculate dimensions of figure
