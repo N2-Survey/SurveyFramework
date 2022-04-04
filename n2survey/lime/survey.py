@@ -12,6 +12,7 @@ from n2survey.lime.structure import read_lime_questionnaire_structure
 from n2survey.plot import (
     likert_bar_plot,
     multiple_choice_bar_plot,
+    multiple_simple_comparison_plot,
     simple_comparison_plot,
     single_choice_bar_plot,
 )
@@ -647,11 +648,12 @@ class LimeSurvey:
         question,
         compare_with: str = None,
         add_questions: list = [],
+        bar_width: float = 0.8,
         totalbar: bool = False,
         suppress_answers: list = [],
         ignore_no_answer: bool = True,
         threshold_percentage: float = 0.0,
-        bar_positions: Union[list, bool] = False,
+        bar_positions: list = [],
         legend_columns: int = 2,
         plot_title: Union[str, bool] = True,
         plot_title_position: tuple = (()),
@@ -661,6 +663,9 @@ class LimeSurvey:
         answer_sequence: list = [],
         legend_title: Union[str, bool] = None,
         legend_sequence: list = [],
+        calculate_aspect_ratio: bool = True,
+        maximum_length_x_axis_answers: int = 20,
+        show_zeroes: bool = True,
         kind: str = None,
         **kwargs,
     ):
@@ -670,11 +675,24 @@ class LimeSurvey:
             'compare_with':
                 correlates answers of 'question' with answers
                 of the question given to the 'compare_with' variable.
+
+                'legend_columns':
+                    number of columns of the legend added by 'compare_with' on
+                    top of the Plot
+                    ATTENTION: if the number of columns is too high this will
+                    press the plot right next to the legend and smush it.
+                'legend_title': if False: no legend-title,
+                    if 'True': 'compare_with' question as title,
+                    if string: string as legend title
+                'legend_sequence': define the order of the legend if you want,
+                    else the sequence is the same as the question answers.
+            'bar_width':
+                define width of the bars in barplots
+            'totalbar':
+                calculates different total bars, depending on question- and
+                comparison-types
             'add_questions':
                 adds bars of other questions to the plot
-            'totalbar':
-                calculates the number of answers of 'compare_with' question
-                and displays them as first question-answer in the plot.
             'suppress_answers':
                 removes every entry in 'suppress_answers' from the plot
             'threshold_percentage':
@@ -687,27 +705,33 @@ class LimeSurvey:
                 answer is the first one of a question in 'add_questions', then
                 it automatically adds +1.5 to distinguish the new question from
                 the previous one
-            'legend_columns':
-                number of columns of the legend added by 'compare_with' on top
-                of the Plot
-                ATTENTION: if the number of columns is too high this will
-                press the plot right next to the legend and smush it.
             'plot_title': if False: no title, if True: question as title,
                 if string: string as title
             'plot_title_position': tuple (x,y), if empty, position of the
                 title is calculated depending on number of legend entries
                 and 'legend_columns'
-            'save': save plot as png either with question indicator as name
-                if True or as string if string is added here
+            'save': save plot as png or pdf either with question indicator as
+                name if True or as string if string is added here.
+                Ending of String determines file_format.
                 'file_format': if you want to save the file as .pdf rather
                     then as png
-                'dpi': well... resolution in dotsperinch if you want to specify
-                    else, the resolution is taken from the figure
+                'dpi': Resolution in dotsperinch for saved file, if you want to
+                    specify. If not, the resolution is taken from the figure
+                    resolution only applies to .png, not to .pdf
+
             'answer_sequence': getting the answers in the right order made the
-            inclusion of an answer_sequence variable necessary, which also
-            can be used if you want to give the order of bars yourself,
-            just add in a list with the answers as entries in the order you
-            want
+                inclusion of an answer_sequence variable necessary, which also
+                can be used if you want to give the order of bars yourself,
+                just add in a list with the answers as entries in the order you
+                want
+
+            'calculate_aspect_ratio': True or False, if False, aspect ratio is
+                taken from theme, if True aspect ratio of picture is calculated
+                from number of bars and 'bar_width'
+            'maximum_length_x_axis_answers': parameter for word wrapping of the
+                answers plotted on x-axis, standard 20 --> no line longer then
+                20 characters
+            'show_zeroes': Plots lines for every 0% bar
         """
         if kind is not None:
             raise NotImplementedError(
@@ -728,57 +752,39 @@ class LimeSurvey:
         # get plot title
         if plot_title is True:
             plot_title = self.get_label(question)
-        if legend_title is True:
-            legend_title = self.get_label(compare_with)
         if compare_with:
-            # load necessary data for comparison
-            if not legend_sequence:
-                legend_sequence = list(
-                    self.count(compare_with, labels=True).index.values.astype(str)
-                )
-            if not answer_sequence:
-                answer_sequence = self.get_answer_sequence(
-                    question, add_questions=add_questions, totalbar=totalbar
-                )
-            (plot_data_list, answer_sequence) = self.create_comparison_data(
-                question, compare_with, answer_sequence, add_questions=add_questions
+            fig, ax = self.plot_comparison(
+                question,
+                compare_with,
+                question_type,
+                theme,
+                add_questions=add_questions,
+                totalbar=totalbar,
+                suppress_answers=suppress_answers,
+                ignore_no_answer=ignore_no_answer,
+                threshold_percentage=threshold_percentage,
+                bar_positions=bar_positions,
+                legend_columns=legend_columns,
+                plot_title=plot_title,
+                plot_title_position=plot_title_position,
+                answer_sequence=answer_sequence,
+                legend_title=legend_title,
+                legend_sequence=legend_sequence,
+                calculate_aspect_ratio=calculate_aspect_ratio,
+                maximum_length_x_axis_answers=maximum_length_x_axis_answers,
+                show_zeroes=show_zeroes,
+                **kwargs,
             )
-        if question_type == "single-choice":
+        elif question_type == "single-choice":
             counts_df = self.count(question, labels=True)
-
             if "title" not in non_theme_kwargs:
                 non_theme_kwargs.update({"title": counts_df.columns[0]})
-            if compare_with:
-                if totalbar:
-                    totalbar_data = np.unique(
-                        self.get_responses(compare_with, labels=True, drop_other=True),
-                        return_counts=True,
-                    )
-                else:
-                    totalbar_data = None
-                fig, ax = simple_comparison_plot(
-                    plot_data_list,
-                    totalbar=totalbar_data,
-                    suppress_answers=suppress_answers,
-                    ignore_no_answer=ignore_no_answer,
-                    bar_positions=bar_positions,
-                    threshold_percentage=threshold_percentage,
-                    legend_columns=legend_columns,
-                    plot_title=plot_title,
-                    plot_title_position=plot_title_position,
-                    legend_title=legend_title,
-                    answer_sequence=answer_sequence,
-                    legend_sequence=legend_sequence,
-                    theme=theme,
-                )
-
-            else:
-                fig, ax = single_choice_bar_plot(
-                    x=counts_df.index.values,
-                    y=pd.Series(counts_df.iloc[:, 0], name="Number of Responses"),
-                    theme=theme,
-                    **non_theme_kwargs,
-                )
+            fig, ax = single_choice_bar_plot(
+                x=counts_df.index.values,
+                y=pd.Series(counts_df.iloc[:, 0], name="Number of Responses"),
+                theme=theme,
+                **non_theme_kwargs,
+            )
         elif question_type == "multiple-choice":
             counts_df = self.count(
                 question, labels=True, percents=True, add_totals=True
@@ -832,6 +838,94 @@ class LimeSurvey:
             )
         return fig, ax
 
+    def plot_comparison(
+        self,
+        question,
+        compare_with,
+        question_type,
+        theme,
+        add_questions: list = [],
+        bar_width: float = 0.8,
+        totalbar: bool = False,
+        suppress_answers: list = [],
+        ignore_no_answer: bool = True,
+        threshold_percentage: float = 0.0,
+        bar_positions: list = [],
+        legend_columns: int = 2,
+        plot_title: Union[str, bool] = True,
+        plot_title_position: tuple = (()),
+        answer_sequence: list = [],
+        legend_title: Union[str, bool] = None,
+        legend_sequence: list = [],
+        calculate_aspect_ratio: bool = True,
+        maximum_length_x_axis_answers: float = 20,
+        kind: str = None,
+        show_zeroes: bool = True,
+        **kwargs,
+    ):
+        """
+        outsourcing of plot_comparison() from plot(), because flake8 says to
+        complicated, for keyword explanation please see plot() function
+        """
+        # load necessary data for comparison
+        if legend_title is True:
+            legend_title = self.get_label(compare_with)
+        if not legend_sequence:
+            legend_sequence = list(
+                self.count(compare_with, labels=True).index.values.astype(str)
+            )
+        if not answer_sequence:
+            answer_sequence = self.get_answer_sequence(
+                question, add_questions=add_questions, totalbar=totalbar
+            )
+        plot_data_list = self.create_comparison_data(
+            question, compare_with, add_questions=add_questions
+        )
+        # create total bar data if needed
+        if totalbar:
+            totalbar_data = self.create_total_bar_data(
+                question_type=question_type, compare_with=compare_with
+            )
+        else:
+            totalbar_data = None
+        if question_type == "single-choice":
+            fig, ax = simple_comparison_plot(
+                plot_data_list,
+                totalbar=totalbar_data,
+                suppress_answers=suppress_answers,
+                ignore_no_answer=ignore_no_answer,
+                bar_positions=bar_positions,
+                threshold_percentage=threshold_percentage,
+                legend_columns=legend_columns,
+                plot_title=plot_title,
+                plot_title_position=plot_title_position,
+                legend_title=legend_title,
+                answer_sequence=answer_sequence,
+                legend_sequence=legend_sequence,
+                theme=theme,
+            )
+        elif question_type == "multiple-choice":
+            fig, ax = multiple_simple_comparison_plot(
+                plot_data_list,
+                totalbar=totalbar_data,
+                bar_width=bar_width,
+                suppress_answers=suppress_answers,
+                ignore_no_answer=ignore_no_answer,
+                bar_positions=bar_positions,
+                threshold_percentage=threshold_percentage,
+                legend_columns=legend_columns,
+                plot_title=plot_title,
+                plot_title_position=plot_title_position,
+                legend_title=legend_title,
+                answer_sequence=answer_sequence,
+                legend_sequence=legend_sequence,
+                calculate_aspect_ratio=calculate_aspect_ratio,
+                maximum_length_x_axis_answers=maximum_length_x_axis_answers,
+                theme=theme,
+                show_zeroes=show_zeroes,
+            )
+        return fig, ax
+
     def save_plot(
         self,
         fig,
@@ -871,7 +965,10 @@ class LimeSurvey:
         compare_with is already implemented and working
         """
         supported_plots = ["single-choice", "multiple-choice", "array"]
-        supported_comparisons = [("single-choice", "single-choice")]
+        supported_comparisons = [
+            ("single-choice", "single-choice"),
+            ("multiple-choice", "single-choice"),
+        ]
         all_plots = [question]
         if compare_with:
             all_plots.append(compare_with)
@@ -916,49 +1013,65 @@ class LimeSurvey:
             answer_sequence[0].insert(0, "Total")
         return answer_sequence
 
-    def create_comparison_data(
-        self, question, compare_with, answer_sequence, add_questions=[]
-    ):
+    def create_comparison_data(self, question, compare_with, add_questions=[]):
         """
         Load and combine necessary data for the plot functions.
         depending on the wanted (question/add_question_entry,compare_with) tuple
         """
         plot_data_list = []
-        if self.get_question_type(compare_with) == "single-choice":
-            # create Dataarray from all existing combinations of
-            # question and compare_with
-            plot_data_list.append(
-                pd.concat(
-                    [
-                        self.get_responses(question, labels=True, drop_other=True),
-                        self.get_responses(compare_with, labels=True, drop_other=True),
-                    ],
-                    axis=1,
-                ).values
-            )
-            # remove combinations that do not occure from answer_sequence
-            for answer in answer_sequence[0].copy():
-                if all([answer not in plot_data_list[0][:, 0], answer != "Total"]):
-                    answer_sequence[0].remove(answer)
-        if add_questions:
-            # add combinations for additional questions with
-            # 'compare_with' question
-            for entry, answerlist in zip(add_questions, answer_sequence[1:]):
-                if self.get_question_type(compare_with) == "single-choice":
-                    next_plot_data = pd.concat(
+        if self.get_question_type(question) == "single-choice":
+            if self.get_question_type(compare_with) == "single-choice":
+                # create Dataarray from all existing combinations of
+                # question and compare_with
+                plot_data_list.append(
+                    pd.concat(
                         [
-                            self.get_responses(entry, labels=True, drop_other=True),
+                            self.get_responses(question, labels=True, drop_other=True),
                             self.get_responses(
                                 compare_with, labels=True, drop_other=True
                             ),
                         ],
                         axis=1,
-                    ).values
-                    plot_data_list.append(next_plot_data)
-                for answer in answerlist.copy():
-                    if answer not in next_plot_data[:, 0]:
-                        answerlist.remove(answer)
-        return plot_data_list, answer_sequence
+                    )
+                )
+            if add_questions:
+                # add combinations for additional questions with
+                # 'compare_with' question
+                for entry in add_questions:
+                    if self.get_question_type(compare_with) == "single-choice":
+                        next_plot_data = pd.concat(
+                            [
+                                self.get_responses(entry, labels=True, drop_other=True),
+                                self.get_responses(
+                                    compare_with, labels=True, drop_other=True
+                                ),
+                            ],
+                            axis=1,
+                        )
+                        plot_data_list.append(next_plot_data)
+        if self.get_question_type(question) == "multiple-choice":
+            if self.get_question_type(compare_with) == "single-choice":
+                # create Dataarray from all existing combinations of
+                # question and compare_with
+                plot_data_list.append(
+                    pd.concat(
+                        [
+                            self.get_responses(question, labels=True, drop_other=True),
+                            self.get_responses(
+                                compare_with, labels=True, drop_other=True
+                            ),
+                        ],
+                        axis=1,
+                    )
+                )
+        return plot_data_list
+
+    def create_total_bar_data(self, question_type, compare_with):
+        totalbar_data = np.unique(
+            self.get_responses(compare_with, labels=True, drop_other=True),
+            return_counts=True,
+        )
+        return totalbar_data
 
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)

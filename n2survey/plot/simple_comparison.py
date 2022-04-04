@@ -4,10 +4,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
+from .comparison_shared_functions import calculate_title_pad
+
 __all__ = ["simple_comparison_plot"]
 
 
-def get_percentages(array, totalbar=None):
+def get_percentages(array, totalbar: bool = None):
     """
     Calculate the total number of combinations from the given
     array of answer combinations.
@@ -46,7 +48,7 @@ def get_percentages(array, totalbar=None):
     return percentage
 
 
-def form_x_and_y(df, totalbar=None, suppress_answers=[]):
+def form_x_and_y(df, totalbar: bool = None, suppress_answers: list = []):
     """
     Split up the array given to it to x and y components for
     the plot.
@@ -80,7 +82,9 @@ def form_x_and_y(df, totalbar=None, suppress_answers=[]):
     return x, y
 
 
-def form_bar_positions(df, bar_positions=False, totalbar=None, suppress_answers=[]):
+def form_bar_positions(
+    df, bar_positions: list = [], totalbar: bool = None, suppress_answers: list = []
+):
     """
     Form a complete list of bar positions for all bars, also the not
     specified ones.
@@ -175,19 +179,12 @@ def sort_data(sequence, x, y):
     return x_sorted, y_sorted
 
 
-def calculate_title_pad(labels, legend_columns, legend_title: Union[str, bool] = None):
-    pad = int(len(labels) / legend_columns) * 20 + 20
-    if legend_title:
-        pad = pad + 20
-    return pad
-
-
 def simple_comparison_plot(
     plot_data_list,
     suppress_answers: list = [],
     ignore_no_answer: bool = True,
     totalbar: np.ndarray = None,
-    bar_positions: Union[list, bool] = False,
+    bar_positions: list = [],
     threshold_percentage: float = 0,
     bar_width: float = 0.8,
     legend_columns: int = 2,
@@ -202,6 +199,16 @@ def simple_comparison_plot(
     Plot correlations from the np.ndarray arrays in plot_data_list with the
     existing answer combinations and applies the given specifications.
     """
+    # change plot data from pandas dataframe to arrays
+    count = 0
+    for df, answerlist in zip(plot_data_list.copy(), answer_sequence):
+        array = df.values
+        # remove combinations that do not occure from answer_sequence
+        for answer in answerlist.copy():
+            if all([answer not in array[:, 0], answer != "Total"]):
+                answerlist.remove(answer)
+        plot_data_list[count] = array
+        count = count + 1
     # form x-axis with answers to first question and y-axis with
     # percentages of second question correlated to each answer of the first
     # question.
@@ -235,6 +242,7 @@ def simple_comparison_plot(
     if theme is not None:
         sns.set_theme(**theme)
     fig, ax = plt.subplots()
+    fig.set_tight_layout(True)
     # %% split up y to list of answers of question 2 and list of percentages
     q2_answers = []
     percentages = []
@@ -270,8 +278,9 @@ def simple_comparison_plot(
         )
         plt.xticks(bar_positions_complete, x)
         bottom = bottom + percentage
-        labels = percentage.astype(str)
-        labels[np.where(labels.astype(np.float64) <= threshold_percentage)] = ""
+        label_values = percentage.astype(str)
+        labels = np.array([i + "%" for i in label_values])
+        labels[np.where(label_values.astype(np.float64) <= threshold_percentage)] = ""
         ax.bar_label(ax.containers[count], labels, fmt="%s", label_type="center")
         count = count + 1
     labels = all_answers
@@ -290,7 +299,7 @@ def simple_comparison_plot(
             ax.set_title(
                 plot_title,
                 pad=calculate_title_pad(
-                    labels, legend_columns, legend_title=legend_title
+                    labels, legend_columns, theme=theme, legend_title=legend_title
                 ),
             )
     # scale
