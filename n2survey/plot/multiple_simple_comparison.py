@@ -149,7 +149,7 @@ def plot_multi_bars_per_answer(
         labels = np.array([i + "%" for i in label_values], dtype=object)
         labels[np.where(label_values.astype(np.float64) <= threshold_percentage)] = ""
         if show_zeroes:
-            labels[np.where(label_values.astype(np.float64) == 0)] = r"________"
+            labels[np.where(label_values.astype(np.float64) == 0)] = r"|"
         ax.bar_label(
             ax.containers[count],
             labels,
