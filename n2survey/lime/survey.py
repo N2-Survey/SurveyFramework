@@ -365,7 +365,7 @@ class LimeSurvey:
 
         if transform_dict.get(transform) == "mental_health":
             return self.rate_mental_health(question, condition=transform)
-        if transform_dict.get(transform) == "supervision":
+        elif transform_dict.get(transform) == "supervision":
             return self.rate_supervision(question, condition=transform)
 
     def __copy__(self):
@@ -1314,7 +1314,8 @@ class LimeSurvey:
             raise ValueError(
                 "Unsupported condition type. Please consult your supervisor of choice."
             )
-        # High score corresponds to high satisfaction
+        # Classes sorted from low to high (high score equals high satisfaction)
+        # necessary because "classification_boundaries" need ascending order
         classes = [
             "very dissatisfied",
             "rather dissatisfied",
@@ -1327,11 +1328,11 @@ class LimeSurvey:
         conversion = ["supervision" for i in range(13)]
         # Set up score conversion dicts
         scores_supervision = {
-            "Fully agree": 5,
-            "Partially agree": 4,
-            "Neither agree nor disagree": 3,
-            "Partially disagree": 2,
             "Fully disagree": 1,
+            "Partially disagree": 2,
+            "Neither agree nor disagree": 3,
+            "Partially agree": 4,
+            "Fully agree": 5,
         }
         conversion_dicts = {"supervision": scores_supervision}
         invert_dict = {

@@ -368,6 +368,66 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
             depression_transformed.iloc[:3], depression_ref, msg="Series not equal"
         )
 
+    def test_supervision_transforms(self):
+        """Test transforming two types of supervision questions"""
+
+        formal_supervision_transformed = self.survey.transform_question(
+            "E7a", "formal_supervision"
+        )
+        direct_supervision_transformed = self.survey.transform_question(
+            "E7b", "direct_supervision"
+        )
+
+        formal_supervision_ref = pd.DataFrame(
+            data={
+                "formal_supervision_score": [54.0 / 13.0, 59.0 / 13.0, 1.0],
+                "formal_supervision_class": pd.Categorical(
+                    ["A2", "A1", "A5"],
+                    categories=[
+                        "A5",
+                        "A4",
+                        "A3",
+                        "A2",
+                        "A1",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[8, 9, 10],
+        )
+        formal_supervision_ref.index.name = "id"
+
+        direct_supervision_ref = pd.DataFrame(
+            data={
+                "direct_supervision_score": [58.0 / 13.0, 63.0 / 13.0, 1.0],
+                "direct_supervision_class": pd.Categorical(
+                    ["A2", "A1", "A5"],
+                    categories=[
+                        "A5",
+                        "A4",
+                        "A3",
+                        "A2",
+                        "A1",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[8, 9, 10],
+        )
+        direct_supervision_ref.index.name = "id"
+
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(
+            formal_supervision_transformed.iloc[6:9],
+            formal_supervision_ref,
+            msg="Series not equal",
+        )
+        self.assert_df_equal(
+            direct_supervision_transformed.iloc[6:9],
+            direct_supervision_ref,
+            msg="Series not equal",
+        )
+
 
 class TestLimeSurveyAddQuestion(BaseTestLimeSurvey2021Case):
     """Test LimeSurvey add_question"""
@@ -1149,6 +1209,60 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
         ref.index.name = "id"
 
         self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
+
+
+class TestLimeSurveyRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test LimeSurvey rate_supervision for formal and direct supervision"""
+
+    def test_formal_supervision(self):
+        """Test rating of formal supervision"""
+
+        result = self.survey.rate_supervision("E7a")
+        ref = pd.DataFrame(
+            data={
+                "formal_supervision_score": [54.0 / 13.0, 59.0 / 13.0, 1.0],
+                "formal_supervision_class": pd.Categorical(
+                    ["A2", "A1", "A5"],
+                    categories=[
+                        "A5",
+                        "A4",
+                        "A3",
+                        "A2",
+                        "A1",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[8, 9, 10],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(result.iloc[6:9, -2:], ref, msg="DataFrames not equal.")
+
+    def test_direct_supervision(self):
+        """Test rating of direct supervision"""
+
+        result = self.survey.rate_supervision("E7b")
+        ref = pd.DataFrame(
+            data={
+                "direct_supervision_score": [58.0 / 13.0, 63.0 / 13.0, 1.0],
+                "direct_supervision_class": pd.Categorical(
+                    ["A2", "A1", "A5"],
+                    categories=[
+                        "A5",
+                        "A4",
+                        "A3",
+                        "A2",
+                        "A1",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[8, 9, 10],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(result.iloc[6:9, -2:], ref, msg="DataFrames not equal.")
 
 
 if __name__ == "__main__":
