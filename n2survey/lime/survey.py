@@ -1168,7 +1168,7 @@ class LimeSurvey:
             question (str): Question ID to use for calculation
             condition (str, optional): Which kind of supervision condition to rate,
                 "formal_supervision", "direct_supervision". If not specified,
-                the condition is automatically infered. Default None.
+                the condition is automatically inferred. Default None.
             keep_subscores (bool, optional): Whether to include scores from subquestions
                 in the output DataFrame, or only total score and classification.
                 Default False.
@@ -1271,7 +1271,7 @@ class LimeSurvey:
             question (str): Question ID to use for calculation
             condition (str, optional): Which kind of mental health condition to rate,
                 "state_anxiety", "trait_anxiety", or "depression". If not specified,
-                the condition is automatically infered. Default None.
+                the condition is automatically inferred. Default None.
             keep_subscores (bool, optional): Whether to include scores from subquestions
                 in the output DataFrame, or only total score and classification.
                 Default False.
