@@ -89,7 +89,7 @@ class TestXMLSectionParsing(unittest.TestCase):
                 </sectionInfo>
                 <sectionInfo>
                     <position>before</position>
-                    <text>&lt;p style="border:medium none;border-bottom:0cm none #000000;padding-bottom:0cm;margin:0cm 0cm .0001pt;padding:0cm;"&gt;&lt;b id="docs-internal-guid-90bd833e-7fff-2c78-398d-1ee9bdc67ae4"&gt;For the following questions, we would like to make the distinction between “formal” and “direct” supervisor clear: &lt;/b&gt;&lt;/p&gt;
+                    <text>&lt;p style="border:medium none;border-bottom:0cm none #000000;padding-bottom:0cm;margin:0cm 0cm .0001pt;padding:0cm;"&gt;&lt;b id="docs-internal-guid-90bd833e-7fff-2c78-398d-1ee9bdc67ae4"&gt;For the following questions, we would like to make the distinction between “formal” and “direct” supervisor clear: &lt;/b&gt;&lt;/p&gt;
 
 
 
@@ -134,7 +134,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
             """<question>
         <text>&lt;p&gt;Do you have one of the following (multiple answers possible)?&lt;/p&gt;
 
-            &lt;p style="border:medium none;border-bottom:0cm none #000000;padding-bottom:0cm;margin:0cm 0cm .0001pt;padding:0cm;"&gt; &lt;/p&gt;</text>
+            &lt;p style="border:medium none;border-bottom:0cm none #000000;padding-bottom:0cm;margin:0cm 0cm .0001pt;padding:0cm;"&gt; &lt;/p&gt;</text>
         </question>""",
             "xml",
         )
@@ -179,7 +179,7 @@ class TestXMLQuestionParsing(unittest.TestCase):
                     <position>during</position>
                     <text>Help text for G1Q1
 
-             </text>
+             </text>
                     <administration>self</administration>
                 </directive>
                 <response varName="G1Q1">
