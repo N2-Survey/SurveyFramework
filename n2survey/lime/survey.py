@@ -366,7 +366,7 @@ class LimeSurvey:
         if transform_dict.get(transform) == "mental_health":
             return self.rate_mental_health(question, condition=transform)
         elif transform_dict.get(transform) == "supervision":
-            return self.rate_supervision(question, condition=transform)
+            return self.rate_supervision(question)
 
     def __copy__(self):
         """Create a shallow copy of the LimeSurvey instance
@@ -1272,16 +1272,12 @@ class LimeSurvey:
     def rate_supervision(
         self,
         question: str,
-        condition: str = None,
         keep_subscores: bool = False,
     ) -> pd.DataFrame:
         """Calculate average direct/formal supervision rating
 
         Args:
             question (str): Question ID to use for calculation
-            condition (str, optional): Which kind of supervision condition to rate,
-                "formal_supervision", "direct_supervision". If not specified,
-                the condition is automatically infered. Default None.
             keep_subscores (bool, optional): Whether to include scores from subquestions
                 in the output DataFrame, or only total score and classification.
                 Default False.
@@ -1290,32 +1286,14 @@ class LimeSurvey:
             pd.DataFrame: Supervision ratings and classifications
         """
         question_label = self.get_label(question)
-        # Infer condition type if not provided
-        if condition is None:
-            if "formal supervisor" in question_label:
-                condition = "formal_supervision"
-            elif "direct supervisor" in question_label:
-                condition = "direct_supervision"
-            else:
-                raise ValueError(
-                    "Question incompatible with any supported condition type."
-                )
-
-        # Set up condition-specific parameters
-        if condition == "formal_supervision":
-            if "formal supervisor" not in question_label:
-                raise ValueError("Question incompatible with specified condition type.")
+        # Infer labels from question
+        if "formal supervisor" in question_label:
             label = "formal_supervision"
-        elif condition == "direct_supervision":
-            if "direct supervisor" not in question_label:
-                raise ValueError("Question incompatible with specified condition type.")
+        elif "direct supervisor" in question_label:
             label = "direct_supervision"
         else:
-            raise ValueError(
-                "Unsupported condition type. Please consult your supervisor of choice."
-            )
-        # Classes sorted from low to high (high score equals high satisfaction)
-        # necessary because "classification_boundaries" need ascending order
+            raise ValueError("Question incompatible with specified transformation.")
+        # Satisfaction classes sorted from low to high (high score equals high satisfaction)
         classes = [
             "very dissatisfied",
             "rather dissatisfied",
@@ -1323,40 +1301,47 @@ class LimeSurvey:
             "rather satisfied",
             "very satisfied",
         ]
-        classification_boundaries = [0, 1.5, 2.5, 3.5, 4.5, 5]
         choice_codes = ["A5", "A4", "A3", "A2", "A1"]
-        conversion = ["supervision" for i in range(13)]
+        choice_rating = [1.0, 2.0, 3.0, 4.0, 5.0]
+
         # Set up score conversion dicts
-        scores_supervision = {
-            "Fully disagree": 1,
-            "Partially disagree": 2,
-            "Neither agree nor disagree": 3,
-            "Partially agree": 4,
-            "Fully agree": 5,
+        supervision_scores = {
+            "Fully disagree": 1.0,
+            "Partially disagree": 2.0,
+            "Neither agree nor disagree": 3.0,
+            "Partially agree": 4.0,
+            "Fully agree": 5.0,
         }
-        conversion_dicts = {"supervision": scores_supervision}
-        invert_dict = {
+        # Invers transformation: Rating (5.0) --> Text ('Very satisfied')
+        satisfaction_levels = {
+            the_class: code for code, the_class in zip(classes, choice_rating)
+        }
+        # Invers transformation: Text ('Very satisfied') --> Category ('A1')
+        satisfaction_classes = {
             the_class: code for code, the_class in zip(choice_codes, classes)
         }
+
         # Map responses from code to text then to score
         df = pd.DataFrame()
         data = self.get_responses(question, labels=False)
-        for column, conversion in zip(data.columns, conversion):
+        for column in data.columns:
             df[f"{column}_score"] = (
                 data[column]
                 .map(self.get_choices(question))
-                .map(conversion_dicts[conversion], na_action="ignore")
+                .map(supervision_scores, na_action="ignore")
             )
 
-        # Calculate mean rating (ignoring NaN)
-        df[f"{label}_score"] = df.mean(axis=1, skipna=True)
+        # Calculate mean rating and round to next int (ignoring NaN)
+        df[f"{label}_score"] = df.mean(axis=1, skipna=True).round()
 
         # Classify into categories
-        df[f"{label}_class"] = pd.cut(
-            df[f"{label}_score"],
-            bins=classification_boundaries,
-            labels=classes,
-        ).map(invert_dict, na_action="ignore")
+        df[f"{label}_class"] = pd.Categorical(
+            df[f"{label}_score"]
+            .map(satisfaction_levels, na_action="ignore")
+            .map(satisfaction_classes, na_action="ignore"),
+            categories=choice_codes,
+            ordered=True,
+        )
 
         if not keep_subscores:
             df = df.drop(df.columns[:-2], axis=1)
