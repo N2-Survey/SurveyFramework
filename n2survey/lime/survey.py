@@ -1293,24 +1293,24 @@ class LimeSurvey:
             label = "direct_supervision"
         else:
             raise ValueError("Question incompatible with specified transformation.")
-        # Satisfaction classes sorted from low to high (high score equals high satisfaction)
+        # Satisfaction classes sorted from high to low (high score equals high satisfaction)
         classes = [
-            "very dissatisfied",
-            "rather dissatisfied",
-            "neither satisfied nor dissatisfied",
-            "rather satisfied",
             "very satisfied",
+            "rather satisfied",
+            "neither satisfied nor dissatisfied",
+            "rather dissatisfied",
+            "very dissatisfied",
         ]
-        choice_codes = ["A5", "A4", "A3", "A2", "A1"]
-        choice_rating = [1.0, 2.0, 3.0, 4.0, 5.0]
+        choice_codes = ["A1", "A2", "A3", "A4", "A5"]
+        choice_rating = [5.0, 4.0, 3.0, 2.0, 1.0]
 
         # Set up score conversion dicts
         supervision_scores = {
-            "Fully disagree": 1.0,
-            "Partially disagree": 2.0,
-            "Neither agree nor disagree": 3.0,
-            "Partially agree": 4.0,
             "Fully agree": 5.0,
+            "Partially agree": 4.0,
+            "Neither agree nor disagree": 3.0,
+            "Partially disagree": 2.0,
+            "Fully disagree": 1.0,
         }
         # Invers transformation: Rating (5.0) --> Text ('Very satisfied')
         satisfaction_levels = {
