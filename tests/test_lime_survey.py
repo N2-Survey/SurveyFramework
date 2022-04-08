@@ -151,7 +151,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
 
         self.assertEqual(bool(not_in_structure), False)
 
-    def test_transformation_questions(self):
+    def test_mental_health_transformation_questions(self):
         """Test adding responses to transformation questions in read_responses"""
 
         mental_health_questions = {
@@ -207,6 +207,54 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
 
         self.assert_df_equal(
             survey.responses.iloc[:3, -6:], ref, msg="DataFrames not equal."
+        )
+
+    def test_supervision_transformation_questions(self):
+        """Test adding responses to transformation questions in read_responses"""
+
+        supervision_questions = {
+            "formal_supervision": "E7a",
+            "direct_supervision": "E7b",
+        }
+
+        survey = LimeSurvey(structure_file=self.structure_file)
+        survey.read_responses(
+            responses_file=self.responses_file,
+            transformation_questions=supervision_questions,
+        )
+        ref = pd.DataFrame(
+            data={
+                "formal_supervision_score": [4.0, 5.0, 1.0],
+                "formal_supervision_class": pd.Categorical(
+                    ["A2", "A1", "A5"],
+                    categories=[
+                        "A5",
+                        "A4",
+                        "A3",
+                        "A2",
+                        "A1",
+                    ],
+                    ordered=True,
+                ),
+                "direct_supervision_score": [4.0, 5.0, 1.0],
+                "direct_supervision_class": pd.Categorical(
+                    ["A2", "A1", "A5"],
+                    categories=[
+                        "A5",
+                        "A4",
+                        "A3",
+                        "A2",
+                        "A1",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[8, 9, 10],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(
+            survey.responses.iloc[6:9, -4:], ref, msg="DataFrames not equal."
         )
 
     def test_single_choice_dtype(self):
@@ -380,7 +428,7 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
 
         formal_supervision_ref = pd.DataFrame(
             data={
-                "formal_supervision_score": [54.0 / 13.0, 59.0 / 13.0, 1.0],
+                "formal_supervision_score": [4.0, 5.0, 1.0],
                 "formal_supervision_class": pd.Categorical(
                     ["A2", "A1", "A5"],
                     categories=[
@@ -399,7 +447,7 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
 
         direct_supervision_ref = pd.DataFrame(
             data={
-                "direct_supervision_score": [58.0 / 13.0, 63.0 / 13.0, 1.0],
+                "direct_supervision_score": [4.0, 5.0, 1.0],
                 "direct_supervision_class": pd.Categorical(
                     ["A2", "A1", "A5"],
                     categories=[
@@ -1220,7 +1268,7 @@ class TestLimeSurveyRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
         result = self.survey.rate_supervision("E7a")
         ref = pd.DataFrame(
             data={
-                "formal_supervision_score": [54.0 / 13.0, 59.0 / 13.0, 1.0],
+                "formal_supervision_score": [4.0, 5.0, 1.0],
                 "formal_supervision_class": pd.Categorical(
                     ["A2", "A1", "A5"],
                     categories=[
@@ -1245,7 +1293,7 @@ class TestLimeSurveyRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
         result = self.survey.rate_supervision("E7b")
         ref = pd.DataFrame(
             data={
-                "direct_supervision_score": [58.0 / 13.0, 63.0 / 13.0, 1.0],
+                "direct_supervision_score": [4.0, 5.0, 1.0],
                 "direct_supervision_class": pd.Categorical(
                     ["A2", "A1", "A5"],
                     categories=[
