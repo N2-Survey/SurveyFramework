@@ -1283,7 +1283,7 @@ class LimeSurvey:
                 Default False.
 
         Returns:
-            pd.DataFrame: Supervision ratings and classifications
+            pd.DataFrame: Rounded supervision ratings and classifications
         """
         question_label = self.get_label(question)
         # Infer labels from question
@@ -1293,32 +1293,34 @@ class LimeSurvey:
             label = "direct_supervision"
         else:
             raise ValueError("Question incompatible with specified transformation.")
-        # Satisfaction classes sorted from high to low (high score equals high satisfaction)
-        classes = [
+        # Supervision classes sorted from high to low (high score equals high satisfaction)
+        supervision_classes = [
             "very satisfied",
             "rather satisfied",
             "neither satisfied nor dissatisfied",
             "rather dissatisfied",
             "very dissatisfied",
         ]
-        choice_codes = ["A1", "A2", "A3", "A4", "A5"]
-        choice_rating = [5.0, 4.0, 3.0, 2.0, 1.0]
+        supervision_labels = ["A1", "A2", "A3", "A4", "A5"]
+        supervision_scores = [5.0, 4.0, 3.0, 2.0, 1.0]
 
-        # Set up score conversion dicts
-        supervision_scores = {
+        # Set up score conversion dicts for individual questions
+        supervision_question_scores = {
             "Fully agree": 5.0,
             "Partially agree": 4.0,
             "Neither agree nor disagree": 3.0,
             "Partially disagree": 2.0,
             "Fully disagree": 1.0,
         }
-        # Invers transformation: Rating (5.0) --> Text ('Very satisfied')
-        satisfaction_levels = {
-            the_class: code for code, the_class in zip(classes, choice_rating)
+        # Inverse supervision transformation: Score (5.0) --> Class ('Very satisfied')
+        supervision_score_to_class = {
+            the_class: code
+            for code, the_class in zip(supervision_classes, supervision_scores)
         }
-        # Invers transformation: Text ('Very satisfied') --> Category ('A1')
-        satisfaction_classes = {
-            the_class: code for code, the_class in zip(choice_codes, classes)
+        # Inverse supervision transformation: Class ('Very satisfied') --> Label ('A1')
+        supervision_class_to_label = {
+            the_class: code
+            for code, the_class in zip(supervision_labels, supervision_classes)
         }
 
         # Map responses from code to text then to score
@@ -1328,18 +1330,18 @@ class LimeSurvey:
             df[f"{column}_score"] = (
                 data[column]
                 .map(self.get_choices(question))
-                .map(supervision_scores, na_action="ignore")
+                .map(supervision_question_scores, na_action="ignore")
             )
 
-        # Calculate mean rating and round to next int (ignoring NaN)
+        # Calculate mean rating and round (ignoring NaN)
         df[f"{label}_score"] = df.mean(axis=1, skipna=True).round()
 
         # Classify into categories
         df[f"{label}_class"] = pd.Categorical(
             df[f"{label}_score"]
-            .map(satisfaction_levels, na_action="ignore")
-            .map(satisfaction_classes, na_action="ignore"),
-            categories=choice_codes,
+            .map(supervision_score_to_class, na_action="ignore")
+            .map(supervision_class_to_label, na_action="ignore"),
+            categories=supervision_labels,
             ordered=True,
         )
 
