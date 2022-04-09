@@ -75,6 +75,40 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
                 },
                 "is_contingent": False,
             },
+            "formal_supervision_score": {
+                "label": "What is the formal supervision score?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "formal_supervision_class": {
+                "label": "What is the formal supervision class?",
+                "type": "single-choice",
+                "choices": {
+                    "A1": "very satisfied",
+                    "A2": "rather satisfied",
+                    "A3": "neither satisfied nor dissatisfied",
+                    "A4": "rather dissatisfied",
+                    "A5": "very dissatisfied",
+                },
+                "is_contingent": False,
+            },
+            "direct_supervision_score": {
+                "label": "What is the direct supervision score?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "direct_supervision_class": {
+                "label": "What is the direct supervision class?",
+                "type": "single-choice",
+                "choices": {
+                    "A1": "very satisfied",
+                    "A2": "rather satisfied",
+                    "A3": "neither satisfied nor dissatisfied",
+                    "A4": "rather dissatisfied",
+                    "A5": "very dissatisfied",
+                },
+                "is_contingent": False,
+            },
         }
         question_df = pd.concat(
             [
@@ -117,7 +151,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
 
         self.assertEqual(bool(not_in_structure), False)
 
-    def test_transformation_questions(self):
+    def test_mental_health_transformation_questions(self):
         """Test adding responses to transformation questions in read_responses"""
 
         mental_health_questions = {
@@ -173,6 +207,54 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
 
         self.assert_df_equal(
             survey.responses.iloc[:3, -6:], ref, msg="DataFrames not equal."
+        )
+
+    def test_supervision_transformation_questions(self):
+        """Test adding responses to transformation questions in read_responses"""
+
+        supervision_questions = {
+            "formal_supervision": "E7a",
+            "direct_supervision": "E7b",
+        }
+
+        survey = LimeSurvey(structure_file=self.structure_file)
+        survey.read_responses(
+            responses_file=self.responses_file,
+            transformation_questions=supervision_questions,
+        )
+        ref = pd.DataFrame(
+            data={
+                "formal_supervision_score": [4.0, 5.0, 1.0],
+                "formal_supervision_class": pd.Categorical(
+                    ["A2", "A1", "A5"],
+                    categories=[
+                        "A1",
+                        "A2",
+                        "A3",
+                        "A4",
+                        "A5",
+                    ],
+                    ordered=True,
+                ),
+                "direct_supervision_score": [4.0, 5.0, 1.0],
+                "direct_supervision_class": pd.Categorical(
+                    ["A2", "A1", "A5"],
+                    categories=[
+                        "A1",
+                        "A2",
+                        "A3",
+                        "A4",
+                        "A5",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[8, 9, 10],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(
+            survey.responses.iloc[6:9, -4:], ref, msg="DataFrames not equal."
         )
 
     def test_single_choice_dtype(self):
@@ -332,6 +414,66 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
         )
         self.assert_df_equal(
             depression_transformed.iloc[:3], depression_ref, msg="Series not equal"
+        )
+
+    def test_supervision_transforms(self):
+        """Test transforming two types of supervision questions"""
+
+        formal_supervision_transformed = self.survey.transform_question(
+            "E7a", "formal_supervision"
+        )
+        direct_supervision_transformed = self.survey.transform_question(
+            "E7b", "direct_supervision"
+        )
+
+        formal_supervision_ref = pd.DataFrame(
+            data={
+                "formal_supervision_score": [4.0, 5.0, 1.0],
+                "formal_supervision_class": pd.Categorical(
+                    ["A2", "A1", "A5"],
+                    categories=[
+                        "A1",
+                        "A2",
+                        "A3",
+                        "A4",
+                        "A5",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[8, 9, 10],
+        )
+        formal_supervision_ref.index.name = "id"
+
+        direct_supervision_ref = pd.DataFrame(
+            data={
+                "direct_supervision_score": [4.0, 5.0, 1.0],
+                "direct_supervision_class": pd.Categorical(
+                    ["A2", "A1", "A5"],
+                    categories=[
+                        "A1",
+                        "A2",
+                        "A3",
+                        "A4",
+                        "A5",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[8, 9, 10],
+        )
+        direct_supervision_ref.index.name = "id"
+
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(
+            formal_supervision_transformed.iloc[6:9],
+            formal_supervision_ref,
+            msg="Series not equal",
+        )
+        self.assert_df_equal(
+            direct_supervision_transformed.iloc[6:9],
+            direct_supervision_ref,
+            msg="Series not equal",
         )
 
 
@@ -1115,6 +1257,60 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
         ref.index.name = "id"
 
         self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
+
+
+class TestLimeSurveyRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test LimeSurvey rate_supervision for formal and direct supervision"""
+
+    def test_formal_supervision(self):
+        """Test rating of formal supervision"""
+
+        result = self.survey.rate_supervision("E7a")
+        ref = pd.DataFrame(
+            data={
+                "formal_supervision_score": [4.0, 5.0, 1.0],
+                "formal_supervision_class": pd.Categorical(
+                    ["A2", "A1", "A5"],
+                    categories=[
+                        "A1",
+                        "A2",
+                        "A3",
+                        "A4",
+                        "A5",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[8, 9, 10],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(result.iloc[6:9, -2:], ref, msg="DataFrames not equal.")
+
+    def test_direct_supervision(self):
+        """Test rating of direct supervision"""
+
+        result = self.survey.rate_supervision("E7b")
+        ref = pd.DataFrame(
+            data={
+                "direct_supervision_score": [4.0, 5.0, 1.0],
+                "direct_supervision_class": pd.Categorical(
+                    ["A2", "A1", "A5"],
+                    categories=[
+                        "A1",
+                        "A2",
+                        "A3",
+                        "A4",
+                        "A5",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[8, 9, 10],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(result.iloc[6:9, -2:], ref, msg="DataFrames not equal.")
 
 
 if __name__ == "__main__":
