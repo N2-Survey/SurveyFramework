@@ -1301,8 +1301,8 @@ class LimeSurvey:
             "rather dissatisfied",
             "very dissatisfied",
         ]
-        supervision_labels = ["A1", "A2", "A3", "A4", "A5"]
-        supervision_scores = [5.0, 4.0, 3.0, 2.0, 1.0]
+        supervision_class_codes = ["A1", "A2", "A3", "A4", "A5"]
+        supervision_class_scores = [5.0, 4.0, 3.0, 2.0, 1.0]
 
         # Set up score conversion dicts for individual questions
         supervision_question_scores = {
@@ -1314,13 +1314,13 @@ class LimeSurvey:
         }
         # Inverse supervision transformation: Score (5.0) --> Class ('Very satisfied')
         supervision_score_to_class = {
-            the_class: code
-            for code, the_class in zip(supervision_classes, supervision_scores)
+            score: the_class
+            for the_class, score in zip(supervision_classes, supervision_class_scores)
         }
-        # Inverse supervision transformation: Class ('Very satisfied') --> Label ('A1')
-        supervision_class_to_label = {
+        # Inverse supervision transformation: Class ('Very satisfied') --> Code ('A1')
+        supervision_class_to_code = {
             the_class: code
-            for code, the_class in zip(supervision_labels, supervision_classes)
+            for code, the_class in zip(supervision_class_codes, supervision_classes)
         }
 
         # Map responses from code to text then to score
@@ -1340,8 +1340,8 @@ class LimeSurvey:
         df[f"{label}_class"] = pd.Categorical(
             df[f"{label}_score"]
             .map(supervision_score_to_class, na_action="ignore")
-            .map(supervision_class_to_label, na_action="ignore"),
-            categories=supervision_labels,
+            .map(supervision_class_to_code, na_action="ignore"),
+            categories=supervision_class_codes,
             ordered=True,
         )
 
