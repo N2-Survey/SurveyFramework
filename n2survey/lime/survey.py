@@ -357,18 +357,13 @@ class LimeSurvey:
             "state_anxiety": "mental_health",
             "trait_anxiety": "mental_health",
             "depression": "mental_health",
-            ## Questions requiring a conversion from a numerical range
-            "range":"range_to_int"
-            
+            "range": "range_to_int",
         }
 
         if transform_dict.get(transform) == "mental_health":
             return self.rate_mental_health(question, condition=transform)
-        
-        if transform_dict.get(transform) == "range_to_int":
+        elif transform_dict.get(transform) == "range_to_int":
             return self.range_to_int(question)
-        
-
 
     def __copy__(self):
         """Create a shallow copy of the LimeSurvey instance
@@ -1416,46 +1411,48 @@ class LimeSurvey:
             df = df.drop(df.columns[:-2], axis=1)
 
         return df
-    
-    def range_to_int(self,question):
-        
-        question_label = self.get_label(question) # + "_SQ001")
-        
+
+    def range_to_int(self, question):
+
+        question_label = self.get_label(question)  # + "_SQ001")
+
         check_condition = {
-            "For how long have you been working on your PhD without pay" : "noincome_duration",
-            "Right now, what is your monthly net income for your work at your research organization" : "income_amount",
-            "How much do you pay for your rent and associated living costs per month in euros" : "costs_amount",
-            "What was or is the longest duration of your contract or stipend related to your PhD project" : "contract_duration",
-            "How many holidays per year can you take according to your contract or stipend" : "holiday_amount",
-            "On average, how many hours do you typically work per week in total" : "hours_amount",
-            "How many days did you take off (holiday) in the past year" : "holidaytaken_amount"
-            }
-        
-        #Assign new question label 
+            # "For how long have you been working on your PhD without pay" : "noincome_duration", # multi-choice, results in error
+            "Right now, what is your monthly net income for your work at your research organization": "income_amount",
+            "How much do you pay for your rent and associated living costs per month in euros": "costs_amount",
+            "What was or is the longest duration of your contract or stipend related to your PhD project": "contract_duration",
+            "How many holidays per year can you take according to your contract or stipend": "holiday_amount",
+            "On average, how many hours do you typically work per week in total": "hours_amount",
+            "How many days did you take off (holiday) in the past year": "holidaytaken_amount",
+        }
+
+        # Assign new question label
         for lab in check_condition:
             if lab in question_label:
                 label = check_condition[lab]
-        
-        #Check if correct question was chosen
+
+        # Check if correct question was chosen
         if label is None:
             raise ValueError("Question incompatible with specified condition type.")
-        
-        
-        responses = self.get_responses(question).iloc[:, 0]
-        
-        def _strRange_to_intRange(strAnswer: str) -> int:
 
+        responses = self.get_responses(question).iloc[:, 0]
+
+        def _strRange_to_intRange(strAnswer: str) -> int:
+            # e.g. 701-801: take the mean of upper and lower value
             if re.search(r"-", strAnswer):
                 list_range = re.findall(r"(?:[1-9]\d*)(?:\.)?(?:[1-9]\d+)?", strAnswer)
-                return int(list_range[0] + list_range[1]) / 2
+                return (int(list_range[0]) + int(list_range[1])) / 2
+            # e.g. >1200: take the value itself
+            elif re.search(r">", strAnswer):
+                return int(re.findall(r"\d+", strAnswer)[0])
             else:
                 return np.NaN  # Handy when computing mean, median,... using numpy
-            
+
         responses_num = responses.apply(_strRange_to_intRange)
         df = pd.DataFrame()
-        
+
         df[f"{label}"] = responses_num
-        
+
         return df
 
     def export_to_file(
@@ -1537,4 +1534,3 @@ class LimeSurvey:
         new_data.to_csv(directory)
 
         print("\nData exported!")
-
