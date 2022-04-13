@@ -1002,6 +1002,7 @@ class LimeSurvey:
         supported_comparisons = [
             ("single-choice", "single-choice"),
             ("multiple-choice", "single-choice"),
+            ("multiple-choice", "multiple-choice"),
         ]
         all_plots = [question]
         if compare_with:
