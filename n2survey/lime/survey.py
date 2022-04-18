@@ -422,15 +422,23 @@ class LimeSurvey:
             # ASSUME: question response consists of multiple columns with
             #         'Y' or NaN as entries.
             # Masked with boolean values the responses with nan only for the columns where is_contingent is True.
-            responses.loc[:, ~question_group.is_contingent] = responses.loc[
-                :, ~question_group.is_contingent
-            ].notnull()
+            # Left-hand-side slicing changed from .loc to __getitem__ to avoid categorical assignment error
+            # Reason unclear, see: https://stackoverflow.com/questions/71905655/pandas-can-assign-1-column-
+            # dataframe-to-series-but-not-to-dataframe-of-same-sha
+            responses[
+                question_group.index[~question_group.is_contingent]
+            ] = responses.loc[:, ~question_group.is_contingent].notnull()
 
         # replace labels
         if labels:
             if question_type == "multiple-choice":
+                # If a multiple-choice subquestion
+                if "SQ" in question:
+                    question = question.split("_")[0]
+                # Get column labels for entire question group as dict
+                rename = self.get_choices(question)
                 # Rename column names
-                responses = responses.rename(columns=self.get_choices(question))
+                responses = responses.rename(columns=rename)
 
             else:
                 # Rename category values and replace NA by self.na_label
