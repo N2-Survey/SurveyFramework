@@ -15,7 +15,9 @@ def rate_supervision(
     """Calculate average direct/formal supervision rating
 
     Args:
-        question (str): Question ID to use for calculation
+        question_label (str): Question label to use for transformation type inference
+        responses (pd.DataFrame): DataFrame containing responses data
+        choices (dict): dict for answer choice conversion
         keep_subscores (bool, optional): Whether to include scores from subquestions
             in the output DataFrame, or only total score and classification.
             Default False.
@@ -106,7 +108,9 @@ def rate_mental_health(
                 31(3):301–306, 1992.
 
     Args:
-        question (str): Question ID to use for calculation
+        question_label (str): Question label to use for transformation type inference
+        responses (pd.DataFrame): DataFrame containing responses data
+        choices (dict): dict for answer choice conversion
         condition (str, optional): Which kind of mental health condition to rate,
             "state_anxiety", "trait_anxiety", or "depression". If not specified,
             the condition is automatically infered. Default None.
