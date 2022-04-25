@@ -170,34 +170,16 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
             data={
                 "state_anxiety_score": [50.0, 100 / 3, 130 / 3],
                 "state_anxiety_class": pd.Categorical(
-                    ["A3", "A1", "A2"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                    ],
-                    ordered=True,
+                    ["A3", "A1", "A2"], categories=["A1", "A2", "A3",], ordered=True,
                 ),
                 "trait_anxiety_score": [47.5, 32.5, 50.0],
                 "trait_anxiety_class": pd.Categorical(
-                    ["A3", "A1", "A3"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                    ],
-                    ordered=True,
+                    ["A3", "A1", "A3"], categories=["A1", "A2", "A3",], ordered=True,
                 ),
                 "depression_score": [8.0, 5.0, 8.0],
                 "depression_class": pd.Categorical(
                     ["A2", "A2", "A2"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
+                    categories=["A1", "A2", "A3", "A4", "A5",],
                     ordered=True,
                 ),
             },
@@ -227,25 +209,13 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
                 "formal_supervision_score": [4.0, 5.0, 1.0],
                 "formal_supervision_class": pd.Categorical(
                     ["A2", "A1", "A5"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
+                    categories=["A1", "A2", "A3", "A4", "A5",],
                     ordered=True,
                 ),
                 "direct_supervision_score": [4.0, 5.0, 1.0],
                 "direct_supervision_class": pd.Categorical(
                     ["A2", "A1", "A5"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
+                    categories=["A1", "A2", "A3", "A4", "A5",],
                     ordered=True,
                 ),
             },
@@ -283,8 +253,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         ]
 
         self.assertEqual(
-            (self.survey.responses[array_columns].dtypes == "category").all(),
-            True,
+            (self.survey.responses[array_columns].dtypes == "category").all(), True,
         )
 
     def test_multiple_choice_dtype(self):
@@ -353,13 +322,7 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
             data={
                 "state_anxiety_score": [50.0, 100 / 3, 130 / 3],
                 "state_anxiety_class": pd.Categorical(
-                    ["A3", "A1", "A2"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                    ],
-                    ordered=True,
+                    ["A3", "A1", "A2"], categories=["A1", "A2", "A3",], ordered=True,
                 ),
             },
             index=[2, 3, 4],
@@ -370,13 +333,7 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
             data={
                 "trait_anxiety_score": [47.5, 32.5, 50.0],
                 "trait_anxiety_class": pd.Categorical(
-                    ["A3", "A1", "A3"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                    ],
-                    ordered=True,
+                    ["A3", "A1", "A3"], categories=["A1", "A2", "A3",], ordered=True,
                 ),
             },
             index=[2, 3, 4],
@@ -388,13 +345,7 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
                 "depression_score": [8.0, 5.0, 8.0],
                 "depression_class": pd.Categorical(
                     ["A2", "A2", "A2"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
+                    categories=["A1", "A2", "A3", "A4", "A5",],
                     ordered=True,
                 ),
             },
@@ -431,13 +382,7 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
                 "formal_supervision_score": [4.0, 5.0, 1.0],
                 "formal_supervision_class": pd.Categorical(
                     ["A2", "A1", "A5"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
+                    categories=["A1", "A2", "A3", "A4", "A5",],
                     ordered=True,
                 ),
             },
@@ -450,13 +395,7 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
                 "direct_supervision_score": [4.0, 5.0, 1.0],
                 "direct_supervision_class": pd.Categorical(
                     ["A2", "A1", "A5"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
+                    categories=["A1", "A2", "A3", "A4", "A5",],
                     ordered=True,
                 ),
             },
@@ -857,8 +796,7 @@ class TestLimeSurveyGetLabel(BaseTestLimeSurvey2021Case):
         label = self.survey.get_label(self.single_choice_column)
 
         self.assertEqual(
-            label,
-            "To which gender do you identify most?",
+            label, "To which gender do you identify most?",
         )
 
     def test_multiple_choice_label_by_group(self):
@@ -867,8 +805,7 @@ class TestLimeSurveyGetLabel(BaseTestLimeSurvey2021Case):
         label = self.survey.get_label(self.multiple_choice_column)
 
         self.assertEqual(
-            label,
-            "What was/were the reason(s) for considering to quit your PhD?",
+            label, "What was/were the reason(s) for considering to quit your PhD?",
         )
 
     def test_multiple_choice_label_by_subquestion(self):
@@ -877,8 +814,7 @@ class TestLimeSurveyGetLabel(BaseTestLimeSurvey2021Case):
         label = self.survey.get_label(self.multiple_choice_column + "_SQ001")
 
         self.assertEqual(
-            label,
-            "What was/were the reason(s) for considering to quit your PhD?",
+            label, "What was/were the reason(s) for considering to quit your PhD?",
         )
 
     def test_array_label_by_group(self):
@@ -897,8 +833,7 @@ class TestLimeSurveyGetLabel(BaseTestLimeSurvey2021Case):
         label = self.survey.get_label(self.array_column + "_SQ001")
 
         self.assertEqual(
-            label,
-            "More time needed to complete PhD project",
+            label, "More time needed to complete PhD project",
         )
 
     def test_free_label(self):
@@ -907,8 +842,7 @@ class TestLimeSurveyGetLabel(BaseTestLimeSurvey2021Case):
         label = self.survey.get_label(self.free_column)
 
         self.assertEqual(
-            label,
-            "When did you start your PhD?",
+            label, "When did you start your PhD?",
         )
 
 
@@ -969,8 +903,7 @@ class TestLimeSurveyGetChoices(BaseTestLimeSurvey2021Case):
         choices = self.survey.get_choices(self.multiple_choice_column + "_SQ001")
 
         self.assertDictEqual(
-            choices,
-            {"Y": "I do not like scientific work."},
+            choices, {"Y": "I do not like scientific work."},
         )
 
     def test_array_choices(self):
@@ -996,8 +929,7 @@ class TestLimeSurveyGetChoices(BaseTestLimeSurvey2021Case):
         label = self.survey.get_choices(self.free_column)
 
         self.assertEqual(
-            label,
-            None,
+            label, None,
         )
 
 
@@ -1247,13 +1179,7 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
             data={
                 "state_anxiety_score": [50.0, 100 / 3, 130 / 3],
                 "state_anxiety_class": pd.Categorical(
-                    ["A3", "A1", "A2"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                    ],
-                    ordered=True,
+                    ["A3", "A1", "A2"], categories=["A1", "A2", "A3",], ordered=True,
                 ),
             },
             index=[2, 3, 4],
@@ -1271,13 +1197,7 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
             data={
                 "trait_anxiety_score": [47.5, 32.5, 50.0],
                 "trait_anxiety_class": pd.Categorical(
-                    ["A3", "A1", "A3"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                    ],
-                    ordered=True,
+                    ["A3", "A1", "A3"], categories=["A1", "A2", "A3",], ordered=True,
                 ),
             },
             index=[2, 3, 4],
@@ -1296,13 +1216,7 @@ class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
                 "depression_score": [8.0, 5.0, 8.0],
                 "depression_class": pd.Categorical(
                     ["A2", "A2", "A2"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
+                    categories=["A1", "A2", "A3", "A4", "A5",],
                     ordered=True,
                 ),
             },
@@ -1325,13 +1239,7 @@ class TestLimeSurveyRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
                 "formal_supervision_score": [4.0, 5.0, 1.0],
                 "formal_supervision_class": pd.Categorical(
                     ["A2", "A1", "A5"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
+                    categories=["A1", "A2", "A3", "A4", "A5",],
                     ordered=True,
                 ),
             },
@@ -1350,13 +1258,7 @@ class TestLimeSurveyRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
                 "direct_supervision_score": [4.0, 5.0, 1.0],
                 "direct_supervision_class": pd.Categorical(
                     ["A2", "A1", "A5"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
+                    categories=["A1", "A2", "A3", "A4", "A5",],
                     ordered=True,
                 ),
             },

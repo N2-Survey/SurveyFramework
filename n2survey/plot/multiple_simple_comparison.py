@@ -3,7 +3,7 @@
 """
 Created on Tue Mar 15 18:50:01 2022
 
-@author: theflike
+@author: TheFlike
 """
 from textwrap import wrap
 from typing import Union

@@ -28,9 +28,7 @@ DEFAULT_THEME = {
     "font": "sans-serif",
     "font_scale": 1,
     "color_codes": True,
-    "rc": {
-        "figure.figsize": (12, 12),
-    },
+    "rc": {"figure.figsize": (12, 12),},
 }
 
 QUESTION_TYPES = (
@@ -128,10 +126,7 @@ class LimeSurvey:
                 "A3": "high anxiety",
             },
         },
-        "depression_score": {
-            "label": "What is the depression score?",
-            "type": "free",
-        },
+        "depression_score": {"label": "What is the depression score?", "type": "free",},
         "depression_class": {
             "label": "What is the depression class?",
             "type": "single-choice",
@@ -394,10 +389,7 @@ class LimeSurvey:
         return survey_copy
 
     def get_responses(
-        self,
-        question: str,
-        labels: bool = True,
-        drop_other: bool = False,
+        self, question: str, labels: bool = True, drop_other: bool = False,
     ) -> pd.DataFrame:
         """Get responses for a given question with or without labels
 
@@ -1317,9 +1309,7 @@ class LimeSurvey:
         return choices_dict
 
     def rate_supervision(
-        self,
-        question: str,
-        keep_subscores: bool = False,
+        self, question: str, keep_subscores: bool = False,
     ) -> pd.DataFrame:
         """Calculate average direct/formal supervision rating
 
@@ -1398,10 +1388,7 @@ class LimeSurvey:
         return df
 
     def rate_mental_health(
-        self,
-        question: str,
-        condition: str = None,
-        keep_subscores: bool = False,
+        self, question: str, condition: str = None, keep_subscores: bool = False,
     ) -> pd.DataFrame:
         """Calculate State/Trait Anxiety or Depression score based on responses to
             question based on the following references:
@@ -1533,9 +1520,7 @@ class LimeSurvey:
 
         # Classify into categories
         df[f"{label}_class"] = pd.cut(
-            df[f"{label}_score"],
-            bins=classification_boundaries,
-            labels=classes,
+            df[f"{label}_score"], bins=classification_boundaries, labels=classes,
         ).map(invert_dict, na_action="ignore")
 
         if not keep_subscores:

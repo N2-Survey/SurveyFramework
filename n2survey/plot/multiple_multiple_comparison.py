@@ -270,7 +270,9 @@ def get_percentages(question_compare_with_tuple, totalbar=None):
                 # zutreffend (=True) for ´answer´ to ´compare_with´.
                 answered_zutreffend = answered_zutreffend + 1
         if answered_zutreffend != 0:
-            percentage[answer] = percentage[answer] / answered_zutreffend * 100
+            percentage[answer] = np.round(
+                (percentage[answer] / answered_zutreffend * 100), decimals=1
+            )
     if totalbar:
         percentage["Total"] = np.round(
             np.count_nonzero(question_results, axis=0) / persons_total * 100,
