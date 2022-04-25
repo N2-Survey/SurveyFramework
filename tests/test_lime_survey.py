@@ -681,6 +681,60 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
             expected_response, response.values[:2].astype(np.float64)
         )
 
+    def test_get_response_multiple_choice_subquestion(self):
+        """Test get response for subquestion of multiple choice question type"""
+        expected_response = np.asarray(
+            [
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                True,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                True,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+            ],
+        ).reshape(36, 1)
+        response = self.survey.get_responses(
+            self.multiple_choice_column + "_SQ001", labels=False
+        )
+        np.testing.assert_equal(expected_response, response.values)
+
+        expected_columns = ["I do not like scientific work."]
+        response = self.survey.get_responses(
+            self.multiple_choice_column + "_SQ001", labels=True
+        )
+        np.testing.assert_array_equal(expected_columns, response.columns)
+        np.testing.assert_array_equal(expected_response, response.values)
+
     def test_get_response_free(self):
         """Test get response for free question type"""
         expected_response = pd.to_datetime(
