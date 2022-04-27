@@ -212,10 +212,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
     def test_supervision_transformation_questions(self):
         """Test adding responses to transformation questions in read_responses"""
 
-        supervision_questions = {
-            "formal_supervision": "E7a",
-            "direct_supervision": "E7b",
-        }
+        supervision_questions = {"supervision": ["E7a", "E7b"]}
 
         survey = LimeSurvey(structure_file=self.structure_file)
         survey.read_responses(
@@ -420,10 +417,10 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
         """Test transforming two types of supervision questions"""
 
         formal_supervision_transformed = self.survey.transform_question(
-            "E7a", "formal_supervision"
+            "E7a", "supervision"
         )
         direct_supervision_transformed = self.survey.transform_question(
-            "E7b", "direct_supervision"
+            "E7b", "supervision"
         )
 
         formal_supervision_ref = pd.DataFrame(
