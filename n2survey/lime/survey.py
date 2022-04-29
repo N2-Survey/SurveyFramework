@@ -28,7 +28,9 @@ DEFAULT_THEME = {
     "font": "sans-serif",
     "font_scale": 1,
     "color_codes": True,
-    "rc": {"figure.figsize": (12, 12),},
+    "rc": {
+        "figure.figsize": (12, 12),
+    },
 }
 
 QUESTION_TYPES = (
@@ -126,7 +128,10 @@ class LimeSurvey:
                 "A3": "high anxiety",
             },
         },
-        "depression_score": {"label": "What is the depression score?", "type": "free",},
+        "depression_score": {
+            "label": "What is the depression score?",
+            "type": "free",
+        },
         "depression_class": {
             "label": "What is the depression class?",
             "type": "single-choice",
@@ -389,7 +394,10 @@ class LimeSurvey:
         return survey_copy
 
     def get_responses(
-        self, question: str, labels: bool = True, drop_other: bool = False,
+        self,
+        question: str,
+        labels: bool = True,
+        drop_other: bool = False,
     ) -> pd.DataFrame:
         """Get responses for a given question with or without labels
 
@@ -701,6 +709,7 @@ class LimeSurvey:
         calculate_aspect_ratio: bool = True,
         maximum_length_x_axis_answers: int = 20,
         show_zeroes: bool = True,
+        bubble_size: float = None,
         kind: str = None,
         **kwargs,
     ):
@@ -767,6 +776,11 @@ class LimeSurvey:
                 answers plotted on x-axis, standard 20 --> no line longer then
                 20 characters
             'show_zeroes': Plots lines for every 0% bar
+            'bubble_size': if float is given, plots are changed to a bubble
+                plot with answers to 'question' and 'add_questions' on the
+                x-Axis and answers to 'compare_with' on the y-Axis.
+                size of the bubbles depends on overleap percentage and the
+                base-value given in bubble_size.
         """
         if kind is not None:
             raise NotImplementedError(
@@ -808,6 +822,7 @@ class LimeSurvey:
                 calculate_aspect_ratio=calculate_aspect_ratio,
                 maximum_length_x_axis_answers=maximum_length_x_axis_answers,
                 show_zeroes=show_zeroes,
+                bubble_size=bubble_size,
                 **kwargs,
             )
         elif question_type == "single-choice":
@@ -896,6 +911,7 @@ class LimeSurvey:
         maximum_length_x_axis_answers: float = 20,
         kind: str = None,
         show_zeroes: bool = True,
+        bubble_size: float = None,
         **kwargs,
     ):
         """
@@ -963,6 +979,7 @@ class LimeSurvey:
                 maximum_length_x_axis_answers=maximum_length_x_axis_answers,
                 theme=theme,
                 show_zeroes=show_zeroes,
+                bubble_size=bubble_size,
             )
         elif all(
             [question_type == "multiple-choice", compare_with_type == "multiple-choice"]
@@ -986,6 +1003,7 @@ class LimeSurvey:
                 maximum_length_x_axis_answers=maximum_length_x_axis_answers,
                 theme=theme,
                 show_zeroes=show_zeroes,
+                bubble_size=bubble_size,
             )
         return fig, ax
 
@@ -1309,7 +1327,9 @@ class LimeSurvey:
         return choices_dict
 
     def rate_supervision(
-        self, question: str, keep_subscores: bool = False,
+        self,
+        question: str,
+        keep_subscores: bool = False,
     ) -> pd.DataFrame:
         """Calculate average direct/formal supervision rating
 
@@ -1388,7 +1408,10 @@ class LimeSurvey:
         return df
 
     def rate_mental_health(
-        self, question: str, condition: str = None, keep_subscores: bool = False,
+        self,
+        question: str,
+        condition: str = None,
+        keep_subscores: bool = False,
     ) -> pd.DataFrame:
         """Calculate State/Trait Anxiety or Depression score based on responses to
             question based on the following references:
@@ -1520,7 +1543,9 @@ class LimeSurvey:
 
         # Classify into categories
         df[f"{label}_class"] = pd.cut(
-            df[f"{label}_score"], bins=classification_boundaries, labels=classes,
+            df[f"{label}_score"],
+            bins=classification_boundaries,
+            labels=classes,
         ).map(invert_dict, na_action="ignore")
 
         if not keep_subscores:
