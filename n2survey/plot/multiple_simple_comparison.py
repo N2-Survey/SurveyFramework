@@ -18,6 +18,7 @@ from .comparison_shared_functions import (
     filter_answer_sequence,
     form_bar_positions,
     form_single_answer_bar_positions,
+    plot_bubbles,
     sort_data,
 )
 
@@ -48,6 +49,9 @@ def multiple_simple_comparison_plot(
     Plots correlations between multiple choice answers and the answers of
     simple choice answers.
     """
+    no_sub_bars = None
+    if bubbles:
+        no_sub_bars = True
     if ignore_no_answer:
         suppress_answers.append("No Answer")
     # form x and y from plot_data_lists
@@ -62,15 +66,19 @@ def multiple_simple_comparison_plot(
     x, _ = sort_data(answer_sequence, x, y)
     # wrap text in x-axis
     x = ["\n".join(wrap(entry, width=maximum_length_x_axis_answers)) for entry in x]
+    max_lines = max([entry.count("\n") for entry in x])
     # remove legend entries not in y
     if totalbar:
         legend_sequence.insert(0, "Total")
     legend_sequence = filter_answer_sequence([entry for entry in y], [legend_sequence])
 
-    # %% Prepare/Define figure
-    positionlist_per_answer = form_single_answer_bar_positions(
-        y, bar_width, bar_positions_per_answer=bar_positions
-    )
+    # %%
+    if bubbles:
+        positionlist_per_answer = [0]
+    else:
+        positionlist_per_answer = form_single_answer_bar_positions(
+            y, bar_width, bar_positions_per_answer=bar_positions
+        )
     bar_positions_complete = form_bar_positions(
         x,
         y,
@@ -78,13 +86,18 @@ def multiple_simple_comparison_plot(
         totalbar=totalbar,
         distance_between_bars=2,
         positionlist_per_answer=list(positionlist_per_answer),
+        no_sub_bars=no_sub_bars,
     )
     # plt.rc('text', usetex=True) --> makes cm-super necessary for latex in plots
     # %%% calculate dimensions of figure
     if theme is not None:
         if calculate_aspect_ratio:
             width = aspect_ratio_from_arguments(
-                bar_positions_complete, positionlist_per_answer, theme, bar_width
+                bar_positions_complete,
+                positionlist_per_answer,
+                theme,
+                bar_width,
+                max_lines_xtick=max_lines,
             )
             height = theme["rc"]["figure.figsize"][1]
         else:
@@ -94,24 +107,43 @@ def multiple_simple_comparison_plot(
     fig, ax = plt.subplots()
     fig.set_tight_layout(True)
     # %% plot
-
-    fig, ax = plot_multi_bars_per_answer(
-        fig,
-        ax,
-        x,
-        y,
-        bar_positions_complete,
-        positionlist_per_answer,
-        legend_sequence,
-        theme=theme,
-        legend_columns=legend_columns,
-        plot_title=plot_title,
-        legend_title=legend_title,
-        plot_title_position=plot_title_position,
-        threshold_percentage=threshold_percentage,
-        bar_width=bar_width,
-        show_zeroes=show_zeroes,
-    )
+    if bubbles:
+        fig, ax = plot_bubbles(
+            fig,
+            ax,
+            x,
+            y,
+            bar_positions_complete,
+            positionlist_per_answer,
+            legend_sequence,
+            theme=theme,
+            legend_columns=legend_columns,
+            plot_title=plot_title,
+            legend_title=legend_title,
+            plot_title_position=plot_title_position,
+            threshold_percentage=threshold_percentage,
+            bar_width=bar_width,
+            show_zeroes=show_zeroes,
+            bubbles=bubbles,
+        )
+    else:
+        fig, ax = plot_multi_bars_per_answer(
+            fig,
+            ax,
+            x,
+            y,
+            bar_positions_complete,
+            positionlist_per_answer,
+            legend_sequence,
+            theme=theme,
+            legend_columns=legend_columns,
+            plot_title=plot_title,
+            legend_title=legend_title,
+            plot_title_position=plot_title_position,
+            threshold_percentage=threshold_percentage,
+            bar_width=bar_width,
+            show_zeroes=show_zeroes,
+        )
     # enlarge y-axis maximum due to bar labels
     new_y_axis_size = 1.05 * ax.get_ylim()[1]
     if theme is not None:
@@ -149,6 +181,7 @@ def plot_multi_bars_per_answer(
         label_values = (np.array(y[entry])).astype(str)
         labels = np.array([i + "%" for i in label_values], dtype=object)
         labels[np.where(label_values.astype(np.float64) <= threshold_percentage)] = ""
+        labels[np.where(label_values.astype(np.float64) == 100.0)] = "100%"
         if show_zeroes:
             labels[np.where(label_values.astype(np.float64) == 0)] = r"|"
         ax.bar_label(

@@ -18,6 +18,7 @@ from .comparison_shared_functions import (
     filter_answer_sequence,
     form_bar_positions,
     form_single_answer_bar_positions,
+    plot_bubbles,
     sort_data,
 )
 
@@ -48,6 +49,9 @@ def multiple_multiple_comparison_plot(
     Plots correlations between multiple choice answers and the answers of
     simple choice answers.
     """
+    no_sub_bars = None
+    if bubbles:
+        no_sub_bars = True
     if ignore_no_answer:
         suppress_answers.append("No Answer")
     # form x and y from plot_data_lists
@@ -62,15 +66,19 @@ def multiple_multiple_comparison_plot(
     x, _ = sort_data(answer_sequence, x, y)
     # wrap text in x-axis
     x = ["\n".join(wrap(entry, width=maximum_length_x_axis_answers)) for entry in x]
+    max_lines = max([entry.count("\n") for entry in x])
     # remove legend entries not in y
     if totalbar:
         legend_sequence.insert(0, "Total")
     legend_sequence = filter_answer_sequence([entry for entry in y], [legend_sequence])
 
     # %% Prepare/Define figure
-    positionlist_per_answer = form_single_answer_bar_positions(
-        y, bar_width, bar_positions_per_answer=bar_positions
-    )
+    if bubbles:
+        positionlist_per_answer = [0]
+    else:
+        positionlist_per_answer = form_single_answer_bar_positions(
+            y, bar_width, bar_positions_per_answer=bar_positions
+        )
     bar_positions_complete = form_bar_positions(
         x,
         y,
@@ -78,13 +86,18 @@ def multiple_multiple_comparison_plot(
         totalbar=totalbar,
         distance_between_bars=2,
         positionlist_per_answer=list(positionlist_per_answer),
+        no_sub_bars=no_sub_bars,
     )
     # plt.rc('text', usetex=True) --> makes cm-super necessary for latex in plots
     # %%% calculate dimensions of figure
     if theme is not None:
         if calculate_aspect_ratio:
             width = aspect_ratio_from_arguments(
-                bar_positions_complete, positionlist_per_answer, theme, bar_width
+                bar_positions_complete,
+                positionlist_per_answer,
+                theme,
+                bar_width,
+                max_lines_xtick=max_lines,
             )
             height = theme["rc"]["figure.figsize"][1]
         else:
@@ -168,6 +181,7 @@ def plot_multi_bars_per_answer(
         label_values = (np.array(y[entry])).astype(str)
         labels = np.array([i + "%" for i in label_values], dtype=object)
         labels[np.where(label_values.astype(np.float64) <= threshold_percentage)] = ""
+        labels[np.where(label_values.astype(np.float64) == 100.0)] = "100%"
         if show_zeroes:
             labels[np.where(label_values.astype(np.float64) == 0)] = r"|"
         ax.bar_label(
@@ -204,93 +218,6 @@ def plot_multi_bars_per_answer(
             )
     fig.tight_layout()
     return fig, ax
-
-
-def plot_bubbles(
-    fig,
-    ax,
-    x,
-    y,
-    bar_positions,
-    positionlist_per_answer,
-    legend_sequence,
-    theme=None,
-    legend_columns=2,
-    legend_title: str = None,
-    plot_title=None,
-    plot_title_position: tuple = (()),
-    threshold_percentage: float = 0,
-    bar_width: float = 0.8,
-    show_zeroes: bool = True,
-    bubbles: Union[bool, float] = None,
-    ylim: tuple = None,
-):
-    count = 0
-    compare_with_answer_positions = list(range(1, len(legend_sequence) + 1))
-    if ylim:
-        plt.ylim(ylim)
-    else:
-        plt.ylim(0, (compare_with_answer_positions[-1] + 1))
-    if type(bubbles) == bool:
-        bubble_size = calculate_bubblesize()
-    else:
-        bubble_size = bubbles
-    for (entry, offset_from_xtick) in zip(legend_sequence, positionlist_per_answer):
-        x_scatter = bar_positions + offset_from_xtick + 1
-        y_scatter = [compare_with_answer_positions[legend_sequence.index(entry)]] * len(
-            x_scatter
-        )
-        z_scatter = y[entry]
-        ax.scatter(
-            x_scatter,
-            y_scatter,
-            s=list(np.array(z_scatter) * bubble_size),
-        )
-        plt.xticks(bar_positions, x)
-        plt.yticks(compare_with_answer_positions, legend_sequence)
-        label_values = (np.array(y[entry])).astype(str)
-        labels = np.array([i + "%" for i in label_values], dtype=object)
-        labels[np.where(label_values.astype(np.float64) <= threshold_percentage)] = ""
-        if show_zeroes:
-            labels[np.where(label_values.astype(np.float64) == 0)] = r"|"
-        ax.bar_label(
-            ax.containers[count],
-            labels,
-            fmt="%s",
-            label_type="edge",
-            rotation=90,
-            padding=2,
-        )
-        count = count + 1
-    plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment="right")
-    ax.legend(
-        legend_sequence,
-        loc=(0.1, 1),
-        ncol=legend_columns,
-        frameon=False,
-        title=legend_title,
-    )
-    # set y-axis to invisible
-    ax.axes.get_yaxis().set_visible(False)
-    if plot_title:
-        if plot_title_position:
-            ax.text(plot_title_position[0], plot_title_position[1], plot_title)
-        else:
-            ax.set_title(
-                plot_title,
-                pad=calculate_title_pad(
-                    legend_sequence,
-                    legend_columns,
-                    theme=theme,
-                    legend_title=legend_title,
-                ),
-            )
-    fig.tight_layout()
-    return fig, ax
-
-
-def calculate_bubblesize():
-    return True
 
 
 def form_x_and_y(plot_data_list, totalbar=None, suppress_answers=[]):
