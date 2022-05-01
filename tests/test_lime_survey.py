@@ -212,10 +212,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
     def test_supervision_transformation_questions(self):
         """Test adding responses to transformation questions in read_responses"""
 
-        supervision_questions = {
-            "formal_supervision": "E7a",
-            "direct_supervision": "E7b",
-        }
+        supervision_questions = {"supervision": ["E7a", "E7b"]}
 
         survey = LimeSurvey(structure_file=self.structure_file)
         survey.read_responses(
@@ -420,10 +417,10 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
         """Test transforming two types of supervision questions"""
 
         formal_supervision_transformed = self.survey.transform_question(
-            "E7a", "formal_supervision"
+            "E7a", "supervision"
         )
         direct_supervision_transformed = self.survey.transform_question(
-            "E7b", "direct_supervision"
+            "E7b", "supervision"
         )
 
         formal_supervision_ref = pd.DataFrame(
@@ -1233,138 +1230,6 @@ class TestLimeSurveyQuery(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
         np.testing.assert_equal(list(filtered_survey.responses.index), [5, 21, 46])
-
-
-class TestLimeSurveyRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
-    """Test LimeSurvey rate_mental_health"""
-
-    def test_state_anxiety(self):
-        """Test rating state anxiety"""
-
-        result = self.survey.rate_mental_health("D1")
-
-        ref = pd.DataFrame(
-            data={
-                "state_anxiety_score": [50.0, 100 / 3, 130 / 3],
-                "state_anxiety_class": pd.Categorical(
-                    ["A3", "A1", "A2"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                    ],
-                    ordered=True,
-                ),
-            },
-            index=[2, 3, 4],
-        )
-        ref.index.name = "id"
-
-        self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
-
-    def test_trait_anxiety(self):
-        """Test rating trait anxiety"""
-
-        result = self.survey.rate_mental_health("D2")
-
-        ref = pd.DataFrame(
-            data={
-                "trait_anxiety_score": [47.5, 32.5, 50.0],
-                "trait_anxiety_class": pd.Categorical(
-                    ["A3", "A1", "A3"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                    ],
-                    ordered=True,
-                ),
-            },
-            index=[2, 3, 4],
-        )
-        ref.index.name = "id"
-
-        self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
-
-    def test_depression(self):
-        """Test rating depression"""
-
-        result = self.survey.rate_mental_health("D3")
-
-        ref = pd.DataFrame(
-            data={
-                "depression_score": [8.0, 5.0, 8.0],
-                "depression_class": pd.Categorical(
-                    ["A2", "A2", "A2"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
-                    ordered=True,
-                ),
-            },
-            index=[2, 3, 4],
-        )
-        ref.index.name = "id"
-
-        self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
-
-
-class TestLimeSurveyRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
-    """Test LimeSurvey rate_supervision for formal and direct supervision"""
-
-    def test_formal_supervision(self):
-        """Test rating of formal supervision"""
-
-        result = self.survey.rate_supervision("E7a")
-        ref = pd.DataFrame(
-            data={
-                "formal_supervision_score": [4.0, 5.0, 1.0],
-                "formal_supervision_class": pd.Categorical(
-                    ["A2", "A1", "A5"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
-                    ordered=True,
-                ),
-            },
-            index=[8, 9, 10],
-        )
-        ref.index.name = "id"
-        # "id" of dataframe starts at 2, therefore difference to "index" above
-        self.assert_df_equal(result.iloc[6:9, -2:], ref, msg="DataFrames not equal.")
-
-    def test_direct_supervision(self):
-        """Test rating of direct supervision"""
-
-        result = self.survey.rate_supervision("E7b")
-        ref = pd.DataFrame(
-            data={
-                "direct_supervision_score": [4.0, 5.0, 1.0],
-                "direct_supervision_class": pd.Categorical(
-                    ["A2", "A1", "A5"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
-                    ordered=True,
-                ),
-            },
-            index=[8, 9, 10],
-        )
-        ref.index.name = "id"
-        # "id" of dataframe starts at 2, therefore difference to "index" above
-        self.assert_df_equal(result.iloc[6:9, -2:], ref, msg="DataFrames not equal.")
 
 
 if __name__ == "__main__":
