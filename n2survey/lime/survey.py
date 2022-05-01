@@ -238,6 +238,7 @@ class LimeSurvey:
             responses_file (str): Path to the responses CSV file
             transformation_questions (dict, optional): Dict of questions
                 requiring transformation of raw data, e.g. {'depression': 'D3'}
+                or {'supervision': ['E7a', 'E7b']}
 
         """
 
@@ -342,8 +343,11 @@ class LimeSurvey:
         self.responses = question_responses
         self.lime_system_info = system_info
 
-        for transform, question in transformation_questions.items():
-            self.add_responses(self.transform_question(question, transform))
+        for transform, questions in transformation_questions.items():
+            if not isinstance(questions, list):
+                questions = [questions]
+            for question in questions:
+                self.add_responses(self.transform_question(question, transform))
 
     def transform_question(self, question: str, transform: str):
         """Perform transformation on responses to given question
@@ -360,8 +364,7 @@ class LimeSurvey:
             "state_anxiety": "mental_health",
             "trait_anxiety": "mental_health",
             "depression": "mental_health",
-            "formal_supervision": "supervision",
-            "direct_supervision": "supervision",
+            "supervision": "supervision",
         }
 
         if transform_dict.get(transform) == "mental_health":
