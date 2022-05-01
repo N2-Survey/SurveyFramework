@@ -64,13 +64,24 @@ def multiple_multiple_comparison_plot(
     for entry in y.copy():
         _, y[entry] = sort_data(answer_sequence, x, list(y[entry]))
     x, _ = sort_data(answer_sequence, x, y)
-    # wrap text in x-axis
-    x = ["\n".join(wrap(entry, width=maximum_length_x_axis_answers)) for entry in x]
-    max_lines = max([entry.count("\n") for entry in x])
     # remove legend entries not in y
     if totalbar:
         legend_sequence.insert(0, "Total")
     legend_sequence = filter_answer_sequence([entry for entry in y], [legend_sequence])
+    # wrap text in x-axis and, if bubbles, y-axis texts as well
+    x = ["\n".join(wrap(entry, width=maximum_length_x_axis_answers)) for entry in x]
+    max_lines_x = max([entry.count("\n") for entry in x]) + 1
+    if bubbles:
+        # can be added to a changeable variable, but I don't think it is
+        # necessary for the moment.
+        maximum_length_y_axis_answers = maximum_length_x_axis_answers
+        y_bubble_plot = [
+            "\n".join(wrap(entry, width=maximum_length_y_axis_answers))
+            for entry in legend_sequence
+        ]
+        max_lines_y = max([entry.count("\n") for entry in y_bubble_plot]) + 1
+    else:
+        max_lines_y = 3
 
     # %% Prepare/Define figure
     if bubbles:
@@ -92,14 +103,16 @@ def multiple_multiple_comparison_plot(
     # %%% calculate dimensions of figure
     if theme is not None:
         if calculate_aspect_ratio:
-            width = aspect_ratio_from_arguments(
+            width, height = aspect_ratio_from_arguments(
                 bar_positions_complete,
                 positionlist_per_answer,
                 theme,
                 bar_width,
-                max_lines_xtick=max_lines,
+                max_lines_xtick=max_lines_x,
+                max_lines_ytick=max_lines_y,
             )
-            height = theme["rc"]["figure.figsize"][1]
+            if not bubbles:
+                height = theme["rc"]["figure.figsize"][1]
         else:
             width, height = theme["rc"]["figure.figsize"]
         theme["rc"]["figure.figsize"] = (width, height)

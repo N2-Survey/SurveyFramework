@@ -107,7 +107,8 @@ def aspect_ratio_from_arguments(
     answer_distance: float = None,
     bar_distance: float = None,
     bubble_size: float = None,
-    max_lines_xtick: float = 1,
+    max_lines_xtick: float = 3,
+    max_lines_ytick: float = 3,
 ):
     """
     calculates the width of the plot, depending on total number of bars,
@@ -117,6 +118,9 @@ def aspect_ratio_from_arguments(
     distance_between_bars = bar_distance or (0.25 * bar_width)
     space_nedded_for_x_ticks = (
         len(bar_positions_complete) * max_lines_xtick * 0.5 * theme["font_scale"]
+    )
+    space_needed_for_y_ticks = (
+        len(bar_positions_complete) * max_lines_ytick * 0.5 * theme["font_scale"]
     )
     width = (
         len(bar_positions_complete) * len(positionlist_per_answer) * bar_width
@@ -128,7 +132,9 @@ def aspect_ratio_from_arguments(
     if width < space_nedded_for_x_ticks:
         print("x_ticks need more space")
         width = space_nedded_for_x_ticks
-    return width
+    height = space_needed_for_y_ticks
+
+    return width, height
 
 
 def calculate_title_pad(labels, legend_columns, theme=None, legend_title: str = None):
