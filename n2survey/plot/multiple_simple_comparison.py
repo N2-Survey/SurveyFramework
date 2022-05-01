@@ -42,7 +42,7 @@ def multiple_simple_comparison_plot(
     calculate_aspect_ratio: bool = True,
     maximum_length_x_axis_answers=20,
     show_zeroes: bool = True,
-    bubble_size: float = None,
+    bubbles: Union[bool, float] = None,
 ):
     """
     Plots correlations between multiple choice answers and the answers of

@@ -709,7 +709,7 @@ class LimeSurvey:
         calculate_aspect_ratio: bool = True,
         maximum_length_x_axis_answers: int = 20,
         show_zeroes: bool = True,
-        bubble_size: float = None,
+        bubbles: Union[bool, float] = None,
         kind: str = None,
         **kwargs,
     ):
@@ -776,11 +776,11 @@ class LimeSurvey:
                 answers plotted on x-axis, standard 20 --> no line longer then
                 20 characters
             'show_zeroes': Plots lines for every 0% bar
-            'bubble_size': if float is given, plots are changed to a bubble
+            'bubbles': if float or True is given, plots are changed to a bubble
                 plot with answers to 'question' and 'add_questions' on the
                 x-Axis and answers to 'compare_with' on the y-Axis.
                 size of the bubbles depends on overleap percentage and the
-                base-value given in bubble_size.
+                base-value given in bubble_size or on the float given.
         """
         if kind is not None:
             raise NotImplementedError(
@@ -822,7 +822,7 @@ class LimeSurvey:
                 calculate_aspect_ratio=calculate_aspect_ratio,
                 maximum_length_x_axis_answers=maximum_length_x_axis_answers,
                 show_zeroes=show_zeroes,
-                bubble_size=bubble_size,
+                bubbles=bubbles,
                 **kwargs,
             )
         elif question_type == "single-choice":
@@ -911,7 +911,7 @@ class LimeSurvey:
         maximum_length_x_axis_answers: float = 20,
         kind: str = None,
         show_zeroes: bool = True,
-        bubble_size: float = None,
+        bubbles: Union[bool, float] = None,
         **kwargs,
     ):
         """
@@ -979,7 +979,7 @@ class LimeSurvey:
                 maximum_length_x_axis_answers=maximum_length_x_axis_answers,
                 theme=theme,
                 show_zeroes=show_zeroes,
-                bubble_size=bubble_size,
+                bubbles=bubbles,
             )
         elif all(
             [question_type == "multiple-choice", compare_with_type == "multiple-choice"]
@@ -1003,7 +1003,7 @@ class LimeSurvey:
                 maximum_length_x_axis_answers=maximum_length_x_axis_answers,
                 theme=theme,
                 show_zeroes=show_zeroes,
-                bubble_size=bubble_size,
+                bubbles=bubbles,
             )
         return fig, ax
 
