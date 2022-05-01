@@ -1504,6 +1504,40 @@ class LimeSurvey:
 
         return df
 
+    def calculate_phd_duration(self, start_question: str, end_question: str):
+        """Calculate PhD duration
+
+        Args:
+            start_question (str): Question ID to use as the start of duration
+            end_question (str): Question ID to use as the end of duration
+
+        Returns:
+            pd.DataFrame: Rounded duration in month and year"""
+
+        # get labels of start and end questions to get their data
+        start_question_label = self.get_label(start_question)
+        end_question_label = self.get_label(end_question)
+        df = pd.concat(
+            [self.get_responses(start_question), self.get_responses(end_question)],
+            axis=1,
+        )
+
+        # duration calculation, return as day
+        df["PhD duration (days)"] = df[end_question_label] - df[start_question_label]
+
+        # convert days to month and year
+        df["PhD duration (months)"] = df["PhD duration (days)"] / np.timedelta64(
+            "1", "M"
+        )
+        df["PhD duration (years)"] = df["PhD duration (days)"] / np.timedelta64(
+            "1", "Y"
+        )
+
+        # drop temporary columns used for duration calculation and return only duration in day, month and year
+        df = df.drop([start_question_label, end_question_label], axis=1).round()
+
+        return df
+
     def export_to_file(
         self,
         organisation: str,
