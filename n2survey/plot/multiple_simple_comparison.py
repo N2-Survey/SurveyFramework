@@ -234,7 +234,7 @@ def plot_multi_bars_per_answer(
     return fig, ax
 
 
-def form_x_and_y(array, totalbar=None, suppress_answers=[]):
+def form_x_and_y(plot_data_list, totalbar=None, suppress_answers=[]):
     """
     Split up the array given to it to x and y components for
     the plot.
@@ -245,12 +245,11 @@ def form_x_and_y(array, totalbar=None, suppress_answers=[]):
     """
     percentages_for_comparison = []
     answers = []
-
     count = 0
-    for entry in array:
-        answers.append(entry.count().index.values[0:-1].astype(str))
+    for question_compare_with_tuple in plot_data_list:
+        answers.append(question_compare_with_tuple[0].count().index.values.astype(str))
         percentages_for_comparison.append(
-            get_percentages(entry.values, totalbar=totalbar)
+            get_percentages(question_compare_with_tuple, totalbar=totalbar)
         )
         for answer in suppress_answers:
             if answer not in answers[count]:
@@ -282,29 +281,56 @@ def form_x_and_y(array, totalbar=None, suppress_answers=[]):
     return x, y
 
 
-def get_percentages(array, totalbar=None):
+def get_percentages(question_compare_with_tuple, totalbar=None):
     """
     Calculate the total number of combinations from the given
     array of answer combinations.
     After that it adds the totalbar, if wanted, then it calculates a dictionary
     with the percentages for each combination+the totalbar if wanted
     """
-    # get possible combinations and count how often they occure
-    percentage = {}
-    for entry in np.unique(array[:, -1]):
-        entry_subset = array[np.where(array[:, -1] == entry)][:, :-1]
-        total = entry_subset.shape[0]
-        calculated_percentages = np.round(
-            np.count_nonzero(entry_subset, axis=0) / total * 100, decimals=1
+    # translate the dataframes of the two questions
+    question_results = question_compare_with_tuple[0]
+    question_answers = question_results.count().index.values
+    compare_with_results = question_compare_with_tuple[1]
+    compare_with_answers = np.unique(compare_with_results.loc[:])
+    total_participants = len(question_results)
+    # count number of yes answers of every answer to compare_with_question
+    persons_total_answered_yes = {}
+    for question_answer in question_answers:
+        persons_total_answered_yes[question_answer] = np.sum(
+            question_results.loc[:, question_answer]
         )
-        if not np.all((calculated_percentages == 0)):
-            percentage[entry] = calculated_percentages
+    percentage = {}
+    for entry in compare_with_answers:
+        percentage[entry] = []
+    for compare_with_answer in compare_with_answers:
+        # translate simple choice to bool array, depending on compare_with_answer
+        compare_with_bool_array = np.zeros(shape=(total_participants,)).astype(bool)
+        compare_with_bool_array[
+            np.where(compare_with_results.values[:, 0] == compare_with_answer)
+        ] = True
+        # count participants that answered both, compare_with_answer and
+        # question answer, with yes
+        for question_answer in question_answers:
+            single_percentage = np.sum(
+                compare_with_bool_array.astype(float)
+                * question_results.loc[:, question_answer].astype(float)
+            )
+            # convert to percent and round
+            if persons_total_answered_yes[question_answer]:
+                single_percentage = np.round(
+                    (
+                        100
+                        * single_percentage
+                        / persons_total_answered_yes[question_answer]
+                    ),
+                    decimals=1,
+                )
+            percentage[compare_with_answer].append(single_percentage)
     if totalbar:
-        total_participants = len(array)
-        total_question_answers = np.round(
-            np.count_nonzero(array[:, :-1], axis=0) / total_participants * 100,
+        percentage["Total"] = np.round(
+            np.count_nonzero(question_results, axis=0) / total_participants * 100,
             decimals=1,
         )
-        percentage["Total"] = total_question_answers
         totalbar = False
     return percentage

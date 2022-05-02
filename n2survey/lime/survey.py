@@ -1149,14 +1149,9 @@ class LimeSurvey:
                 # create Dataarray from all existing combinations of
                 # question and compare_with
                 plot_data_list.append(
-                    pd.concat(
-                        [
-                            self.get_responses(question, labels=True, drop_other=True),
-                            self.get_responses(
-                                compare_with, labels=True, drop_other=True
-                            ),
-                        ],
-                        axis=1,
+                    (
+                        self.get_responses(question, labels=True, drop_other=True),
+                        self.get_responses(compare_with, labels=True, drop_other=True),
                     )
                 )
             elif self.get_question_type(compare_with) == "multiple-choice":
