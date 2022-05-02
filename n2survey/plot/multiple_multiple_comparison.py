@@ -294,34 +294,38 @@ def get_percentages(question_compare_with_tuple, totalbar=None):
     question_answers = question_results.count().index.values
     compare_with_results = question_compare_with_tuple[1]
     compare_with_answers = compare_with_results.count().index.values
-    persons_total = question_answers.shape[0]
+    total_participants = len(question_results)
+    # count number of yes answers of every answer to compare_with_question
+    persons_total_answered_yes = {}
+    for question_answer in question_answers:
+        persons_total_answered_yes[question_answer] = np.sum(
+            question_results.loc[:, question_answer]
+        )
     percentage = {}
-    for answer in compare_with_answers:
-        percentage[answer] = np.zeros(shape=question_answers.shape)
-    for answer in compare_with_answers:
-        # define total number of people who answered zutreffend (=True) for this
-        # answer to compare_with
-        answered_zutreffend = 0
-        # cycle through all participants that gave an answer to compare_with answer
-        for person_id in compare_with_results.index:
-            if compare_with_results.loc[person_id, answer]:
-                # if person with id ´person_id´ chose zutreffend (=True) for
-                # ´answer´ to ´compare_with´:
-                # add one for each answer to ´question´ which they chose also
-                # zutreffend (=True)
-                percentage[answer] = percentage[answer] + question_results.loc[
-                    person_id, :
-                ].values.astype("float64")
-                # and add 1 to the total number of people that chose
-                # zutreffend (=True) for ´answer´ to ´compare_with´.
-                answered_zutreffend = answered_zutreffend + 1
-        if answered_zutreffend != 0:
-            percentage[answer] = np.round(
-                (percentage[answer] / answered_zutreffend * 100), decimals=1
+    for entry in compare_with_answers:
+        percentage[entry] = []
+    for compare_with_answer in compare_with_answers:
+        # count participants that answered both, compare_with_answer and
+        # question answer, with yes
+        for question_answer in question_answers:
+            single_percentage = np.sum(
+                compare_with_results.loc[:, compare_with_answer].astype(float)
+                * question_results.loc[:, question_answer].astype(float)
             )
+            # convert to percent and round
+            if persons_total_answered_yes[question_answer]:
+                single_percentage = np.round(
+                    (
+                        100
+                        * single_percentage
+                        / persons_total_answered_yes[question_answer]
+                    ),
+                    decimals=1,
+                )
+            percentage[compare_with_answer].append(single_percentage)
     if totalbar:
         percentage["Total"] = np.round(
-            np.count_nonzero(question_results, axis=0) / persons_total * 100,
+            np.count_nonzero(question_results, axis=0) / total_participants * 100,
             decimals=1,
         )
         totalbar = False
