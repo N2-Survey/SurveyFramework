@@ -3,6 +3,7 @@ import pandas as pd
 __all__ = [
     "rate_supervision",
     "rate_mental_health",
+    "rate_satisfaction",
 ]
 
 
@@ -226,6 +227,86 @@ def rate_mental_health(
         bins=classification_boundaries,
         labels=classes,
     ).map(invert_dict, na_action="ignore")
+
+    if not keep_subscores:
+        df = df.drop(df.columns[:-2], axis=1)
+
+    return df
+
+def rate_satisfaction(
+    question_label: str,
+    responses: pd.DataFrame,
+    choices: dict,
+    keep_subscores: bool = False,
+) -> pd.DataFrame:
+    """Calculate average overall satisfaction rating
+
+    Args:
+        question_label (str): Question label to use for transformation type inference
+        responses (pd.DataFrame): DataFrame containing responses data
+        choices (dict): dict for answer choice conversion
+        keep_subscores (bool, optional): Whether to include scores from subquestions
+            in the output DataFrame, or only total score and classification.
+            Default False.
+
+    Returns:
+        pd.DataFrame: Rounded satisfaction ratings and classifications
+    """
+    # Infer labels from question
+    if "satisfied" in question_label:
+        label = "satisfaction"
+    else:
+        raise ValueError("Question incompatible with specified transformation.")
+    # Satisfation classes sorted from high to low (high score equals high satisfaction)
+    satisfaction_classes = [
+        "very satisfied",
+        "rather satisfied",
+        "neither satisfied nor dissatisfied",
+        "rather dissatisfied",
+        "very dissatisfied",
+    ]
+    satisfaction_class_codes = ["A1", "A2", "A3", "A4", "A5"]
+    satisfaction_class_scores = [5.0, 4.0, 3.0, 2.0, 1.0]
+
+    # Set up score conversion dicts for individual questions
+    satisfaction_question_scores = {
+        "Fully agree": 5.0,
+        "Partially agree": 4.0,
+        "Neither agree nor disagree": 3.0,
+        "Partially disagree": 2.0,
+        "Fully disagree": 1.0,
+    }
+    # Inverse satisfaction transformation: Score (5.0) --> Class ('Very satisfied')
+    satisfaction_score_to_class = {
+        score: the_class
+        for the_class, score in zip(satisfaction_classes, satisfaction_class_scores)
+    }
+    # Inverse satisfaction transformation: Class ('Very satisfied') --> Code ('A1')
+    satisfaction_class_to_code = {
+        the_class: code
+        for code, the_class in zip(satisfaction_class_codes, satisfaction_classes)
+    }
+
+    # Map responses from code to text then to score
+    df = pd.DataFrame()
+    for column in responses.columns:
+        df[f"{column}_score"] = (
+            responses[column]
+            .map(choices)
+            .map(satisfaction_question_scores, na_action="ignore")
+        )
+
+    # Calculate mean rating and round (ignoring NaN)
+    df[f"{label}_score"] = df.mean(axis=1, skipna=True).round()
+
+    # Classify into categories
+    df[f"{label}_class"] = pd.Categorical(
+        df[f"{label}_score"]
+        .map(satisfaction_score_to_class, na_action="ignore")
+        .map(satisfaction_class_to_code, na_action="ignore"),
+        categories=satisfaction_class_codes,
+        ordered=True,
+    )
 
     if not keep_subscores:
         df = df.drop(df.columns[:-2], axis=1)

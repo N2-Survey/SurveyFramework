@@ -7,9 +7,9 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from n2survey.transformation import *
+
 from n2survey.lime.structure import read_lime_questionnaire_structure
-from n2survey.lime.transformations import rate_mental_health, rate_supervision
+from n2survey.lime.transformations import rate_mental_health, rate_supervision, rate_satisfaction
 from n2survey.plot import (
     likert_bar_plot,
     multiple_choice_bar_plot,
@@ -164,6 +164,21 @@ class LimeSurvey:
         },
         "direct_supervision_class": {
             "label": "What is the direct supervision class?",
+            "type": "single-choice",
+            "choices": {
+                "A1": "very satisfied",
+                "A2": "rather satisfied",
+                "A3": "neither satisfied nor dissatisfied",
+                "A4": "rather dissatisfied",
+                "A5": "very dissatisfied",
+            },
+        },
+        "satisfaction_score": {
+            "label": "What is the satisfaction score?",
+            "type": "free",
+        },
+        "satisfaction_class": {
+            "label": "What is the satisfaction class?",
             "type": "single-choice",
             "choices": {
                 "A1": "very satisfied",
@@ -365,6 +380,7 @@ class LimeSurvey:
             "trait_anxiety": "mental_health",
             "depression": "mental_health",
             "supervision": "supervision",
+            "satisfaction": "satisfaction",
         }
 
         if transform_dict.get(transform) == "mental_health":
@@ -380,6 +396,12 @@ class LimeSurvey:
                 responses=self.get_responses(question, labels=False),
                 choices=self.get_choices(question),
             )
+        elif transform_dict.get(transform) == "satisfaction":
+            return rate_satisfaction(
+                question_label=self.get_label(question),
+                responses=self.get_responses(question, labels=False),
+                choices=self.get_choices(question),
+            )    
 
     def __copy__(self):
         """Create a shallow copy of the LimeSurvey instance
