@@ -7,12 +7,13 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from n2survey.transformation import *
+
 from n2survey.lime.structure import read_lime_questionnaire_structure
 from n2survey.lime.transformations import (
     calculate_duration,
     range_to_numerical,
     rate_mental_health,
+    rate_satisfaction,
     rate_supervision,
 )
 from n2survey.plot import (
@@ -211,6 +212,21 @@ class LimeSurvey:
             "label": "What is the length of PhD?",
             "type": "free",
         },
+        "satisfaction_score": {
+            "label": "What is the satisfaction score?",
+            "type": "free",
+        },
+        "satisfaction_class": {
+            "label": "What is the satisfaction class?",
+            "type": "single-choice",
+            "choices": {
+                "A1": "very satisfied",
+                "A2": "rather satisfied",
+                "A3": "neither satisfied nor dissatisfied",
+                "A4": "rather dissatisfied",
+                "A5": "very dissatisfied",
+            },
+        },
     }
 
     def __init__(
@@ -405,6 +421,7 @@ class LimeSurvey:
             "supervision": "supervision",
             "range": "range_to_numerical",
             "duration": "duration",
+            "satisfaction": "satisfaction",
         }
 
         if transform_dict.get(transform) == "mental_health":
@@ -430,6 +447,12 @@ class LimeSurvey:
                 start_responses=self.get_responses(question[0], labels=False),
                 end_responses=self.get_responses(question[1], labels=False),
             )
+        elif transform_dict.get(transform) == "satisfaction":
+            return rate_satisfaction(
+                question_label=self.get_label(question),
+                responses=self.get_responses(question, labels=False),
+                choices=self.get_choices(question),
+            )    
 
     def __copy__(self):
         """Create a shallow copy of the LimeSurvey instance
