@@ -16,7 +16,29 @@ def wrap_title(title, wrap_text):
     return fill(title, 30)
 
 
+def calculate_median(survey, question):
+    transformed_questions = {
+        "B1b": "noincome_duration",
+        "B2": "income_amount",
+        "B3": "costs_amount",
+        "B4": "contract_duration",
+        "B10": "hoiday_amount",
+        "C4": "hours_amount",
+        "C8": "holidaytaken_amount",
+    }
+    if question in transformed_questions.keys():
+        transformed_question = transformed_questions[question]
+        try:
+            return np.median(survey.get_responses(transformed_question))
+        except ValueError:
+            return np.nan
+    else:
+        return np.nan
+
+
 def comparison_numeric_bar_plot(
+    survey,
+    question,
     list_of_data,
     list_of_labels: list = None,
     total: Union[int, float, None] = None,
@@ -34,6 +56,7 @@ def comparison_numeric_bar_plot(
     """Do a multiple bar plots for a numeric single-choice question with multiple filters.
 
     Args:
+        question (str): investigated question, used for selecting data to calculate median.
         list_of_data (list): unfiltered and filtered data to plot.
         list_of_labels (list): labels for the entries in `list_of_data`.
         total (Union[int, float, None], optional): Total number to calculate percentage
@@ -120,7 +143,7 @@ def comparison_numeric_bar_plot(
             ax[i].bar_label(ax[i].containers[0], labels)
         if display_median:
             # `default_median`: placeholder for plotting
-            # probably something like: `median = data['median']`
+            # probably something like: `median = calculate_median(survey, question)`
             default_median = x[len(x) // 2]
             plot_position = np.where(np.asarray(x) == default_median)[0]
             ax[i].axvline(x=plot_position, ls="--", c="grey")
