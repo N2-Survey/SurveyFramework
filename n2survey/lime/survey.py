@@ -1098,7 +1098,7 @@ class LimeSurvey:
     def plot_numeric_comparison(
         self,
         question,
-        questions_to_compare,
+        questions_to_filter,
         simple_filtering: bool = True,
         valid_questions: list = None,
         display_title: bool = True,
@@ -1131,20 +1131,15 @@ class LimeSurvey:
                 f"{question} is not a numeric single-choice question."
             )
 
-        # Check if `questions_to_compare`: - are NOT numerical questions &
-        #                                  - have only single-choice questions as keys &
-        #                                  - have valid answer possibilites as values.
-        for key, values in questions_to_compare.items():
-            questions_to_compare_type = self.get_question_type(key)
-            if key in valid_questions:
-                raise ValueError(
-                    f"Selected `questions_to_compare` question ({key}) is also a numeric question!"
-                    f"Please only select non-numeric questions for the comparison!"
-                )
-            if questions_to_compare_type != "single-choice":
+        # Check if `questions_to_filter`: - are NOT numerical questions &
+        #                                 - have only single-choice questions as keys &
+        #                                 - have valid answer possibilites as values.
+        for key, values in questions_to_filter.items():
+            questions_to_filter_type = self.get_question_type(key)
+            if questions_to_filter_type != "single-choice" or key in valid_questions:
                 raise NotImplementedError(
-                    "Comparison plot is only implemented for single-choice questions."
-                    f"{key} is not a single-choice question."
+                    "Comparison plot is only implemented for single-choice non-numeric questions."
+                    f"{key} is either not a single-choice question or a numeric question."
                 )
             possible_answers = list(self.questions.loc[key, "choices"])
             if not all(answer in possible_answers for answer in values):
@@ -1164,73 +1159,55 @@ class LimeSurvey:
         unfiltered_counts_df = self.count(question, labels=True)
         list_of_labels.append("Total")
         list_of_counts_df.append(unfiltered_counts_df)
+
+        # Simple filtering: Filter `question` according to answers in `questions_to_filter` individually
         if simple_filtering:
             label = "simple"
-            for key, values in questions_to_compare.items():
+            for key, values in questions_to_filter.items():
                 for value in values:
                     # Get indices and filter array according to these
-                    indices = np.where(self.get_responses(key, labels=False) == value)[
-                        0
-                    ]
-                    filtered_responses = unfiltered_responses.iloc[indices]
-                    counts_df = self.count(
-                        question, responses=filtered_responses, labels=True
+                    counts_df = self.filter_responses(
+                        question, unfiltered_responses, [key, value]
                     )
                     # Skip comparisons if filtered DataFrame has no counts left
                     if counts_df.sum(axis=0)[0] > 0:
                         list_of_labels.append(self.get_choices(key)[value])
                         list_of_counts_df.append(counts_df)
-        # Filter `question` according to all combinations of answers in `questions_to_compare`
-        # e.g. `questions_to_compare`: {'gender': ['male', 'female'],
-        #                               'nationality': ['German', 'Non-German']}
+
+        # Multiple filtering: Filter `question` according to all combinations of answers in `questions_to_filter`
+        # e.g. `questions_to_filter`: {'gender': ['male', 'female'],
+        #                              'nationality': ['German', 'Non-German']}
         # --> 4 possible combinations: 'male'+'German', 'female'+'German',
         #                              'male'+'Non-German', 'female'+'Non-German'
         else:
-            if len(questions_to_compare.keys()) != 2:
-                print(
-                    "Multiple comparisons only available for two `questions_to_compare`!"
+            label = "multiple"
+            first_key, first_values = list(questions_to_filter.items())[0]
+            second_key, second_values = list(questions_to_filter.items())[1]
+            # Multiple comparisons only done for: - max. 2 `questions_to_filter`
+            if len(questions_to_filter.keys()) != 2:
+                raise NotImplementedError(
+                    "Multiple comparisons only available for two `questions_to_filter`!"
                 )
-                print("Skipping multiple comparison plot...")
-                return
-            else:
-                label = "multiple"
-                first_key, first_values = list(questions_to_compare.items())[0]
-                second_key, second_values = list(questions_to_compare.items())[1]
-                # Make sure that all multiple comparisons can still fit in one figure (= 9 subplots)
-                if len(first_values) * len(second_values) > 8:
-                    print(
-                        "Multiple comparisons only available for a total of 8 comparisons!"
+            # Go through all entries of first element of `questions_to_filter`
+            for first_value in first_values:
+                for second_value in second_values:
+                    counts_df = self.filter_responses(
+                        question,
+                        unfiltered_responses,
+                        [first_key, first_value],
+                        [second_key, second_value],
                     )
-                    print("Skipping multiple comparison plot...")
-                    return
-                # Go through all entries of first element of `questions_to_compare`
-                for first_value in first_values:
-                    for second_value in second_values:
-                        indices = np.where(
-                            np.logical_and(
-                                self.get_responses(
-                                    first_key, labels=False, drop_other=True
-                                )
-                                == first_value,
-                                self.get_responses(
-                                    second_key, labels=False, drop_other=True
-                                )
-                                == second_value,
-                            )
-                        )[0]
-                        filtered_responses = unfiltered_responses.iloc[indices]
-                        counts_df = self.count(
-                            question, responses=filtered_responses, labels=True
+                    # Skip comparisons if filtered DataFrame has no counts left
+                    if counts_df.sum(axis=0)[0] > 0:
+                        list_of_labels.append(
+                            self.get_choices(first_key)[first_value]
+                            + " + "
+                            + self.get_choices(second_key)[second_value]
                         )
-                        # Skip comparisons if filtered DataFrame has no counts left
-                        if counts_df.sum(axis=0)[0] > 0:
-                            list_of_labels.append(
-                                self.get_choices(first_key)[first_value]
-                                + " + "
-                                + self.get_choices(second_key)[second_value]
-                            )
-                            list_of_counts_df.append(counts_df)
+                        list_of_counts_df.append(counts_df)
         fig, ax = comparison_numeric_bar_plot(
+            self,
+            question,
             list_of_counts_df,
             list_of_labels,
             display_no_answer=display_no_answer,
@@ -1241,9 +1218,33 @@ class LimeSurvey:
         )
         # Save to a file
         if save:
-            filename = f"Numeric_{label}_comparison_{question}_with_{list(questions_to_compare.keys())}.png"
+            filename = f"Numeric_{label}_comparison_{question}_with_{list(questions_to_filter.keys())}.png"
             filename = _clean_file_name(filename).replace(" ", "_")
             self.save_plot(fig, question, save=filename)
+
+    def filter_responses(self, question, unfiltered_responses, *args):
+        """Filtering of responses called in `plot_numeric_comparison`."""
+        # Simple filtering
+        if len(args) == 1:
+            key, value = args[0]
+            indices, _ = np.where(
+                self.get_responses(key, labels=False, drop_other=True) == value
+            )
+        # Multiple filtering (only works for two filtering options)
+        elif len(args) == 2:
+            first_key, first_value = args[0]
+            second_key, second_value = args[1]
+            indices, _ = np.where(
+                np.logical_and(
+                    self.get_responses(first_key, labels=False, drop_other=True)
+                    == first_value,
+                    self.get_responses(second_key, labels=False, drop_other=True)
+                    == second_value,
+                )
+            )
+        filtered_responses = unfiltered_responses.iloc[indices]
+        counts_df = self.count(question, responses=filtered_responses, labels=True)
+        return counts_df
 
     def save_plot(
         self,
