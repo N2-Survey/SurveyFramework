@@ -7,9 +7,13 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from n2survey.transformation import *
+
 from n2survey.lime.structure import read_lime_questionnaire_structure
-from n2survey.lime.transformations import rate_mental_health, rate_supervision, rate_satisfaction
+from n2survey.lime.transformations import (
+    rate_mental_health,
+    rate_satisfaction,
+    rate_supervision,
+)
 from n2survey.plot import (
     likert_bar_plot,
     multiple_choice_bar_plot,
@@ -401,7 +405,7 @@ class LimeSurvey:
                 question_label=self.get_label(question),
                 responses=self.get_responses(question, labels=False),
                 choices=self.get_choices(question),
-            )    
+            )
 
     def __copy__(self):
         """Create a shallow copy of the LimeSurvey instance
