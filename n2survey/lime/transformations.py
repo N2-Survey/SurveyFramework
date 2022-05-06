@@ -250,6 +250,7 @@ def rate_mental_health(
 
     return df
 
+
 def rate_satisfaction(
     question_label: str,
     responses: pd.DataFrame,
