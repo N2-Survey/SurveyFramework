@@ -7,7 +7,7 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from n2survey.transformation import *
+
 from n2survey.lime.structure import read_lime_questionnaire_structure
 from n2survey.lime.transformations import (
     calculate_duration,
@@ -452,7 +452,7 @@ class LimeSurvey:
                 question_label=self.get_label(question),
                 responses=self.get_responses(question, labels=False),
                 choices=self.get_choices(question),
-            )    
+            )
 
     def __copy__(self):
         """Create a shallow copy of the LimeSurvey instance
