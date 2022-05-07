@@ -1,6 +1,7 @@
 """Test functions related to Transformations functions"""
 import unittest
 
+import numpy as np
 import pandas as pd
 
 from n2survey.lime.transformations import rate_mental_health, rate_supervision
@@ -21,9 +22,17 @@ class TestRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
 
         ref = pd.DataFrame(
             data={
-                "state_anxiety_score": [50.0, 100 / 3, 130 / 3],
+                "state_anxiety_score": [
+                    50.0,
+                    100 / 3,
+                    130 / 3,
+                    48.0,
+                    np.nan,
+                    np.nan,
+                    60.0,
+                ],
                 "state_anxiety_class": pd.Categorical(
-                    ["A3", "A1", "A2"],
+                    ["A3", "A1", "A2", "A3", np.nan, np.nan, "A3"],
                     categories=[
                         "A1",
                         "A2",
@@ -32,11 +41,15 @@ class TestRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
                     ordered=True,
                 ),
             },
-            index=[2, 3, 4],
+            index=[2, 3, 4, 24, 28, 30, 46],
         )
         ref.index.name = "id"
 
-        self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
+        self.assert_df_equal(
+            result.iloc[[0, 1, 2, 19, 21, 22, 34], -2:],
+            ref,
+            msg="DataFrames not equal.",
+        )
 
     def test_trait_anxiety(self):
         """Test rating trait anxiety"""
@@ -50,9 +63,17 @@ class TestRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
 
         ref = pd.DataFrame(
             data={
-                "trait_anxiety_score": [47.5, 32.5, 50.0],
+                "trait_anxiety_score": [
+                    47.5,
+                    32.5,
+                    50.0,
+                    55.0,
+                    170 / 3,
+                    np.nan,
+                    np.nan,
+                ],
                 "trait_anxiety_class": pd.Categorical(
-                    ["A3", "A1", "A3"],
+                    ["A3", "A1", "A3", "A3", "A3", np.nan, np.nan],
                     categories=[
                         "A1",
                         "A2",
@@ -61,11 +82,15 @@ class TestRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
                     ordered=True,
                 ),
             },
-            index=[2, 3, 4],
+            index=[2, 3, 4, 24, 28, 46, 47],
         )
         ref.index.name = "id"
 
-        self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
+        self.assert_df_equal(
+            result.iloc[[0, 1, 2, 19, 21, 34, 35], -2:],
+            ref,
+            msg="DataFrames not equal.",
+        )
 
     def test_depression(self):
         """Test rating depression"""
@@ -79,9 +104,9 @@ class TestRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
 
         ref = pd.DataFrame(
             data={
-                "depression_score": [8.0, 5.0, 8.0],
+                "depression_score": [8.0, 5.0, 8.0, 10.0, 52 / 3, np.nan, np.nan],
                 "depression_class": pd.Categorical(
-                    ["A2", "A2", "A2"],
+                    ["A2", "A2", "A2", "A3", "A4", np.nan, np.nan],
                     categories=[
                         "A1",
                         "A2",
@@ -92,11 +117,15 @@ class TestRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
                     ordered=True,
                 ),
             },
-            index=[2, 3, 4],
+            index=[2, 3, 4, 30, 43, 46, 47],
         )
         ref.index.name = "id"
 
-        self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
+        self.assert_df_equal(
+            result.iloc[[0, 1, 2, 22, 31, 34, 35], -2:],
+            ref,
+            msg="DataFrames not equal.",
+        )
 
 
 class TestRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
