@@ -1,9 +1,7 @@
+import numpy as np
 import pandas as pd
 
-__all__ = [
-    "rate_supervision",
-    "rate_mental_health",
-]
+__all__ = ["rate_supervision", "rate_mental_health", "calculate_phd_duration"]
 
 
 def rate_supervision(
@@ -229,5 +227,32 @@ def rate_mental_health(
 
     if not keep_subscores:
         df = df.drop(df.columns[:-2], axis=1)
+
+    return df
+
+
+def calculate_phd_duration(start_responses: pd.DataFrame, end_responses: pd.DataFrame):
+    """Calculate PhD duration
+    Args:
+        start_responses (pd.DataFrame): DataFrame containing responses data of the start of duration
+        end_responses (pd.DataFrame): DataFrame containing responses data of the end of duration
+    Returns:
+        pd.DataFrame: Rounded PhD duration in days, months and years"""
+
+    # get labels of start and end questions to get their data
+    df = pd.concat(
+        [start_responses, end_responses],
+        axis=1,
+    )
+
+    # duration calculation, return as day
+    df["PhD duration (days)"] = df.iloc[:, 1] - df.iloc[:, 0]
+
+    # convert days to month and year
+    df["PhD duration (months)"] = df.iloc[:, 2] / np.timedelta64("1", "M")
+    df["PhD duration (years)"] = df.iloc[:, 2] / np.timedelta64("1", "Y")
+
+    # drop temporary columns used for duration calculation and return only duration in day, month and year
+    df = df.iloc[:, 2:].round()
 
     return df
