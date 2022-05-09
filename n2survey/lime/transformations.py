@@ -7,8 +7,8 @@ __all__ = [
     "rate_supervision",
     "rate_mental_health",
     "range_to_numerical",
+    "calculate_phd_duration",
 ]
-
 
 def rate_supervision(
     question_label: str,
@@ -249,7 +249,7 @@ def rate_mental_health(
 
 
 def strRange_to_intRange(strAnswer: str) -> int:
-
+    
     """Calculate the mean of all numbers present in a string.
 
     Args:
