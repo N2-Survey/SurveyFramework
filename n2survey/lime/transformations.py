@@ -1,4 +1,6 @@
 import pandas as pd
+import re
+import numpy as np
 
 __all__ = [
     "rate_supervision",
@@ -242,3 +244,70 @@ def rate_mental_health(
         df = df.drop(df.columns[:-2], axis=1)
 
     return df
+
+def range_to_int(self, question_label, responses, question_type):
+
+        #question_label = self.get_label(question)  # + "_SQ001")
+
+        check_condition = {
+            "For how long have you been working on your PhD without pay": "noincome_duration",  # multi-choice, results in error
+            "Right now, what is your monthly net income for your work at your research organization": "income_amount",
+            "How much do you pay for your rent and associated living costs per month in euros": "costs_amount",
+            "What was or is the longest duration of your contract or stipend related to your PhD project": "contract_duration",
+            "How many holidays per year can you take according to your contract or stipend": "holiday_amount",
+            "On average, how many hours do you typically work per week in total": "hours_amount",
+            "How many days did you take off (holiday) in the past year": "holidaytaken_amount",
+        }
+
+        # Assign new question label
+        for lab in check_condition:
+            if lab in question_label:
+                label = check_condition[lab]
+
+        # Check if correct question has been chosen
+        if label is None:
+            raise ValueError("Question incompatible with specified condition type.")
+
+        #responses = self.get_responses(question).iloc[:, 0]
+
+        def _strRange_to_intRange(strAnswer: str) -> int:
+            # e.g. 701-801: take the mean of upper and lower value
+            if re.search(r"(?:[1-9]\d*)", strAnswer):
+                list_range = re.findall(r"(?:[1-9]\d*)(?:\.)?(?:[1-9]\d+)?", strAnswer)
+                if len(list_range) > 1:
+                    return (int(list_range[0]) + int(list_range[1])) / 2
+                else:
+                    return int(list_range[0])
+
+            # e.g. >1200: take the value itself
+            # elif re.search(r">", strAnswer):
+            #    return int(re.findall(r"\d+", strAnswer)[0])
+            else:
+                return np.NaN  # Handy when computing mean, median,... using numpy
+
+        df = pd.DataFrame()
+
+        # Multiple and single choice question
+        if question_type == "single-choice":
+            # Apply function to each row in df
+            responses_num = responses.apply(_strRange_to_intRange)
+
+        else:
+            # get answer labels and convert them to a list of corresponding numerical values
+            vals = list(responses)
+            vals_num = list(map(_strRange_to_intRange, vals))
+
+            def convert_multi_range(row):
+                indices = np.where(row)[0]
+                if indices.size > 0:
+                    answer_values = [vals_num[int(j)] for j in indices]
+                    return np.sum(answer_values)
+                else:
+                    return np.NaN
+
+            ## For each participant, the sum of each given answer is computed. Is this even usefull?
+            responses_num = responses.apply(convert_multi_range, axis=1)
+
+        df[f"{label}"] = responses_num
+
+        return df
