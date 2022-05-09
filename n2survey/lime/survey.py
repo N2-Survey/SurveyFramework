@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from n2survey.lime.structure import read_lime_questionnaire_structure
+from n2survey.lime.transformations import rate_mental_health, rate_supervision
 from n2survey.plot import (
     likert_bar_plot,
     multiple_choice_bar_plot,
@@ -169,6 +170,36 @@ class LimeSurvey:
         "holidaytaken_amount": {
             "label": "How many days off last year",
             "type": "free",
+
+        "formal_supervision_score": {
+            "label": "What is the formal supervision score?",
+            "type": "free",
+        },
+        "formal_supervision_class": {
+            "label": "What is the formal supervision class?",
+            "type": "single-choice",
+            "choices": {
+                "A1": "very satisfied",
+                "A2": "rather satisfied",
+                "A3": "neither satisfied nor dissatisfied",
+                "A4": "rather dissatisfied",
+                "A5": "very dissatisfied",
+            },
+        },
+        "direct_supervision_score": {
+            "label": "What is the direct supervision score?",
+            "type": "free",
+        },
+        "direct_supervision_class": {
+            "label": "What is the direct supervision class?",
+            "type": "single-choice",
+            "choices": {
+                "A1": "very satisfied",
+                "A2": "rather satisfied",
+                "A3": "neither satisfied nor dissatisfied",
+                "A4": "rather dissatisfied",
+                "A5": "very dissatisfied",
+            },
         },
     }
 
@@ -235,6 +266,7 @@ class LimeSurvey:
             responses_file (str): Path to the responses CSV file
             transformation_questions (dict, optional): Dict of questions
                 requiring transformation of raw data, e.g. {'depression': 'D3'}
+                or {'supervision': ['E7a', 'E7b']}
 
         """
 
@@ -339,8 +371,11 @@ class LimeSurvey:
         self.responses = question_responses
         self.lime_system_info = system_info
 
-        for transform, question in transformation_questions.items():
-            self.add_responses(self.transform_question(question, transform))
+        for transform, questions in transformation_questions.items():
+            if not isinstance(questions, list):
+                questions = [questions]
+            for question in questions:
+                self.add_responses(self.transform_question(question, transform))
 
     def transform_question(self, question: str, transform: str):
         """Perform transformation on responses to given question
@@ -364,6 +399,23 @@ class LimeSurvey:
             return self.rate_mental_health(question, condition=transform)
         elif transform_dict.get(transform) == "range_to_int":
             return self.range_to_int(question)
+
+            "supervision": "supervision",
+        }
+
+        if transform_dict.get(transform) == "mental_health":
+            return rate_mental_health(
+                question_label=self.get_label(question + "_SQ001"),
+                responses=self.get_responses(question, labels=False),
+                choices=self.get_choices(question),
+                condition=transform,
+            )
+        elif transform_dict.get(transform) == "supervision":
+            return rate_supervision(
+                question_label=self.get_label(question),
+                responses=self.get_responses(question, labels=False),
+                choices=self.get_choices(question),
+            )
 
     def __copy__(self):
         """Create a shallow copy of the LimeSurvey instance
@@ -419,15 +471,23 @@ class LimeSurvey:
             # ASSUME: question response consists of multiple columns with
             #         'Y' or NaN as entries.
             # Masked with boolean values the responses with nan only for the columns where is_contingent is True.
-            responses.loc[:, ~question_group.is_contingent] = responses.loc[
-                :, ~question_group.is_contingent
-            ].notnull()
+            # Left-hand-side slicing changed from .loc to __getitem__ to avoid categorical assignment error
+            # Reason unclear, see: https://stackoverflow.com/questions/71905655/pandas-can-assign-1-column-
+            # dataframe-to-series-but-not-to-dataframe-of-same-sha
+            responses[
+                question_group.index[~question_group.is_contingent]
+            ] = responses.loc[:, ~question_group.is_contingent].notnull()
 
         # replace labels
         if labels:
             if question_type == "multiple-choice":
+                # If a multiple-choice subquestion
+                if "SQ" in question:
+                    question = question.split("_")[0]
+                # Get column labels for entire question group as dict
+                rename = self.get_choices(question)
                 # Rename column names
-                responses = responses.rename(columns=self.get_choices(question))
+                responses = responses.rename(columns=rename)
 
             else:
                 # Rename category values and replace NA by self.na_label
