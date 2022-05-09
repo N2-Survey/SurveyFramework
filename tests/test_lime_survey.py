@@ -109,6 +109,41 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
                 },
                 "is_contingent": False,
             },
+            "noincome_duration": {
+                "label": "How long working on PhD without income?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "income_amount": {
+                "label": "What is current net-income?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "costs_amount": {
+                "label": "What are current iving costs?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "contract_duration": {
+                "label": "What was/is longest contract duration during PhD?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "holiday_amount": {
+                "label": "How many holiday per year?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "hours_amount": {
+                "label": "How many hours on average per week?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "holidaytaken_amount": {
+                "label": "How many days off last year",
+                "type": "free",
+                "is_contingent": False,
+            },
         }
         question_df = pd.concat(
             [
