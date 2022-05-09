@@ -9,7 +9,11 @@ import numpy as np
 import pandas as pd
 
 from n2survey.lime.structure import read_lime_questionnaire_structure
-from n2survey.lime.transformations import rate_mental_health, rate_supervision, range_to_int
+from n2survey.lime.transformations import (
+    range_to_int,
+    rate_mental_health,
+    rate_supervision,
+)
 from n2survey.plot import (
     likert_bar_plot,
     multiple_choice_bar_plot,
@@ -396,7 +400,6 @@ class LimeSurvey:
             "range": "range_to_int",
         }
 
-
         if transform_dict.get(transform) == "mental_health":
             return rate_mental_health(
                 question_label=self.get_label(question + "_SQ001"),
@@ -412,11 +415,10 @@ class LimeSurvey:
             )
         elif transform_dict.get(transform) == "range_to_int":
             return range_to_int(
-                question_label = self.get_label(question),
+                question_label=self.get_label(question),
                 responses=self.get_responses(question, labels=False),
-                question_type = self.get_question_type(question),
+                question_type=self.get_question_type(question),
             )
-            
 
     def __copy__(self):
         """Create a shallow copy of the LimeSurvey instance
@@ -1327,7 +1329,6 @@ class LimeSurvey:
 
         return choices_dict
 
-    
     def export_to_file(
         self,
         organisation: str,
