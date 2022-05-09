@@ -245,9 +245,13 @@ def rate_mental_health(
 
     return df
 
-def range_to_int(self, question_label, responses, question_type):
+def range_to_int(
+        self, 
+        question_label: str, 
+        responses: pd.DataFrame, 
+        question_type:str
+        ) -> pd.DataFrame:
 
-        #question_label = self.get_label(question)  # + "_SQ001")
 
         check_condition = {
             "For how long have you been working on your PhD without pay": "noincome_duration",  # multi-choice, results in error
