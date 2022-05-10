@@ -9,7 +9,11 @@ import numpy as np
 import pandas as pd
 
 from n2survey.lime.structure import read_lime_questionnaire_structure
-from n2survey.lime.transformations import rate_mental_health, rate_supervision
+from n2survey.lime.transformations import (
+    calculate_phd_duration,
+    rate_mental_health,
+    rate_supervision,
+)
 from n2survey.plot import (
     likert_bar_plot,
     multiple_choice_bar_plot,
@@ -349,11 +353,11 @@ class LimeSurvey:
             for question in questions:
                 self.add_responses(self.transform_question(question, transform))
 
-    def transform_question(self, question: str, transform: str):
+    def transform_question(self, question: Union[str, tuple], transform: str):
         """Perform transformation on responses to given question
 
         Args:
-            question (str): Question to transform
+            question (str or tuple of str): Question(s) to transform
             transform (str): Type of transform to perform
 
         Returns:
@@ -365,6 +369,7 @@ class LimeSurvey:
             "trait_anxiety": "mental_health",
             "depression": "mental_health",
             "supervision": "supervision",
+            "phd_duration": "duration",
         }
 
         if transform_dict.get(transform) == "mental_health":
@@ -379,6 +384,11 @@ class LimeSurvey:
                 question_label=self.get_label(question),
                 responses=self.get_responses(question, labels=False),
                 choices=self.get_choices(question),
+            )
+        elif transform_dict.get(transform) == "duration":
+            return calculate_phd_duration(
+                start_responses=self.get_responses(question[0], labels=False),
+                end_responses=self.get_responses(question[1], labels=False),
             )
 
     def __copy__(self):
