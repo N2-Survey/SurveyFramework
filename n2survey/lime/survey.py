@@ -11,6 +11,7 @@ import pandas as pd
 from n2survey.lime.structure import read_lime_questionnaire_structure
 from n2survey.lime.transformations import (
     range_to_numerical,
+    calculate_phd_duration,
     rate_mental_health,
     rate_supervision,
 )
@@ -382,11 +383,11 @@ class LimeSurvey:
             for question in questions:
                 self.add_responses(self.transform_question(question, transform))
 
-    def transform_question(self, question: str, transform: str):
+    def transform_question(self, question: Union[str, tuple], transform: str):
         """Perform transformation on responses to given question
 
         Args:
-            question (str): Question to transform
+            question (str or tuple of str): Question(s) to transform
             transform (str): Type of transform to perform
 
         Returns:
@@ -399,6 +400,7 @@ class LimeSurvey:
             "depression": "mental_health",
             "supervision": "supervision",
             "range": "range_to_numerical",
+            "phd_duration": "duration",
         }
 
         if transform_dict.get(transform) == "mental_health":
@@ -417,7 +419,11 @@ class LimeSurvey:
         elif transform_dict.get(transform) == "range_to_numerical":
             return range_to_numerical(
                 question_label=self.get_label(question),
-                responses=self.get_responses(question),
+                responses=self.get_responses(question),)
+        elif transform_dict.get(transform) == "duration":
+            return calculate_phd_duration(
+                start_responses=self.get_responses(question[0], labels=False),
+                end_responses=self.get_responses(question[1], labels=False),
             )
 
     def __copy__(self):
