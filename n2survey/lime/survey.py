@@ -416,7 +416,7 @@ class LimeSurvey:
         elif transform_dict.get(transform) == "range_to_int":
             return range_to_int(
                 question_label=self.get_label(question),
-                responses=self.get_responses(question, labels=False),
+                responses=self.get_responses(question),
                 question_type=self.get_question_type(question),
             )
 

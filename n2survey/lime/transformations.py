@@ -248,7 +248,7 @@ def rate_mental_health(
 
 
 def range_to_int(
-    self, question_label: str, responses: pd.DataFrame, question_type: str
+    question_label: str, responses: pd.DataFrame, question_type: str
 ) -> pd.DataFrame:
 
     check_condition = {
@@ -292,7 +292,7 @@ def range_to_int(
     # Multiple and single choice question
     if question_type == "single-choice":
         # Apply function to each row in df
-        responses_num = responses.apply(_strRange_to_intRange)
+        responses_num = responses.iloc[:, 0].apply(_strRange_to_intRange)
 
     else:
         # get answer labels and convert them to a list of corresponding numerical values

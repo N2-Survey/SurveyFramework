@@ -289,6 +289,29 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
             survey.responses.iloc[6:9, -4:], ref, msg="DataFrames not equal."
         )
 
+    def test_range_to_int_transformation_questions(self):
+        """Test adding responses to transformation questions in read_responses"""
+
+        range_questions = {"range": ["B2", "B3"]}
+
+        survey = LimeSurvey(structure_file=self.structure_file)
+        survey.read_responses(
+            responses_file=self.responses_file,
+            transformation_questions=range_questions,
+        )
+        ref = pd.DataFrame(
+            data={
+                "income_amount": [1650.5, 1950.5, 2050.5],
+                "holiday_amount": [28.0, 28.0, 28.0],
+            },
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(
+            survey.responses.iloc[:3, -2:], ref, msg="DataFrames not equal."
+        )
+
     def test_single_choice_dtype(self):
         """Test data for single choice questions is unordered categorical dtype"""
 
@@ -505,6 +528,40 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
         self.assert_df_equal(
             direct_supervision_transformed.iloc[6:9],
             direct_supervision_ref,
+            msg="Series not equal",
+        )
+
+    def test_range_transforms(self):
+        """Test transforming two types of range to numerical questions"""
+
+        single_choice_1_transformed = self.survey.transform_question("B2", "range")
+        single_choice_2_transformed = self.survey.transform_question("B3", "range")
+
+        single_choice_1_ref = pd.DataFrame(
+            data={
+                "income_amount": [1650.5, 1950.5, 2050.5],
+            },
+            index=[2, 3, 4],
+        )
+        single_choice_1_ref.index.name = "id"
+
+        single_choice_2_ref = pd.DataFrame(
+            data={
+                "holiday_amount": [28.0, 28.0, 28.0],
+            },
+            index=[2, 3, 4],
+        )
+        single_choice_2_ref.index.name = "id"
+
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(
+            single_choice_1_transformed.iloc[:3],
+            single_choice_1_ref,
+            msg="Series not equal",
+        )
+        self.assert_df_equal(
+            single_choice_2_transformed.iloc[:3],
+            single_choice_2_ref,
             msg="Series not equal",
         )
 

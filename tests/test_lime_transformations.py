@@ -4,7 +4,11 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from n2survey.lime.transformations import rate_mental_health, rate_supervision
+from n2survey.lime.transformations import (
+    range_to_int,
+    rate_mental_health,
+    rate_supervision,
+)
 from tests.common import BaseTestLimeSurvey2021WithResponsesCase
 
 
@@ -191,6 +195,31 @@ class TestRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
         ref.index.name = "id"
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(result.iloc[6:9, -2:], ref, msg="DataFrames not equal.")
+
+
+class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test Transformations rate_supervision for formal and direct supervision"""
+
+    def test_range_to_num(self):
+        """Test rating of formal supervision"""
+
+        question = "B2"
+
+        result = range_to_int(
+            question_label=self.get_label(question),
+            responses=self.get_responses(question),
+            question_type=self.get_question_type(question),
+        )
+
+        ref = pd.DataFrame(
+            data={
+                "income_amount": [1650.5, 1950.5, 2050.5],
+            },
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
 
 
 if __name__ == "__main__":
