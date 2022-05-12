@@ -206,9 +206,9 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
         question = "B2"
 
         result = range_to_int(
-            question_label=self.get_label(question),
-            responses=self.get_responses(question),
-            question_type=self.get_question_type(question),
+            question_label=self.survey.get_label(question),
+            responses=self.survey.get_responses(question),
+            question_type=self.survey.get_question_type(question),
         )
 
         ref = pd.DataFrame(
