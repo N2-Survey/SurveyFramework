@@ -292,7 +292,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
     def test_range_to_int_transformation_questions(self):
         """Test adding responses to transformation questions in read_responses"""
 
-        range_questions = {"range": ["B2", "B3"]}
+        range_questions = {"range": ["B2", "B10"]}
 
         survey = LimeSurvey(structure_file=self.structure_file)
         survey.read_responses(
@@ -535,7 +535,7 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
         """Test transforming two types of range to numerical questions"""
 
         single_choice_1_transformed = self.survey.transform_question("B2", "range")
-        single_choice_2_transformed = self.survey.transform_question("B3", "range")
+        single_choice_2_transformed = self.survey.transform_question("B10", "range")
 
         single_choice_1_ref = pd.DataFrame(
             data={
