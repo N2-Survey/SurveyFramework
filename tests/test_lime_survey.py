@@ -427,7 +427,6 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
             True,
         )
 
-
 class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
     """Test LimeSurvey transform_question"""
 
