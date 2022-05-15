@@ -11,9 +11,9 @@ import pandas as pd
 from n2survey.lime.structure import read_lime_questionnaire_structure
 from n2survey.lime.transformations import (
     range_to_numerical,
-    calculate_phd_duration,
     rate_mental_health,
     rate_supervision,
+    calculate_phd_duration,
 )
 from n2survey.plot import (
     likert_bar_plot,
@@ -64,10 +64,8 @@ def _clean_file_name(filename: str) -> str:
 
 def _split_plot_kwargs(mixed_kwargs: dict) -> tuple[dict, dict]:
     """Split dict of arguments into theme and non-theme arguments
-
     Args:
         mixed_kwargs (dict): Initial dict of mixed arguments
-
     Returns:
         tuple[dict, dict]: Tuple of (<theme arguements>, <non-theme arguments>)
     """
@@ -78,11 +76,9 @@ def _split_plot_kwargs(mixed_kwargs: dict) -> tuple[dict, dict]:
 
 def deep_dict_update(source: dict, update_dict: dict) -> dict:
     """Recursive dictionary update
-
     Args:
         source (dict): Source dictionary to update
         update_dict (dict): Dictionary with "new" data
-
     Returns:
         dict: Upated dictionary. Neasted dictionaries are updated recursevely
           Neasted lists are combined.
@@ -207,6 +203,10 @@ class LimeSurvey:
                 "A5": "very dissatisfied",
             },
         },
+        "phd_duration": {
+            "label": "What is the length of PhD?",
+            "type": "free",
+        },
     }
 
     def __init__(
@@ -216,7 +216,6 @@ class LimeSurvey:
         output_folder: Optional[str] = None,
     ) -> None:
         """Get an instance of the Survey
-
         Args:
             structure_file (str, optional): Path to the structure XML file
             theme (Optional[dict], optional): seaborn theme parameters.
@@ -242,7 +241,6 @@ class LimeSurvey:
 
     def read_structure(self, structure_file: str) -> None:
         """Read structure XML file
-
         Args:
             structure_file (str): Path to the structure XML file
         """
@@ -267,13 +265,11 @@ class LimeSurvey:
         self, responses_file: str, transformation_questions: dict = {}
     ) -> None:
         """Read responses CSV file
-
         Args:
             responses_file (str): Path to the responses CSV file
             transformation_questions (dict, optional): Dict of questions
                 requiring transformation of raw data, e.g. {'depression': 'D3'}
                 or {'supervision': ['E7a', 'E7b']}
-
         """
 
         # Read 1st line of the csv file
@@ -385,11 +381,9 @@ class LimeSurvey:
 
     def transform_question(self, question: Union[str, tuple], transform: str):
         """Perform transformation on responses to given question
-
         Args:
             question (str or tuple of str): Question(s) to transform
             transform (str): Type of transform to perform
-
         Returns:
             pd.DataFrame: Transformed DataFrame to be concatenated to self.responses
         """
@@ -419,7 +413,8 @@ class LimeSurvey:
         elif transform_dict.get(transform) == "range_to_numerical":
             return range_to_numerical(
                 question_label=self.get_label(question),
-                responses=self.get_responses(question),)
+                responses=self.get_responses(question),
+            )
         elif transform_dict.get(transform) == "duration":
             return calculate_phd_duration(
                 start_responses=self.get_responses(question[0], labels=False),
@@ -428,7 +423,6 @@ class LimeSurvey:
 
     def __copy__(self):
         """Create a shallow copy of the LimeSurvey instance
-
         Returns:
             LimeSurvey: a shallow copy of the LimeSurvey instance
         """
@@ -439,7 +433,6 @@ class LimeSurvey:
 
     def __deepcopy__(self, memo_dict={}):
         """Create a deep copy of the LimeSurvey instance
-
         Returns:
             LimeSurvey: a deep copy of the LimeSurvey instance
         """
@@ -457,16 +450,13 @@ class LimeSurvey:
         drop_other: bool = False,
     ) -> pd.DataFrame:
         """Get responses for a given question with or without labels
-
         Args:
             question (str): Question to get the responses for.
             labels (bool, optional): If the response consists of labels or not (default True).
             drop_other (bool, optional): Whether to exclude contingent question (i.e. "other")
-
         Raises:
             ValueError: Inconsistent question types within question groups.
             ValueError: Unknown question types.
-
         Returns:
             [pd.DataFrame]: The response for the selected question.
         """
@@ -518,11 +508,9 @@ class LimeSurvey:
         self, key: Union[pd.Series, pd.DataFrame, str, list, tuple]
     ) -> "LimeSurvey":
         """Retrieve or slice the responses DataFrame
-
         Args:
             key (pd.Series, pd.DataFrame, str, list, or tuple): A key for
                 DataFrame slicing or get_responses method
-
         Returns:
             LimeSurvey: A copy of LimeSurvey instance with filtered responses
                 DataFrame
@@ -569,11 +557,9 @@ class LimeSurvey:
 
     def query(self, expr: str) -> "LimeSurvey":
         """Filter responses DataFrame with a boolean expression
-
         Args:
             expr (str): Condition str for pd.DataFrame.query().
                 E.g. "A6 == 'A3' & "B2 == 'A5'"
-
         Returns:
             LimeSurvey: LimeSurvey with filtered responses
         """
@@ -588,10 +574,8 @@ class LimeSurvey:
     def filter_na(self, question: str) -> "LimeSurvey":
         """Filter out entries in responses DataFrame with no answer
         to specified question.
-
         Args:
             question (str): Question to which the entries are filtered.
-
         returns:
             LimeSurvey: LimeSurvey with filtered responses.
         """
@@ -614,7 +598,6 @@ class LimeSurvey:
         percents: bool = False,
     ) -> pd.DataFrame:
         """Get counts for a question or a single column
-
         Args:
             question (str): Name of a question group or a sinlge column
             labels (bool, optional): Use labels instead of codes. Defaults to True.
@@ -625,10 +608,8 @@ class LimeSurvey:
             percents (bool, optional): Output percents instead of counts.
               Calculted with respent to the total number of repondents.
               Defaults to False.
-
         Raises:
             AssertionError: Unexpected question type
-
         Returns:
             pd.DataFrame: Counts for a given question/column.
               * For question with choices, counts are ordered accordingly and
@@ -703,11 +684,9 @@ class LimeSurvey:
 
     def _get_dtype_info(self, columns, renamed_columns):
         """Get dtypes for columns in data csv
-
         Args:
             columns (list): List of column names from data csv
             renamed_columns (list): List of column names modified to match self.questions entries
-
         Returns:
             dict: Dictionary of column names and dtypes
             list: List of datetime columns
@@ -796,7 +775,6 @@ class LimeSurvey:
             'compare_with':
                 correlates answers of 'question' with answers
                 of the question given to the 'compare_with' variable.
-
                 'legend_columns':
                     number of columns of the legend added by 'compare_with' on
                     top of the Plot
@@ -839,13 +817,11 @@ class LimeSurvey:
                 'dpi': Resolution in dotsperinch for saved file, if you want to
                     specify. If not, the resolution is taken from the figure
                     resolution only applies to .png, not to .pdf
-
             'answer_sequence': getting the answers in the right order made the
                 inclusion of an answer_sequence variable necessary, which also
                 can be used if you want to give the order of bars yourself,
                 just add in a list with the answers as entries in the order you
                 want
-
             'calculate_aspect_ratio': True or False, if False, aspect ratio is
                 taken from theme, if True aspect ratio of picture is calculated
                 from number of bars and 'bar_width'
@@ -1238,13 +1214,11 @@ class LimeSurvey:
 
     def get_question(self, question: str, drop_other: bool = False) -> pd.DataFrame:
         """Get question structure (i.e. subset from self.questions)
-
         Args:
             question (str): Name of question or subquestion
             drop_other (bool, optional): Whether to exclude contingent question (i.e. "other")
         Raises:
             ValueError: There is no such question or subquestion
-
         Returns:
             pd.DataFrame: Subset from `self.questions` with corresponding rows
         """
@@ -1266,7 +1240,6 @@ class LimeSurvey:
         self, name: str, responses: Union[pd.Series, pd.DataFrame] = None, **kwargs
     ):
         """Add question to self.questions DataFrame
-
         Args:
             name (str): Name (id) of the question to add, e.g. "A12"
             responses (pd.Series or pd.DataFrame, optional): responses
@@ -1294,7 +1267,6 @@ class LimeSurvey:
         question: Union[list, str] = None,
     ):
         """Add responses to specified question to self.responses DataFrame
-
         Args:
             responses (pd.Series or pd.DataFrame): responses to be added
                 to self.responses
@@ -1321,14 +1293,11 @@ class LimeSurvey:
 
     def get_question_type(self, question: str) -> str:
         """Get question type and validate it
-
         Args:
             question (str): question or column code
-
         Raises:
             AssertionError: Unconsistent question types within question
             AssertionError: Unexpected question type
-
         Returns:
             str: Question type like "single-choice", "array", etc.
         """
@@ -1349,10 +1318,8 @@ class LimeSurvey:
 
     def get_label(self, question: str) -> str:
         """Get label for the corresponding column or group of colums
-
         Args:
             question (str): Name of question or subquestion
-
         Returns:
             str: question label/title
         """
@@ -1368,16 +1335,13 @@ class LimeSurvey:
 
     def get_choices(self, question: str) -> dict:
         """Get choices of a question
-
         * For multiple-choice group, format is `<subquestion code: subquestion title>`,
         for example, {"C3_SQ001": "I do not like scientific work.", "C3_SQ002": ...}
         * For all other fixed questions (i.e. array, single choice, subquestion), returns
           choices of that question or column
         * For free and contingent, returns None
-
         Args:
             question (str): Name of question or subquestion to retrieve
-
         Returns:
             dict: dict of choices mappings
         """
@@ -1407,7 +1371,6 @@ class LimeSurvey:
         verbose: bool = True,
     ):
         """Export anonymised data for question to file
-
         Args:
             organisation (str): Name of the organisation to which the
                 exported data belong
@@ -1418,7 +1381,6 @@ class LimeSurvey:
                 save csv file. Default is the current working directory.
             verbose (bool, optional): Whether to display checks for similarity
                 after random permutation. Default is True
-
         """
         # If no dierctory specified, use current working direction
         if not directory:

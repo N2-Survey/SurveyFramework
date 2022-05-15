@@ -144,6 +144,11 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
                 },
                 "is_contingent": False,
             },
+            "phd_duration": {
+                "label": "What is the length of PhD?",
+                "type": "free",
+                "is_contingent": False,
+            },
         }
         question_df = pd.concat(
             [
@@ -318,6 +323,31 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(
             survey.responses.iloc[:3, -7:], ref, msg="DataFrames not equal."
+        )
+
+    def test_phd_duration_transformation_questions(self):
+        """Test adding responses to transformation questions in read_responses"""
+
+        phd_duration_questions = {"phd_duration": ("A8", "A9")}
+
+        survey = LimeSurvey(structure_file=self.structure_file)
+        survey.read_responses(
+            responses_file=self.responses_file,
+            transformation_questions=phd_duration_questions,
+        )
+        
+        ref = pd.DataFrame(
+            data={
+                "PhD duration (days)": np.array([1826.0, 1095.0, 1065.0]),
+                "PhD duration (months)": np.array([60.0, 36.0, 35.0]),
+                "PhD duration (years)": np.array([5.0, 3.0, 3.0]),
+            },
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(
+            survey.responses.iloc[:3, -3:], ref, msg="DataFrames not equal."
         )
 
     def test_single_choice_dtype(self):
