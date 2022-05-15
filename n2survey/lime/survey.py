@@ -177,6 +177,10 @@ class LimeSurvey:
                 "A5": "very dissatisfied",
             },
         },
+        "phd_duration": {
+            "label": "What is the length of PhD?",
+            "type": "free",
+        },
     }
 
     def __init__(
