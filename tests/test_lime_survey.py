@@ -271,10 +271,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         )
         ref = pd.DataFrame(
             data={
-                "PhD duration (days)": np.array(
-                    [157766400000000000, 94608000000000000, 92016000000000000],
-                    dtype="timedelta64[ns]",
-                ),
+                "PhD duration (days)": np.array([1826.0, 1095.0, 1065.0]),
                 "PhD duration (months)": np.array([60.0, 36.0, 35.0]),
                 "PhD duration (years)": np.array([5.0, 3.0, 3.0]),
             },
