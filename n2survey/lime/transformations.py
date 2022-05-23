@@ -325,7 +325,6 @@ def calculate_phd_duration(start_responses: pd.DataFrame, end_responses: pd.Data
 
     # duration calculation, return as day
     df["PhD duration (days)"] = df.iloc[:, 1] - df.iloc[:, 0]
-    df["PhD duration (days)"] = df["PhD duration (days)"].dt.days
 
     # convert days to month and year
     df["PhD duration (months)"] = df.iloc[:, 2] / np.timedelta64("1", "M")
