@@ -14,6 +14,7 @@ def single_choice_bar_plot(
     theme: Optional[Dict] = None,
     total: Union[int, float, None] = None,
     title: Optional[str] = None,
+    plot_title: Optional[str] = False,
     show_percents: bool = True,
     show_total: bool = True,
     **kwargs,
@@ -26,6 +27,7 @@ def single_choice_bar_plot(
         total (Union[int, float, None], optional): Total number to calculate percentage
           and to show on the figure. By default, sum of Y values is used.
         title (Optional[str], optional): Title of the axes. Defaults to None.
+        plot_title (Optional[str], optional): Title of the plot.
         show_percents (bool, optional): Show percents on top of boxes. Defaults to True.
         show_total (bool, optional): Show total number on the figure. Defaults to True.
         theme (Optional[Dict], optional): seaborn theme parameters.
@@ -57,9 +59,9 @@ def single_choice_bar_plot(
     # Do the plot
     sns.barplot(x=x, y=y, ci=None, ax=ax, **additional_params)
 
-    # Set title
-    if title:
-        ax.set_title(title)
+    # set plot title - already handled by outer plot function
+    if plot_title:
+        ax.set_title(plot_title)
 
     # Add percents on top
     if show_percents:

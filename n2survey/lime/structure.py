@@ -431,7 +431,7 @@ def _parse_section(section: Tag) -> Dict:
     }
 
 
-def read_lime_questionnaire_structure(filepath: str) -> dict[str, list[dict]]:
+def read_lime_questionnaire_structure(filepath: str) -> Dict[str, List[Dict]]:
     """Read LimeSurvey XML structure file
 
     Args:

@@ -10,10 +10,11 @@ def create_bar_plot(
     data_df,
     tick_labels,
     palette,
-    display_title,
+    #display_title,
     fig_dim,
     bar_thickness,
     bar_spacing,
+    plot_title,
     **kwargs,
 ):
     """
@@ -72,16 +73,20 @@ def create_bar_plot(
         )
 
     # Display texts
-    wrapped_title = "\n".join(wrap(data_df.columns[0], 45))
+    #wrapped_title = "\n".join(wrap(data_df.columns[0], 45))
     wrapped_bottom = "\n".join(wrap(data_df.columns[0], 55))
-    if display_title:
-        plt.text(
-            x=0.5, y=-1, s=wrapped_title, fontsize=default_fontsize * 1.2 / bar_spacing
-        )
+    #if display_title:
+    #    plt.text(
+    #        x=0.5, y=-1, s=wrapped_title, fontsize=default_fontsize * 1.2 / bar_spacing
+    #    )
     bottom_text = f"Total: {total}\n'{wrapped_bottom}'"
     if is_percentage:
         bottom_text = bottom_text + " Relative response rates."
     plt.title(bottom_text, fontsize=default_fontsize * 0.9 / bar_spacing, y=-0.1)
+
+    # set plot title - already handled by outer plot function
+    if plot_title:
+        ax.set_title(plot_title)
 
     # Adjust margins
     plt.subplots_adjust(left=0.25, right=0.9, top=0.8, bottom=0.1)
@@ -166,8 +171,9 @@ def multiple_choice_bar_plot(
     # sort=None,
     sort="descending",
     # display_title=False,
-    display_title=True,
+    #display_title=True,
     bar_thickness=1,
+    plot_title = False,
     # bar_spacing=1,
     bar_spacing=1.2,
     display_threshold=0,
@@ -180,6 +186,7 @@ def multiple_choice_bar_plot(
     Args:
         data_df (df): dataframe of counts and percentages
         sort (str, optional): 'ascending' or 'descending' order to sort in. If value other than these two, the df remains unchanged. Default is None.
+        plot_title (Optional[str], optional): Title of the plot.
         display_title (bool, optional): Whether to display the question title or not
         display_threshold (float, optional): Threshold of the category to be included in the plot. Can be either count or percentage.
         wrap_text (bool, optional): Whether to wrap text labels if they are too long for a single line
@@ -202,10 +209,11 @@ def multiple_choice_bar_plot(
         filtered_data_df,
         tick_labels,
         palette,
-        display_title,
+        #display_title,
         fig_dim,
         bar_thickness,
         bar_spacing,
+        plot_title = plot_title,
         **kwargs,
     )
 
