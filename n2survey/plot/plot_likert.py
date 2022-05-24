@@ -472,7 +472,7 @@ def likert_bar_plot(
 
     # set plot title - already handled by outer plot function
     if plot_title:
-        ax.set_title(plot_title)
+        ax.set_title(plot_title, y=1.28)
 
     plt.tight_layout()
     return fig, ax
