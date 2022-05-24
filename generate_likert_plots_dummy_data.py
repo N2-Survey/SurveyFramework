@@ -55,7 +55,6 @@ def likert_plot_all_kwargs(
         grouped_questions=grouped_questions,
         grouped_choices=grouped_choices,
         sort_questions_by_choices=sort_questions_by_choices,
-        #title_question=title_question,
         plot_title=plot_title,
         bar_spacing=0.2,
         bar_thickness=0.4,

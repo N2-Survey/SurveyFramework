@@ -13,8 +13,7 @@ def single_choice_bar_plot(
     y,
     theme: Optional[Dict] = None,
     total: Union[int, float, None] = None,
-    title: Optional[str] = None,
-    plot_title: Optional[str] = False,
+    plot_title: Union[str, bool] = False,
     show_percents: bool = True,
     show_total: bool = True,
     **kwargs,
@@ -26,8 +25,7 @@ def single_choice_bar_plot(
         y ([type]): Y values for the bar plot. See `seaborn.barplot`
         total (Union[int, float, None], optional): Total number to calculate percentage
           and to show on the figure. By default, sum of Y values is used.
-        title (Optional[str], optional): Title of the axes. Defaults to None.
-        plot_title (Optional[str], optional): Title of the plot.
+        plot_title (Union[str, bool], optional): Title of the plot.
         show_percents (bool, optional): Show percents on top of boxes. Defaults to True.
         show_total (bool, optional): Show total number on the figure. Defaults to True.
         theme (Optional[Dict], optional): seaborn theme parameters.

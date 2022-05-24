@@ -320,7 +320,6 @@ def likert_bar_plot(
     grouped_choices=None,
     grouped_questions=None,
     sort_questions_by_choices="left",
-    #title_question=None,
     plot_title = False,
     theme=None,
     bar_thickness=0.2,
@@ -338,8 +337,7 @@ def likert_bar_plot(
         grouped_choices (dict, optional): choices sorted by location where they will be plotted ("left", "center", "right"). If None provided, a set of default pre-sorted choices is selected.
         grouped_questions (list, optional): each sub-list is a group of questions which will be plotted together. If None provided all columns are assigned to a single group.
         sort_by_choices (str, optional): choices by which to sort the questions ("left", "right", "no_sorting").
-        title_question (str, optional): The title question. If None provided, no title is added to the plot.
-        plot_title (Optional[str], optional): Title of the plot.
+        plot_title (Union[str, bool], optional): Title of the plot.
         theme(dict, optional): plot theme. If None is provided a default theme is selected.
         bar_thickness (float): thickness of a single bar
         bar_spacing (float): horizontal spacing between bars belonging to the same group
@@ -471,11 +469,6 @@ def likert_bar_plot(
         fontsize="small",
         framealpha=0.5,
     )
-
-    # add title
-    if title_question is not None:
-        n_rows = int(np.ceil(len(location_and_response) / n_columns))
-        ax.set_title(title_question, pad=(n_rows + 1.5) * plt.rcParams["font.size"])
 
     # set plot title - already handled by outer plot function
     if plot_title:
