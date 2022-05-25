@@ -138,6 +138,7 @@ def rate_mental_health(
     if condition == "state_anxiety":
         if "I feel calm" not in question_label:
             raise ValueError("Question incompatible with specified condition type.")
+        num_subquestions = 6
         base_score = 10 / 3
         conversion = ["pos", "neg", "neg", "pos", "pos", "neg"]
         label = "state_anxiety"
@@ -148,6 +149,7 @@ def rate_mental_health(
     elif condition == "trait_anxiety":
         if "calm, cool and collected" not in question_label:
             raise ValueError("Question incompatible with specified condition type.")
+        num_subquestions = 8
         base_score = 5 / 2
         conversion = [
             "pos",
@@ -166,6 +168,7 @@ def rate_mental_health(
     elif condition == "depression":
         if "interest or pleasure" not in question_label:
             raise ValueError("Question incompatible with specified condition type.")
+        num_subquestions = 8
         base_score = 1
         conversion = ["freq" for i in range(8)]
         label = "depression"
@@ -219,7 +222,15 @@ def rate_mental_health(
         )
 
     # Calculate total anxiety or depression scores
-    df[f"{label}_score"] = df.sum(axis=1, skipna=False)
+    # scaled by number of non-NaN responses
+    # e.g. scale by 8/5 if 5/8 subquestions answered
+    responses_counts = df.notna().sum(axis=1)
+    df[f"{label}_score"] = (
+        df.sum(axis=1, skipna=True).div(responses_counts).mul(num_subquestions)
+    )
+
+    # Suppress entries with less than half of all subquestions answered
+    df.loc[responses_counts < num_subquestions / 2, f"{label}_score"] = None
 
     # Classify into categories
     df[f"{label}_class"] = pd.cut(

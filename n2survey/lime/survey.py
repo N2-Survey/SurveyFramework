@@ -17,6 +17,7 @@ from n2survey.lime.transformations import (
 from n2survey.plot import (
     likert_bar_plot,
     multiple_choice_bar_plot,
+    multiple_multiple_comparison_plot,
     multiple_simple_comparison_plot,
     simple_comparison_plot,
     single_choice_bar_plot,
@@ -747,6 +748,7 @@ class LimeSurvey:
         calculate_aspect_ratio: bool = True,
         maximum_length_x_axis_answers: int = 20,
         show_zeroes: bool = True,
+        bubbles: Union[bool, float] = None,
         kind: str = None,
         **kwargs,
     ):
@@ -813,6 +815,11 @@ class LimeSurvey:
                 answers plotted on x-axis, standard 20 --> no line longer then
                 20 characters
             'show_zeroes': Plots lines for every 0% bar
+            'bubbles': if float or True is given, plots are changed to a bubble
+                plot with answers to 'question' and 'add_questions' on the
+                x-Axis and answers to 'compare_with' on the y-Axis.
+                size of the bubbles depends on overleap percentage and the
+                base-value given in bubble_size or on the float given.
         """
         if kind is not None:
             raise NotImplementedError(
@@ -854,6 +861,7 @@ class LimeSurvey:
                 calculate_aspect_ratio=calculate_aspect_ratio,
                 maximum_length_x_axis_answers=maximum_length_x_axis_answers,
                 show_zeroes=show_zeroes,
+                bubbles=bubbles,
                 **kwargs,
             )
         elif question_type == "single-choice":
@@ -942,6 +950,7 @@ class LimeSurvey:
         maximum_length_x_axis_answers: float = 20,
         kind: str = None,
         show_zeroes: bool = True,
+        bubbles: Union[bool, float] = None,
         **kwargs,
     ):
         """
@@ -949,6 +958,7 @@ class LimeSurvey:
         complicated, for keyword explanation please see plot() function
         """
         # load necessary data for comparison
+        compare_with_type = self.get_question_type(compare_with)
         if legend_title is True:
             legend_title = self.get_label(compare_with)
         if not legend_sequence:
@@ -970,6 +980,7 @@ class LimeSurvey:
         else:
             totalbar_data = None
         if question_type == "single-choice":
+            print("single-single")
             fig, ax = simple_comparison_plot(
                 plot_data_list,
                 totalbar=totalbar_data,
@@ -985,7 +996,10 @@ class LimeSurvey:
                 legend_sequence=legend_sequence,
                 theme=theme,
             )
-        elif question_type == "multiple-choice":
+        elif all(
+            [question_type == "multiple-choice", compare_with_type == "single-choice"]
+        ):
+            print("multi-single")
             fig, ax = multiple_simple_comparison_plot(
                 plot_data_list,
                 totalbar=totalbar_data,
@@ -1004,6 +1018,31 @@ class LimeSurvey:
                 maximum_length_x_axis_answers=maximum_length_x_axis_answers,
                 theme=theme,
                 show_zeroes=show_zeroes,
+                bubbles=bubbles,
+            )
+        elif all(
+            [question_type == "multiple-choice", compare_with_type == "multiple-choice"]
+        ):
+            print("multi-multi")
+            fig, ax = multiple_multiple_comparison_plot(
+                plot_data_list,
+                totalbar=totalbar_data,
+                bar_width=bar_width,
+                suppress_answers=suppress_answers,
+                ignore_no_answer=ignore_no_answer,
+                bar_positions=bar_positions,
+                threshold_percentage=threshold_percentage,
+                legend_columns=legend_columns,
+                plot_title=plot_title,
+                plot_title_position=plot_title_position,
+                legend_title=legend_title,
+                answer_sequence=answer_sequence,
+                legend_sequence=legend_sequence,
+                calculate_aspect_ratio=calculate_aspect_ratio,
+                maximum_length_x_axis_answers=maximum_length_x_axis_answers,
+                theme=theme,
+                show_zeroes=show_zeroes,
+                bubbles=bubbles,
             )
         return fig, ax
 
@@ -1049,6 +1088,7 @@ class LimeSurvey:
         supported_comparisons = [
             ("single-choice", "single-choice"),
             ("multiple-choice", "single-choice"),
+            ("multiple-choice", "multiple-choice"),
         ]
         all_plots = [question]
         if compare_with:
@@ -1135,14 +1175,18 @@ class LimeSurvey:
                 # create Dataarray from all existing combinations of
                 # question and compare_with
                 plot_data_list.append(
-                    pd.concat(
-                        [
-                            self.get_responses(question, labels=True, drop_other=True),
-                            self.get_responses(
-                                compare_with, labels=True, drop_other=True
-                            ),
-                        ],
-                        axis=1,
+                    (
+                        self.get_responses(question, labels=True, drop_other=True),
+                        self.get_responses(compare_with, labels=True, drop_other=True),
+                    )
+                )
+            elif self.get_question_type(compare_with) == "multiple-choice":
+                # create Dataarray from all existing combinations of
+                # question and compare_with
+                plot_data_list.append(
+                    (
+                        self.get_responses(question, labels=True, drop_other=True),
+                        self.get_responses(compare_with, labels=True, drop_other=True),
                     )
                 )
         return plot_data_list
