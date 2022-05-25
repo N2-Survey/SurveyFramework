@@ -1018,51 +1018,31 @@
     </question>
     <question>
       <text>For how long have you been working on your PhD without pay?</text>
-      <response varName="B1b_SQ001">
+      <response varName="B1b">
         <fixed>
           <category>
             <label>0-3 months</label>
-            <value>Y</value>
+            <value>A1</value>
           </category>
-        </fixed>
-      </response>
-      <response varName="B1b_SQ002">
-        <fixed>
           <category>
             <label>4-6 months</label>
-            <value>Y</value>
+            <value>A2</value>
           </category>
-        </fixed>
-      </response>
-      <response varName="B1b_SQ003">
-        <fixed>
           <category>
-            <label>7-9 months</label>
-            <value>Y</value>
+            <label>7- 9 months</label>
+            <value>A3</value>
           </category>
-        </fixed>
-      </response>
-      <response varName="B1b_SQ004">
-        <fixed>
           <category>
             <label>10-12 months</label>
-            <value>Y</value>
+            <value>A4</value>
           </category>
-        </fixed>
-      </response>
-      <response varName="B1b_SQ005">
-        <fixed>
           <category>
             <label>more than 12 months</label>
-            <value>Y</value>
+            <value>A5</value>
           </category>
-        </fixed>
-      </response>
-      <response varName="B1b_SQ006">
-        <fixed>
           <category>
-            <label>I don't want to answer this question</label>
-            <value>Y</value>
+            <label>I don’t want to answer</label>
+            <value>A6</value>
           </category>
         </fixed>
       </response>
