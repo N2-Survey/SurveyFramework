@@ -3,7 +3,7 @@
 """
 Created on Tue Mar 15 18:50:01 2022
 
-@author: TheFlike
+@author: theflike
 """
 from textwrap import wrap
 from typing import Union
@@ -22,10 +22,10 @@ from .comparison_shared_functions import (
     sort_data,
 )
 
-__all__ = ["multiple_simple_comparison_plot"]
+__all__ = ["multiple_multiple_comparison_plot"]
 
 
-def multiple_simple_comparison_plot(
+def multiple_multiple_comparison_plot(
     plot_data_list,
     suppress_answers: list = [],
     ignore_no_answer: bool = True,
@@ -68,8 +68,7 @@ def multiple_simple_comparison_plot(
     if totalbar:
         legend_sequence.insert(0, "Total")
     legend_sequence = filter_answer_sequence([entry for entry in y], [legend_sequence])
-
-    # wrap text in x-axis and, if bubbleplot, also text in y-axis
+    # wrap text in x-axis and, if bubbles, y-axis texts as well
     x = ["\n".join(wrap(entry, width=maximum_length_x_axis_answers)) for entry in x]
     max_lines_x = max([entry.count("\n") for entry in x]) + 1
     if bubbles:
@@ -84,7 +83,7 @@ def multiple_simple_comparison_plot(
     else:
         max_lines_y = 3
 
-    # %%
+    # %% Prepare/Define figure
     if bubbles:
         positionlist_per_answer = [0]
     else:
@@ -245,9 +244,11 @@ def form_x_and_y(plot_data_list, totalbar=None, suppress_answers=[]):
     """
     percentages_for_comparison = []
     answers = []
+
     count = 0
     for question_compare_with_tuple in plot_data_list:
         answers.append(question_compare_with_tuple[0].count().index.values.astype(str))
+
         percentages_for_comparison.append(
             get_percentages(question_compare_with_tuple, totalbar=totalbar)
         )
@@ -292,7 +293,7 @@ def get_percentages(question_compare_with_tuple, totalbar=None):
     question_results = question_compare_with_tuple[0]
     question_answers = question_results.count().index.values
     compare_with_results = question_compare_with_tuple[1]
-    compare_with_answers = np.unique(compare_with_results.loc[:])
+    compare_with_answers = compare_with_results.count().index.values
     total_participants = len(question_results)
     # count number of yes answers of every answer to compare_with_question
     persons_total_answered_yes = {}
@@ -304,16 +305,11 @@ def get_percentages(question_compare_with_tuple, totalbar=None):
     for entry in compare_with_answers:
         percentage[entry] = []
     for compare_with_answer in compare_with_answers:
-        # translate simple choice to bool array, depending on compare_with_answer
-        compare_with_bool_array = np.zeros(shape=(total_participants,)).astype(bool)
-        compare_with_bool_array[
-            np.where(compare_with_results.values[:, 0] == compare_with_answer)
-        ] = True
         # count participants that answered both, compare_with_answer and
         # question answer, with yes
         for question_answer in question_answers:
             single_percentage = np.sum(
-                compare_with_bool_array.astype(float)
+                compare_with_results.loc[:, compare_with_answer].astype(float)
                 * question_results.loc[:, question_answer].astype(float)
             )
             # convert to percent and round
