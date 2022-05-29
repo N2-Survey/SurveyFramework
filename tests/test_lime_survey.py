@@ -302,7 +302,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         ref = pd.DataFrame(
             data={
                 "noincome_duration": [np.NaN, np.NaN, np.NaN],
-                "income_amount": [1650.5, 1950.5, 2050.5],
+                "income_amount": [1650.0, 1950.0, 2050.0],
                 "costs_amount": [850.0, 750.0, 550.0],
                 "contract_duration": [30.0, 48.0, 30.0],
                 "holiday_amount": [28.0, 28.0, 28.0],
@@ -557,7 +557,7 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
 
         single_choice_2_ref = pd.DataFrame(
             data={
-                "income_amount": [1650.5, 1950.5, 2050.5],
+                "income_amount": [1650.0, 1950.0, 2050.0],
             },
             index=[2, 3, 4],
         )

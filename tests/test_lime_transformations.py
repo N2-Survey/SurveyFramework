@@ -234,7 +234,7 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
 
         ref = pd.DataFrame(
             data={
-                "income_amount": [1650.5, 1950.5, 2050.5],
+                "income_amount": [1650.0, 1950.0, 2050.0],
             },
             index=[2, 3, 4],
         )
