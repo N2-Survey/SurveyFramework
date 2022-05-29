@@ -6,6 +6,7 @@ import pandas as pd
 __all__ = [
     "rate_supervision",
     "rate_mental_health",
+    "range_to_int",
 ]
 
 
@@ -247,12 +248,42 @@ def rate_mental_health(
     return df
 
 
-def range_to_int(
-    question_label: str, responses: pd.DataFrame, question_type: str
-) -> pd.DataFrame:
+def strRange_to_intRange(strAnswer: str) -> int:
+
+    """Calculate the mean of all numbers present in a string.
+
+    Args:
+        strAnswer (str): String containing numbers.
+
+    Returns:
+        int: Mean of all values present in the string.
+
+    """
+
+    if re.search(r"(?:[1-9]\d*)", strAnswer):
+        list_range = re.findall(r"(?:[1-9]\d*)(?:\.)?(?:[1-9]\d+)?", strAnswer)
+        list_range_numerical = list(map(int, list_range))
+
+        return int(np.mean(list_range_numerical))
+
+    else:
+        return np.NaN  # Handy when computing mean, median,... using numpy
+
+
+def range_to_int(question_label: str, responses: pd.DataFrame) -> pd.DataFrame:
+
+    """Get numerical values from responses with ranges in a non-numerical datatype.
+
+    Args:
+        question_label (str): Question label to use for transformation type inference
+        responses (pd.DataFrame): DataFrame containing responses data
+
+    Returns:
+        pd.DataFrame: Numerical values for each range
+    """
 
     check_condition = {
-        "For how long have you been working on your PhD without pay": "noincome_duration",  # multi-choice, results in error
+        "For how long have you been working on your PhD without pay": "noincome_duration",
         "Right now, what is your monthly net income for your work at your research organization": "income_amount",
         "How much do you pay for your rent and associated living costs per month in euros": "costs_amount",
         "What was or is the longest duration of your contract or stipend related to your PhD project": "contract_duration",
@@ -262,54 +293,18 @@ def range_to_int(
     }
 
     # Assign new question label
-    for lab in check_condition:
-        if lab in question_label:
-            label = check_condition[lab]
+    for label in check_condition:
+        if label in question_label:
+            new_question_label = check_condition[label]
 
     # Check if correct question has been chosen
-    if label is None:
+    if new_question_label is None:
         raise ValueError("Question incompatible with specified condition type.")
-
-    # responses = self.get_responses(question).iloc[:, 0]
-
-    def _strRange_to_intRange(strAnswer: str) -> int:
-        # e.g. 701-801: take the mean of upper and lower value
-        if re.search(r"(?:[1-9]\d*)", strAnswer):
-            list_range = re.findall(r"(?:[1-9]\d*)(?:\.)?(?:[1-9]\d+)?", strAnswer)
-            if len(list_range) > 1:
-                return (int(list_range[0]) + int(list_range[1])) / 2
-            else:
-                return int(list_range[0])
-
-        # e.g. >1200: take the value itself
-        # elif re.search(r">", strAnswer):
-        #    return int(re.findall(r"\d+", strAnswer)[0])
-        else:
-            return np.NaN  # Handy when computing mean, median,... using numpy
 
     df = pd.DataFrame()
 
-    # Multiple and single choice question
-    if question_type == "single-choice":
-        # Apply function to each row in df
-        responses_num = responses.iloc[:, 0].apply(_strRange_to_intRange)
+    responses_numerical = responses.iloc[:, 0].apply(strRange_to_intRange)
 
-    else:
-        # get answer labels and convert them to a list of corresponding numerical values
-        vals = list(responses)
-        vals_num = list(map(_strRange_to_intRange, vals))
-
-        def convert_multi_range(row):
-            indices = np.where(row)[0]
-            if indices.size > 0:
-                answer_values = [vals_num[int(j)] for j in indices]
-                return np.sum(answer_values)
-            else:
-                return np.NaN
-
-        ## For each participant, the sum of each given answer is computed. Is this even usefull?
-        responses_num = responses.apply(convert_multi_range, axis=1)
-
-    df[f"{label}"] = responses_num
+    df[f"{new_question_label}"] = responses_numerical
 
     return df

@@ -149,31 +149,31 @@ class LimeSurvey:
             },
         },
         "noincome_duration": {
-            "label": "How long working on PhD without income?",
+            "label": "For how long have you been working on your PhD without pay?",
             "type": "free",
         },
         "income_amount": {
-            "label": "What is current net-income?",
+            "label": "Right now, what is your monthly net income for your work at your research organization?",
             "type": "free",
         },
         "costs_amount": {
-            "label": "What are current iving costs?",
+            "label": "How much do you pay for your rent and associated living costs per month in euros?",
             "type": "free",
         },
         "contract_duration": {
-            "label": "What was/is longest contract duration during PhD?",
+            "label": "What was or is the longest duration of your contract or stipend related to your PhD project?",
             "type": "free",
         },
         "holiday_amount": {
-            "label": "How many holiday per year?",
+            "label": "How many holidays per year can you take according to your contract or stipend?",
             "type": "free",
         },
         "hours_amount": {
-            "label": "How many hours on average per week?",
+            "label": "On average, how many hours do you typically work per week in total?",
             "type": "free",
         },
         "holidaytaken_amount": {
-            "label": "How many days off last year",
+            "label": "How many days did you take off (holiday) in the past year?",
             "type": "free",
         },
         "formal_supervision_score": {
@@ -418,7 +418,6 @@ class LimeSurvey:
             return range_to_int(
                 question_label=self.get_label(question),
                 responses=self.get_responses(question),
-                question_type=self.get_question_type(question),
             )
 
     def __copy__(self):

@@ -198,10 +198,31 @@ class TestRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
 
 
 class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
-    """Test Transformations rate_supervision for formal and direct supervision"""
+    """Test Transformations range for different questions"""
 
-    def test_range_to_num(self):
-        """Test rating of formal supervision"""
+    def test_range_to_num_noincome_duration(self):
+        """Test convert to num noincome_duration"""
+
+        question = "B1b"
+
+        result = range_to_int(
+            question_label=self.survey.get_label(question),
+            responses=self.survey.get_responses(question),
+            question_type=self.survey.get_question_type(question),
+        )
+
+        ref = pd.DataFrame(
+            data={
+                "noincome_duration": [np.NaN, np.NaN, np.NaN],
+            },
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
+
+    def test_range_to_num_income_amount(self):
+        """Test convert to num income_amount"""
 
         question = "B2"
 
@@ -215,6 +236,103 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
             data={
                 "income_amount": [1650.5, 1950.5, 2050.5],
             },
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
+
+    def test_range_to_num_costs_amount(self):
+        """Test convert to num costs_amount"""
+
+        question = "B3"
+
+        result = range_to_int(
+            question_label=self.survey.get_label(question),
+            responses=self.survey.get_responses(question),
+            question_type=self.survey.get_question_type(question),
+        )
+
+        ref = pd.DataFrame(
+            data={
+                "costs_amount": [850.0, 750.0, 550.0],
+            },
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
+
+    def test_range_to_num_contract_duration(self):
+        """Test convert to num contract_duration"""
+
+        question = "B4"
+
+        result = range_to_int(
+            question_label=self.survey.get_label(question),
+            responses=self.survey.get_responses(question),
+            question_type=self.survey.get_question_type(question),
+        )
+
+        ref = pd.DataFrame(
+            data={"contract_duration": [30.0, 48.0, 30.0]},
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
+
+    def test_range_to_num_holiday_amount(self):
+        """Test convert to num holiday_amount"""
+
+        question = "B10"
+
+        result = range_to_int(
+            question_label=self.survey.get_label(question),
+            responses=self.survey.get_responses(question),
+            question_type=self.survey.get_question_type(question),
+        )
+
+        ref = pd.DataFrame(
+            data={"holiday_amount": [28.0, 28.0, 28.0]},
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
+
+    def test_range_to_num_hours_amount(self):
+        """Test convert to num hours_amount"""
+
+        question = "C4"
+
+        result = range_to_int(
+            question_label=self.survey.get_label(question),
+            responses=self.survey.get_responses(question),
+            question_type=self.survey.get_question_type(question),
+        )
+
+        ref = pd.DataFrame(
+            data={"hours_amount": [53.0, 38.0, 43.0]},
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
+
+    def test_range_to_num_holidaytaken_amount(self):
+        """Test convert to num holidaytaken_amount"""
+
+        question = "C8"
+
+        result = range_to_int(
+            question_label=self.survey.get_label(question),
+            responses=self.survey.get_responses(question),
+            question_type=self.survey.get_question_type(question),
+        )
+
+        ref = pd.DataFrame(
+            data={"holidaytaken_amount": [8.0, 28.0, 13.0]},
             index=[2, 3, 4],
         )
         ref.index.name = "id"

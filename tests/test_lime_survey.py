@@ -76,37 +76,37 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
                 "is_contingent": False,
             },
             "noincome_duration": {
-                "label": "How long working on PhD without income?",
+                "label": "For how long have you been working on your PhD without pay?",
                 "type": "free",
                 "is_contingent": False,
             },
             "income_amount": {
-                "label": "What is current net-income?",
+                "label": "Right now, what is your monthly net income for your work at your research organization?",
                 "type": "free",
                 "is_contingent": False,
             },
             "costs_amount": {
-                "label": "What are current iving costs?",
+                "label": "How much do you pay for your rent and associated living costs per month in euros?",
                 "type": "free",
                 "is_contingent": False,
             },
             "contract_duration": {
-                "label": "What was/is longest contract duration during PhD?",
+                "label": "What was or is the longest duration of your contract or stipend related to your PhD project?",
                 "type": "free",
                 "is_contingent": False,
             },
             "holiday_amount": {
-                "label": "How many holiday per year?",
+                "label": "How many holidays per year can you take according to your contract or stipend?",
                 "type": "free",
                 "is_contingent": False,
             },
             "hours_amount": {
-                "label": "How many hours on average per week?",
+                "label": "On average, how many hours do you typically work per week in total?",
                 "type": "free",
                 "is_contingent": False,
             },
             "holidaytaken_amount": {
-                "label": "How many days off last year",
+                "label": "How many days did you take off (holiday) in the past year?",
                 "type": "free",
                 "is_contingent": False,
             },
@@ -292,7 +292,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
     def test_range_to_int_transformation_questions(self):
         """Test adding responses to transformation questions in read_responses"""
 
-        range_questions = {"range": ["B2", "B10"]}
+        range_questions = {"range": ["B1b", "B2", "B3", "B4", "B10", "C4", "C8"]}
 
         survey = LimeSurvey(structure_file=self.structure_file)
         survey.read_responses(
@@ -301,15 +301,20 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         )
         ref = pd.DataFrame(
             data={
+                "noincome_duration": [np.NaN, np.NaN, np.NaN],
                 "income_amount": [1650.5, 1950.5, 2050.5],
+                "costs_amount": [850.0, 750.0, 550.0],
+                "contract_duration": [30.0, 48.0, 30.0],
                 "holiday_amount": [28.0, 28.0, 28.0],
+                "hours_amount": [53.0, 38.0, 43.0],
+                "holidaytaken_amount": [8.0, 28.0, 13.0],
             },
             index=[2, 3, 4],
         )
         ref.index.name = "id"
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(
-            survey.responses.iloc[:3, -2:], ref, msg="DataFrames not equal."
+            survey.responses.iloc[:3, -7:], ref, msg="DataFrames not equal."
         )
 
     def test_single_choice_dtype(self):
@@ -534,12 +539,17 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
     def test_range_transforms(self):
         """Test transforming two types of range to numerical questions"""
 
-        single_choice_1_transformed = self.survey.transform_question("B2", "range")
-        single_choice_2_transformed = self.survey.transform_question("B10", "range")
+        single_choice_1_transformed = self.survey.transform_question("B1b", "range")
+        single_choice_2_transformed = self.survey.transform_question("B2", "range")
+        single_choice_3_transformed = self.survey.transform_question("B3", "range")
+        single_choice_4_transformed = self.survey.transform_question("B4", "range")
+        single_choice_5_transformed = self.survey.transform_question("B10", "range")
+        single_choice_6_transformed = self.survey.transform_question("C4", "range")
+        single_choice_7_transformed = self.survey.transform_question("C8", "range")
 
         single_choice_1_ref = pd.DataFrame(
             data={
-                "income_amount": [1650.5, 1950.5, 2050.5],
+                "noincome_duration": [np.NaN, np.NaN, np.NaN],
             },
             index=[2, 3, 4],
         )
@@ -547,11 +557,51 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
 
         single_choice_2_ref = pd.DataFrame(
             data={
-                "holiday_amount": [28.0, 28.0, 28.0],
+                "income_amount": [1650.5, 1950.5, 2050.5],
             },
             index=[2, 3, 4],
         )
         single_choice_2_ref.index.name = "id"
+
+        single_choice_3_ref = pd.DataFrame(
+            data={
+                "costs_amount": [850.0, 750.0, 550.0],
+            },
+            index=[2, 3, 4],
+        )
+        single_choice_3_ref.index.name = "id"
+
+        single_choice_4_ref = pd.DataFrame(
+            data={
+                "contract_duration": [30.0, 48.0, 30.0],
+            },
+            index=[2, 3, 4],
+        )
+        single_choice_4_ref.index.name = "id"
+
+        single_choice_5_ref = pd.DataFrame(
+            data={
+                "holiday_amount": [28.0, 28.0, 28.0],
+            },
+            index=[2, 3, 4],
+        )
+        single_choice_5_ref.index.name = "id"
+
+        single_choice_6_ref = pd.DataFrame(
+            data={
+                "hours_amount": [53.0, 38.0, 43.0],
+            },
+            index=[2, 3, 4],
+        )
+        single_choice_6_ref.index.name = "id"
+
+        single_choice_7_ref = pd.DataFrame(
+            data={
+                "holidaytaken_amount": [8.0, 28.0, 13.0],
+            },
+            index=[2, 3, 4],
+        )
+        single_choice_7_ref.index.name = "id"
 
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(
@@ -562,6 +612,31 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
         self.assert_df_equal(
             single_choice_2_transformed.iloc[:3],
             single_choice_2_ref,
+            msg="Series not equal",
+        )
+        self.assert_df_equal(
+            single_choice_3_transformed.iloc[:3],
+            single_choice_3_ref,
+            msg="Series not equal",
+        )
+        self.assert_df_equal(
+            single_choice_4_transformed.iloc[:3],
+            single_choice_4_ref,
+            msg="Series not equal",
+        )
+        self.assert_df_equal(
+            single_choice_5_transformed.iloc[:3],
+            single_choice_5_ref,
+            msg="Series not equal",
+        )
+        self.assert_df_equal(
+            single_choice_6_transformed.iloc[:3],
+            single_choice_6_ref,
+            msg="Series not equal",
+        )
+        self.assert_df_equal(
+            single_choice_7_transformed.iloc[:3],
+            single_choice_7_ref,
             msg="Series not equal",
         )
 
