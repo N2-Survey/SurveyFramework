@@ -208,7 +208,6 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
         result = range_to_int(
             question_label=self.survey.get_label(question),
             responses=self.survey.get_responses(question),
-            question_type=self.survey.get_question_type(question),
         )
 
         ref = pd.DataFrame(
@@ -229,7 +228,6 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
         result = range_to_int(
             question_label=self.survey.get_label(question),
             responses=self.survey.get_responses(question),
-            question_type=self.survey.get_question_type(question),
         )
 
         ref = pd.DataFrame(
@@ -250,7 +248,6 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
         result = range_to_int(
             question_label=self.survey.get_label(question),
             responses=self.survey.get_responses(question),
-            question_type=self.survey.get_question_type(question),
         )
 
         ref = pd.DataFrame(
@@ -271,7 +268,6 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
         result = range_to_int(
             question_label=self.survey.get_label(question),
             responses=self.survey.get_responses(question),
-            question_type=self.survey.get_question_type(question),
         )
 
         ref = pd.DataFrame(
@@ -290,7 +286,6 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
         result = range_to_int(
             question_label=self.survey.get_label(question),
             responses=self.survey.get_responses(question),
-            question_type=self.survey.get_question_type(question),
         )
 
         ref = pd.DataFrame(
@@ -309,7 +304,6 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
         result = range_to_int(
             question_label=self.survey.get_label(question),
             responses=self.survey.get_responses(question),
-            question_type=self.survey.get_question_type(question),
         )
 
         ref = pd.DataFrame(
@@ -328,7 +322,6 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
         result = range_to_int(
             question_label=self.survey.get_label(question),
             responses=self.survey.get_responses(question),
-            question_type=self.survey.get_question_type(question),
         )
 
         ref = pd.DataFrame(
