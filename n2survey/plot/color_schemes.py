@@ -1,51 +1,65 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
+from matplotlib.colors import LinearSegmentedColormap
 
 
-def get_rgb_list(pallete):
-    return [c["rgb"] for c in pallete]
-
-
-def example_plot(pallete):
-    plt.figure(figsize=(len(pallete), 1))
+def example_plot(palette):
+    plt.figure(figsize=(len(palette), 1))
+    sns.set_theme(palette=palette)
     plt.axis('off')
-    dx = 1/len(pallete)
-    for i, p in enumerate(pallete):
-        plt.scatter(i*dx, 1,  s=500, color=np.array(p["rgb"])/255, marker="s")
+    dx = 1 / len(palette)
+    for i, p in enumerate(palette):
+        sns.scatterplot(x=i * dx, y=np.ones(len(palette)), s=500, marker="s")
     plt.show()
 
 
 class ColorSchemes:
+    base_colors = {
+        "mps": [np.array([201, 219, 216]) / 255,
+                np.array([4, 117, 105]) / 255],
 
+        "leibniz": [np.array([173, 173, 211]) / 255,
+                    np.array([226, 142, 98]) / 255,
+                    np.array([219, 223, 84]) / 255,
+                    np.array([111, 152, 204]) / 255],
 
-    def __init__(self):
-        pass
-        #Todo check how lime survey plots generates the colors and adapt the
-        # contet accordingly
+        "helmholtz": [np.array([0, 40, 100]) / 255,
+                      # np.array([34, 238, 251]) / 255],
+                      np.array([34, 176, 248]) / 255],
 
-        self.phd_net = [{"name": "Opal", "hex": "C9DBD8", "rgb": [201, 219, 216],
-                         "cmyk": [8, 0, 1, 14], "hsb": [170, 8, 86],
-                         "hsl": [170, 20, 82], "lab": [86, -7, -1]},
-                        {"name": "Spanish Gray", "hex": "999999",
-                         "rgb": [153, 153, 153], "cmyk": [0, 0, 0, 40],
-                         "hsb": [0, 0, 60], "hsl": [0, 0, 60], "lab": [63, 0, 0]},
-                        {"name": "Black", "hex": "000000", "rgb": [0, 0, 0],
-                         "cmyk": [0, 0, 0, 100], "hsb": [0, 0, 0], "hsl": [0, 0, 0],
-                         "lab": [0, 0, 0]},
-                        {"name": "Pine Green", "hex": "047569", "rgb": [4, 117, 105],
-                         "cmyk": [97, 0, 10, 54], "hsb": [174, 97, 46],
-                         "hsl": [174, 93, 24], "lab": [44, -31, -1]},
-                        {"name": "Opal", "hex": "A9CDC9", "rgb": [169, 205, 201],
-                         "cmyk": [18, 0, 2, 20], "hsb": [173, 18, 80],
-                         "hsl": [173, 26, 73], "lab": [80, -13, -2]}]
+        "tum": [np.array([230, 230, 230]) / 255,
+                np.array([48, 112, 179]) / 255],
+
+        "n2_net": [
+            np.array([46, 71, 128]) / 255,
+            np.array([26, 130, 161]) / 255,
+            np.array([229, 21, 109]) / 255, ]}
+
+    @staticmethod
+    def map_colors(n_colors, name):
+        colors = ColorSchemes.base_colors[name]
+        cmap = LinearSegmentedColormap.from_list(name, colors)
+        c_list = [cmap(i, alpha=False) for i in
+                  np.linspace(0, 1, n_colors, endpoint=True)]
+        return sns.color_palette(c_list)
+
+    def __init__(self, n_colors=5):
+        self.n_colors = n_colors
+        self.mps = ColorSchemes.map_colors(n_colors, "mps")
+        self.leibniz = ColorSchemes.map_colors(n_colors, "leibniz")
+        self.helmholtz = ColorSchemes.map_colors(n_colors, "helmholtz")
+        self.tum = ColorSchemes.map_colors(n_colors, "tum")
+        self.n2_net = ColorSchemes.map_colors(n_colors, "n2_net")
 
 
 def main():
-    cs = ColorSchemes()
-    color_list  = get_rgb_list(cs.phd_net)
-    example_plot(cs.phd_net)
+    example_plot(ColorSchemes(5).mps)
+    example_plot(ColorSchemes(5).leibniz)
+    example_plot(ColorSchemes(5).helmholtz)
+    example_plot(ColorSchemes(5).tum)
+    example_plot(ColorSchemes().n2_net)
 
 
 if __name__ == "__main__":
     main()
-
