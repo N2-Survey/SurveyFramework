@@ -1411,7 +1411,7 @@ class TestLimeSurveyFilterNa(BaseTestLimeSurvey2021WithResponsesCase):
         filtered_survey = self.survey.filter_na("F5a")
 
         np.testing.assert_equal(
-            list(filtered_survey.responses.index), [20, 10, 28, 31, 37]
+            list(filtered_survey.responses.index), [2, 10, 28, 31, 37]
         )
 
 
