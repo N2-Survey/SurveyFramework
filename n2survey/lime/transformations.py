@@ -1,8 +1,12 @@
+import re
+
+import numpy as np
 import pandas as pd
 
 __all__ = [
     "rate_supervision",
     "rate_mental_health",
+    "range_to_numerical",
 ]
 
 
@@ -240,5 +244,67 @@ def rate_mental_health(
 
     if not keep_subscores:
         df = df.drop(df.columns[:-2], axis=1)
+
+    return df
+
+
+def strRange_to_intRange(strAnswer: str) -> int:
+
+    """Calculate the mean of all numbers present in a string.
+
+    Args:
+        strAnswer (str): String containing numbers.
+
+    Returns:
+        int: Mean of all values present in the string.
+
+    """
+
+    if re.search(r"(?:[1-9]\d*)", strAnswer):
+        list_range = re.findall(r"(?:[1-9]\d*)(?:\.)?(?:[1-9]\d+)?", strAnswer)
+        list_range_numerical = list(map(int, list_range))
+
+        return int(np.mean(list_range_numerical))
+
+    else:
+        return np.NaN  # Handy when computing mean, median,... using numpy
+
+
+def range_to_numerical(question_label: str, responses: pd.DataFrame) -> pd.DataFrame:
+
+    """Get numerical values from responses with ranges in a non-numerical datatype.
+
+    Args:
+        question_label (str): Question label to use for transformation type inference
+        responses (pd.DataFrame): DataFrame containing responses data
+
+    Returns:
+        pd.DataFrame: Numerical values for each range
+    """
+
+    check_condition = {
+        "For how long have you been working on your PhD without pay": "noincome_duration",
+        "Right now, what is your monthly net income for your work at your research organization": "income_amount",
+        "How much do you pay for your rent and associated living costs per month in euros": "costs_amount",
+        "What was or is the longest duration of your contract or stipend related to your PhD project": "contract_duration",
+        "How many holidays per year can you take according to your contract or stipend": "holiday_amount",
+        "On average, how many hours do you typically work per week in total": "hours_amount",
+        "How many days did you take off (holiday) in the past year": "holidaytaken_amount",
+    }
+
+    # Assign new question label
+    for label in check_condition:
+        if label in question_label:
+            new_question_label = check_condition[label]
+
+    # Check if correct question has been chosen
+    if new_question_label is None:
+        raise ValueError("Question incompatible with specified condition type.")
+
+    df = pd.DataFrame()
+
+    responses_numerical = responses.iloc[:, 0].apply(strRange_to_intRange)
+
+    df[f"{new_question_label}"] = responses_numerical
 
     return df

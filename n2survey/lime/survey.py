@@ -9,7 +9,11 @@ import numpy as np
 import pandas as pd
 
 from n2survey.lime.structure import read_lime_questionnaire_structure
-from n2survey.lime.transformations import rate_mental_health, rate_supervision
+from n2survey.lime.transformations import (
+    range_to_numerical,
+    rate_mental_health,
+    rate_supervision,
+)
 from n2survey.plot import (
     likert_bar_plot,
     multiple_choice_bar_plot,
@@ -143,6 +147,34 @@ class LimeSurvey:
                 "A4": "moderately severe depression",
                 "A5": "severe depression",
             },
+        },
+        "noincome_duration": {
+            "label": "For how long have you been working on your PhD without pay?",
+            "type": "free",
+        },
+        "income_amount": {
+            "label": "Right now, what is your monthly net income for your work at your research organization?",
+            "type": "free",
+        },
+        "costs_amount": {
+            "label": "How much do you pay for your rent and associated living costs per month in euros?",
+            "type": "free",
+        },
+        "contract_duration": {
+            "label": "What was or is the longest duration of your contract or stipend related to your PhD project?",
+            "type": "free",
+        },
+        "holiday_amount": {
+            "label": "How many holidays per year can you take according to your contract or stipend?",
+            "type": "free",
+        },
+        "hours_amount": {
+            "label": "On average, how many hours do you typically work per week in total?",
+            "type": "free",
+        },
+        "holidaytaken_amount": {
+            "label": "How many days did you take off (holiday) in the past year?",
+            "type": "free",
         },
         "formal_supervision_score": {
             "label": "What is the formal supervision score?",
@@ -366,6 +398,7 @@ class LimeSurvey:
             "trait_anxiety": "mental_health",
             "depression": "mental_health",
             "supervision": "supervision",
+            "range": "range_to_numerical",
         }
 
         if transform_dict.get(transform) == "mental_health":
@@ -380,6 +413,11 @@ class LimeSurvey:
                 question_label=self.get_label(question),
                 responses=self.get_responses(question, labels=False),
                 choices=self.get_choices(question),
+            )
+        elif transform_dict.get(transform) == "range_to_numerical":
+            return range_to_numerical(
+                question_label=self.get_label(question),
+                responses=self.get_responses(question),
             )
 
     def __copy__(self):
