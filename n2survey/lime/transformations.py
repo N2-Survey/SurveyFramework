@@ -6,7 +6,7 @@ import pandas as pd
 __all__ = [
     "rate_supervision",
     "rate_mental_health",
-    "range_to_int",
+    "range_to_numerical",
 ]
 
 
@@ -270,7 +270,7 @@ def strRange_to_intRange(strAnswer: str) -> int:
         return np.NaN  # Handy when computing mean, median,... using numpy
 
 
-def range_to_int(question_label: str, responses: pd.DataFrame) -> pd.DataFrame:
+def range_to_numerical(question_label: str, responses: pd.DataFrame) -> pd.DataFrame:
 
     """Get numerical values from responses with ranges in a non-numerical datatype.
 

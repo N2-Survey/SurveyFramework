@@ -187,7 +187,8 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         self.assertEqual(bool(not_in_structure), False)
 
     def test_mental_health_transformation_questions(self):
-        """Test adding responses to transformation questions in read_responses"""
+        """Test adding responses to mental health transformationquestions in
+        read_responses"""
 
         mental_health_questions = {
             "state_anxiety": "D1",
@@ -245,7 +246,8 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
     def test_supervision_transformation_questions(self):
-        """Test adding responses to transformation questions in read_responses"""
+        """Test adding responses to supervision transformation questions in
+        read_responses"""
 
         supervision_questions = {"supervision": ["E7a", "E7b"]}
 
@@ -289,8 +291,9 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
             survey.responses.iloc[6:9, -4:], ref, msg="DataFrames not equal."
         )
 
-    def test_range_to_int_transformation_questions(self):
-        """Test adding responses to transformation questions in read_responses"""
+    def test_range_to_numerical_transformation_questions(self):
+        """Test adding responses to range_to_numerical transformation questions
+        in read_responses"""
 
         range_questions = {"range": ["B1b", "B2", "B3", "B4", "B10", "C4", "C8"]}
 

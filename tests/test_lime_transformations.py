@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from n2survey.lime.transformations import (
-    range_to_int,
+    range_to_numerical,
     rate_mental_health,
     rate_supervision,
 )
@@ -197,15 +197,15 @@ class TestRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
         self.assert_df_equal(result.iloc[6:9, -2:], ref, msg="DataFrames not equal.")
 
 
-class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
+class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
     """Test Transformations range for different questions"""
 
-    def test_range_to_num_noincome_duration(self):
+    def test_range_to_numerical_noincome_duration(self):
         """Test convert to num noincome_duration"""
 
         question = "B1b"
 
-        result = range_to_int(
+        result = range_to_numerical(
             question_label=self.survey.get_label(question),
             responses=self.survey.get_responses(question),
         )
@@ -220,12 +220,12 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
 
-    def test_range_to_num_income_amount(self):
+    def test_range_to_numerical_income_amount(self):
         """Test convert to num income_amount"""
 
         question = "B2"
 
-        result = range_to_int(
+        result = range_to_numerical(
             question_label=self.survey.get_label(question),
             responses=self.survey.get_responses(question),
         )
@@ -240,12 +240,12 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
 
-    def test_range_to_num_costs_amount(self):
+    def test_range_to_numerical_costs_amount(self):
         """Test convert to num costs_amount"""
 
         question = "B3"
 
-        result = range_to_int(
+        result = range_to_numerical(
             question_label=self.survey.get_label(question),
             responses=self.survey.get_responses(question),
         )
@@ -260,12 +260,12 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
 
-    def test_range_to_num_contract_duration(self):
+    def test_range_to_numerical_contract_duration(self):
         """Test convert to num contract_duration"""
 
         question = "B4"
 
-        result = range_to_int(
+        result = range_to_numerical(
             question_label=self.survey.get_label(question),
             responses=self.survey.get_responses(question),
         )
@@ -278,12 +278,12 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
 
-    def test_range_to_num_holiday_amount(self):
+    def test_range_to_numerical_holiday_amount(self):
         """Test convert to num holiday_amount"""
 
         question = "B10"
 
-        result = range_to_int(
+        result = range_to_numerical(
             question_label=self.survey.get_label(question),
             responses=self.survey.get_responses(question),
         )
@@ -296,12 +296,12 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
 
-    def test_range_to_num_hours_amount(self):
+    def test_range_to_numerical_hours_amount(self):
         """Test convert to num hours_amount"""
 
         question = "C4"
 
-        result = range_to_int(
+        result = range_to_numerical(
             question_label=self.survey.get_label(question),
             responses=self.survey.get_responses(question),
         )
@@ -314,12 +314,12 @@ class TestRangeToNum(BaseTestLimeSurvey2021WithResponsesCase):
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
 
-    def test_range_to_num_holidaytaken_amount(self):
+    def test_range_to_numerical_holidaytaken_amount(self):
         """Test convert to num holidaytaken_amount"""
 
         question = "C8"
 
-        result = range_to_int(
+        result = range_to_numerical(
             question_label=self.survey.get_label(question),
             responses=self.survey.get_responses(question),
         )

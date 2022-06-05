@@ -10,7 +10,7 @@ import pandas as pd
 
 from n2survey.lime.structure import read_lime_questionnaire_structure
 from n2survey.lime.transformations import (
-    range_to_int,
+    range_to_numerical,
     rate_mental_health,
     rate_supervision,
 )
@@ -398,7 +398,7 @@ class LimeSurvey:
             "trait_anxiety": "mental_health",
             "depression": "mental_health",
             "supervision": "supervision",
-            "range": "range_to_int",
+            "range": "range_to_numerical",
         }
 
         if transform_dict.get(transform) == "mental_health":
@@ -414,8 +414,8 @@ class LimeSurvey:
                 responses=self.get_responses(question, labels=False),
                 choices=self.get_choices(question),
             )
-        elif transform_dict.get(transform) == "range_to_int":
-            return range_to_int(
+        elif transform_dict.get(transform) == "range_to_numerical":
+            return range_to_numerical(
                 question_label=self.get_label(question),
                 responses=self.get_responses(question),
             )
