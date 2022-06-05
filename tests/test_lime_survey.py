@@ -540,7 +540,7 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
     def test_range_transforms(self):
-        """Test transforming two types of range to numerical questions"""
+        """Test transforming range to numerical questions"""
 
         single_choice_1_transformed = self.survey.transform_question("B1b", "range")
         single_choice_2_transformed = self.survey.transform_question("B2", "range")

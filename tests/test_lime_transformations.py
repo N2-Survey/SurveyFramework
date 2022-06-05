@@ -201,7 +201,7 @@ class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
     """Test Transformations range for different questions"""
 
     def test_range_to_numerical_noincome_duration(self):
-        """Test convert to num noincome_duration"""
+        """Test convert to numerical noincome_duration"""
 
         question = "B1b"
 
@@ -221,7 +221,7 @@ class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
         self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
 
     def test_range_to_numerical_income_amount(self):
-        """Test convert to num income_amount"""
+        """Test convert to numerical income_amount"""
 
         question = "B2"
 
@@ -241,7 +241,7 @@ class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
         self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
 
     def test_range_to_numerical_costs_amount(self):
-        """Test convert to num costs_amount"""
+        """Test convert to numerical costs_amount"""
 
         question = "B3"
 
@@ -261,7 +261,7 @@ class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
         self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
 
     def test_range_to_numerical_contract_duration(self):
-        """Test convert to num contract_duration"""
+        """Test convert to numerical contract_duration"""
 
         question = "B4"
 
@@ -279,7 +279,7 @@ class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
         self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
 
     def test_range_to_numerical_holiday_amount(self):
-        """Test convert to num holiday_amount"""
+        """Test convert to numerical holiday_amount"""
 
         question = "B10"
 
@@ -297,7 +297,7 @@ class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
         self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
 
     def test_range_to_numerical_hours_amount(self):
-        """Test convert to num hours_amount"""
+        """Test convert to numerical hours_amount"""
 
         question = "C4"
 
@@ -315,7 +315,7 @@ class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
         self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
 
     def test_range_to_numerical_holidaytaken_amount(self):
-        """Test convert to num holidaytaken_amount"""
+        """Test convert to numerical holidaytaken_amount"""
 
         question = "C8"
 
