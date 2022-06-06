@@ -359,5 +359,37 @@ class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
         self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
 
 
+class TestPhDDuration(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test Transformations calculate_phd_duration"""
+
+    def test_phd_duration(self):
+        """Test calculated phd duration"""
+
+        start_question = "A8"
+        end_question = "A9"
+        # phd_duration_questions = {"phd_duration": ("A8", "A9")}
+
+        result = calculate_phd_duration(
+            start_responses=self.survey.get_responses(start_question, labels=False),
+            end_responses=self.survey.get_responses(end_question, labels=False),
+        )
+        # survey = LimeSurvey(structure_file=self.structure_file)
+        # survey.read_responses(
+        #     responses_file=self.responses_file,
+        #     transformation_questions=phd_duration_questions,
+        # )
+        ref = pd.DataFrame(
+            data={
+                "PhD duration (days)": [1826.0, 1095.0, 1065.0],
+                "PhD duration (months)": [60.0, 36.0, 35.0],
+                "PhD duration (years)": [5.0, 3.0, 3.0],
+            },
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(result.iloc[:3, :], ref, msg="DataFrames not equal.")
+
+
 if __name__ == "__main__":
     unittest.main()
