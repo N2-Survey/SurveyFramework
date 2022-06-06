@@ -1402,5 +1402,18 @@ class TestLimeSurveyQuery(BaseTestLimeSurvey2021WithResponsesCase):
         np.testing.assert_equal(list(filtered_survey.responses.index), [5, 21, 46])
 
 
+class TestLimeSurveyFilterNa(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test LimeSurvey filter_na method"""
+
+    def test_filter_na(self):
+        """Test filter_na method"""
+
+        filtered_survey = self.survey.filter_na("F5a")
+
+        np.testing.assert_equal(
+            list(filtered_survey.responses.index), [2, 10, 28, 31, 37]
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

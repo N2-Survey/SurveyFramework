@@ -579,6 +579,26 @@ class LimeSurvey:
 
         return filtered_survey
 
+    def filter_na(self, question: str) -> "LimeSurvey":
+        """Filter out entries in responses DataFrame with no answer
+        to specified question.
+
+        Args:
+            question (str): Question to which the entries are filtered.
+
+        returns:
+            LimeSurvey: LimeSurvey with filtered responses.
+        """
+
+        # Make copy of LimeSurvey instance
+        filtered_survey = self.__copy__()
+        # Filter responses DataFrame
+        filtered_survey.responses = filtered_survey.responses[
+            filtered_survey.responses[question].notna()
+        ]
+
+        return filtered_survey
+
     def count(
         self,
         question: str,
