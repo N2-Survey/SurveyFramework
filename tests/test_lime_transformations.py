@@ -374,7 +374,6 @@ class TestRateSatisfaction(BaseTestLimeSurvey2021WithResponsesCase):
             responses=self.survey.get_responses(question, labels=False),
             choices=self.survey.get_choices(question),
         )
-
         ref = pd.DataFrame(
             data={
                 "satisfaction_score": [5.0, 4.0, 3.0],
@@ -395,7 +394,6 @@ class TestRateSatisfaction(BaseTestLimeSurvey2021WithResponsesCase):
         ref.index.name = "id"
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
-
 
 if __name__ == "__main__":
     unittest.main()
