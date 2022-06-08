@@ -352,11 +352,13 @@ def rate_satisfaction(
     keep_subscores: bool = False,
 ) -> pd.DataFrame:
     """Calculate average overall satisfaction rating
+    Args:
+        question_label (str): Question label to use for transformation type inference
+        responses (pd.DataFrame): DataFrame containing responses data
         choices (dict): dict for answer choice conversion
         keep_subscores (bool, optional): Whether to include scores from subquestions
             in the output DataFrame, or only total score and classification.
             Default False.
-
     Returns:
         pd.DataFrame: Rounded satisfaction ratings and classifications
     """
