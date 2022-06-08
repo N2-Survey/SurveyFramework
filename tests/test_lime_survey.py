@@ -75,6 +75,41 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
                 },
                 "is_contingent": False,
             },
+            "noincome_duration": {
+                "label": "For how long have you been working on your PhD without pay?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "income_amount": {
+                "label": "Right now, what is your monthly net income for your work at your research organization?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "costs_amount": {
+                "label": "How much do you pay for your rent and associated living costs per month in euros?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "contract_duration": {
+                "label": "What was or is the longest duration of your contract or stipend related to your PhD project?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "holiday_amount": {
+                "label": "How many holidays per year can you take according to your contract or stipend?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "hours_amount": {
+                "label": "On average, how many hours do you typically work per week in total?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "holidaytaken_amount": {
+                "label": "How many days did you take off (holiday) in the past year?",
+                "type": "free",
+                "is_contingent": False,
+            },
             "formal_supervision_score": {
                 "label": "What is the formal supervision score?",
                 "type": "free",
@@ -99,23 +134,6 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
             },
             "direct_supervision_class": {
                 "label": "What is the direct supervision class?",
-                "type": "single-choice",
-                "choices": {
-                    "A1": "very satisfied",
-                    "A2": "rather satisfied",
-                    "A3": "neither satisfied nor dissatisfied",
-                    "A4": "rather dissatisfied",
-                    "A5": "very dissatisfied",
-                },
-                "is_contingent": False,
-            },
-            "satisfaction_score": {
-                "label": "What is the satisfaction score?",
-                "type": "free",
-                "is_contingent": False,
-            },
-            "satisfaction_class": {
-                "label": "What is the satisfaction class?",
                 "type": "single-choice",
                 "choices": {
                     "A1": "very satisfied",
@@ -169,7 +187,8 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         self.assertEqual(bool(not_in_structure), False)
 
     def test_mental_health_transformation_questions(self):
-        """Test adding responses to transformation questions in read_responses"""
+        """Test adding responses to mental health transformationquestions in
+        read_responses"""
 
         mental_health_questions = {
             "state_anxiety": "D1",
@@ -227,7 +246,8 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
     def test_supervision_transformation_questions(self):
-        """Test adding responses to transformation questions in read_responses"""
+        """Test adding responses to supervision transformation questions in
+        read_responses"""
 
         supervision_questions = {"supervision": ["E7a", "E7b"]}
 
@@ -271,37 +291,33 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
             survey.responses.iloc[6:9, -4:], ref, msg="DataFrames not equal."
         )
 
-    def test_satisfaction_transformation_questions(self):
-        """Test adding responses to transformation questions in read_responses"""
+    def test_range_to_numerical_transformation_questions(self):
+        """Test adding responses to range_to_numerical transformation questions
+        in read_responses"""
 
-        satisfaction_questions = {"satisfaction": ["C1"]}
+        range_questions = {"range": ["B1b", "B2", "B3", "B4", "B10", "C4", "C8"]}
 
         survey = LimeSurvey(structure_file=self.structure_file)
         survey.read_responses(
             responses_file=self.responses_file,
-            transformation_questions=satisfaction_questions,
+            transformation_questions=range_questions,
         )
         ref = pd.DataFrame(
             data={
-                "satisfaction_score": [5.0, 4.0, 3.0],
-                "satisfaction_class": pd.Categorical(
-                    ["A1", "A2", "A3"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
-                    ordered=True,
-                ),
+                "noincome_duration": [np.NaN, np.NaN, np.NaN],
+                "income_amount": [1650.0, 1950.0, 2050.0],
+                "costs_amount": [850.0, 750.0, 550.0],
+                "contract_duration": [30.0, 48.0, 30.0],
+                "holiday_amount": [28.0, 28.0, 28.0],
+                "hours_amount": [53.0, 38.0, 43.0],
+                "holidaytaken_amount": [8.0, 28.0, 13.0],
             },
             index=[2, 3, 4],
         )
         ref.index.name = "id"
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(
-            survey.responses.iloc[:3, -2:], ref, msg="DataFrames not equal."
+            survey.responses.iloc[:3, -7:], ref, msg="DataFrames not equal."
         )
 
     def test_single_choice_dtype(self):
@@ -523,39 +539,109 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
             msg="Series not equal",
         )
 
-    def test_satisfaction_transforms(self):
-        """Test transforming satisfaction questions"""
+    def test_range_transforms(self):
+        """Test transforming range to numerical questions"""
 
-        satisfaction_transformed = self.survey.transform_question(
-            "C1", "satisfaction"
-        )
+        single_choice_1_transformed = self.survey.transform_question("B1b", "range")
+        single_choice_2_transformed = self.survey.transform_question("B2", "range")
+        single_choice_3_transformed = self.survey.transform_question("B3", "range")
+        single_choice_4_transformed = self.survey.transform_question("B4", "range")
+        single_choice_5_transformed = self.survey.transform_question("B10", "range")
+        single_choice_6_transformed = self.survey.transform_question("C4", "range")
+        single_choice_7_transformed = self.survey.transform_question("C8", "range")
 
-        satisfaction_ref = pd.DataFrame(
+        single_choice_1_ref = pd.DataFrame(
             data={
-                "satisfaction_score": [5.0, 4.0, 3.0],
-                "satisfaction_class": pd.Categorical(
-                    ["A1", "A2", "A3"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
-                    ordered=True,
-                ),
+                "noincome_duration": [np.NaN, np.NaN, np.NaN],
             },
             index=[2, 3, 4],
         )
-        satisfaction_ref.index.name = "id"
+        single_choice_1_ref.index.name = "id"
+
+        single_choice_2_ref = pd.DataFrame(
+            data={
+                "income_amount": [1650.0, 1950.0, 2050.0],
+            },
+            index=[2, 3, 4],
+        )
+        single_choice_2_ref.index.name = "id"
+
+        single_choice_3_ref = pd.DataFrame(
+            data={
+                "costs_amount": [850.0, 750.0, 550.0],
+            },
+            index=[2, 3, 4],
+        )
+        single_choice_3_ref.index.name = "id"
+
+        single_choice_4_ref = pd.DataFrame(
+            data={
+                "contract_duration": [30.0, 48.0, 30.0],
+            },
+            index=[2, 3, 4],
+        )
+        single_choice_4_ref.index.name = "id"
+
+        single_choice_5_ref = pd.DataFrame(
+            data={
+                "holiday_amount": [28.0, 28.0, 28.0],
+            },
+            index=[2, 3, 4],
+        )
+        single_choice_5_ref.index.name = "id"
+
+        single_choice_6_ref = pd.DataFrame(
+            data={
+                "hours_amount": [53.0, 38.0, 43.0],
+            },
+            index=[2, 3, 4],
+        )
+        single_choice_6_ref.index.name = "id"
+
+        single_choice_7_ref = pd.DataFrame(
+            data={
+                "holidaytaken_amount": [8.0, 28.0, 13.0],
+            },
+            index=[2, 3, 4],
+        )
+        single_choice_7_ref.index.name = "id"
 
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(
-            satisfaction_transformed.iloc[:3],
-            satisfaction_ref,
+            single_choice_1_transformed.iloc[:3],
+            single_choice_1_ref,
             msg="Series not equal",
         )
-
+        self.assert_df_equal(
+            single_choice_2_transformed.iloc[:3],
+            single_choice_2_ref,
+            msg="Series not equal",
+        )
+        self.assert_df_equal(
+            single_choice_3_transformed.iloc[:3],
+            single_choice_3_ref,
+            msg="Series not equal",
+        )
+        self.assert_df_equal(
+            single_choice_4_transformed.iloc[:3],
+            single_choice_4_ref,
+            msg="Series not equal",
+        )
+        self.assert_df_equal(
+            single_choice_5_transformed.iloc[:3],
+            single_choice_5_ref,
+            msg="Series not equal",
+        )
+        self.assert_df_equal(
+            single_choice_6_transformed.iloc[:3],
+            single_choice_6_ref,
+            msg="Series not equal",
+        )
+        self.assert_df_equal(
+            single_choice_7_transformed.iloc[:3],
+            single_choice_7_ref,
+            msg="Series not equal",
+        )
 
 
 class TestLimeSurveyAddQuestion(BaseTestLimeSurvey2021Case):
@@ -1314,6 +1400,19 @@ class TestLimeSurveyQuery(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
         np.testing.assert_equal(list(filtered_survey.responses.index), [5, 21, 46])
+
+
+class TestLimeSurveyFilterNa(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test LimeSurvey filter_na method"""
+
+    def test_filter_na(self):
+        """Test filter_na method"""
+
+        filtered_survey = self.survey.filter_na("F5a")
+
+        np.testing.assert_equal(
+            list(filtered_survey.responses.index), [2, 10, 28, 31, 37]
+        )
 
 
 if __name__ == "__main__":

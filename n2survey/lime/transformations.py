@@ -1,9 +1,12 @@
+import re
+
+import numpy as np
 import pandas as pd
 
 __all__ = [
     "rate_supervision",
     "rate_mental_health",
-    "rate_satisfaction",
+    "range_to_numerical",
 ]
 
 
@@ -245,82 +248,63 @@ def rate_mental_health(
     return df
 
 
-def rate_satisfaction(
-    question_label: str,
-    responses: pd.DataFrame,
-    choices: dict,
-    keep_subscores: bool = False,
-) -> pd.DataFrame:
-    """Calculate average overall satisfaction rating
+def strRange_to_intRange(strAnswer: str) -> int:
+
+    """Calculate the mean of all numbers present in a string.
+
+    Args:
+        strAnswer (str): String containing numbers.
+
+    Returns:
+        int: Mean of all values present in the string.
+
+    """
+
+    if re.search(r"(?:[1-9]\d*)", strAnswer):
+        list_range = re.findall(r"(?:[1-9]\d*)(?:\.)?(?:[1-9]\d+)?", strAnswer)
+        list_range_numerical = list(map(int, list_range))
+
+        return int(np.mean(list_range_numerical))
+
+    else:
+        return np.NaN  # Handy when computing mean, median,... using numpy
+
+
+def range_to_numerical(question_label: str, responses: pd.DataFrame) -> pd.DataFrame:
+
+    """Get numerical values from responses with ranges in a non-numerical datatype.
 
     Args:
         question_label (str): Question label to use for transformation type inference
         responses (pd.DataFrame): DataFrame containing responses data
-        choices (dict): dict for answer choice conversion
-        keep_subscores (bool, optional): Whether to include scores from subquestions
-            in the output DataFrame, or only total score and classification.
-            Default False.
 
     Returns:
-        pd.DataFrame: Rounded satisfaction ratings and classifications
+        pd.DataFrame: Numerical values for each range
     """
-    # Infer labels from question
-    if "satisfied" in question_label:
-        label = "satisfaction"
-    else:
-        raise ValueError("Question incompatible with specified transformation.")
-    # Satisfation classes sorted from high to low (high score equals high satisfaction)
-    satisfaction_classes = [
-        "very satisfied",
-        "rather satisfied",
-        "neither satisfied nor dissatisfied",
-        "rather dissatisfied",
-        "very dissatisfied",
-    ]
-    satisfaction_class_codes = ["A1", "A2", "A3", "A4", "A5"]
-    satisfaction_class_scores = [5.0, 4.0, 3.0, 2.0, 1.0]
 
-    # Set up score conversion dicts for individual questions
-    satisfaction_question_scores = {
-        "Fully agree": 5.0,
-        "Partially agree": 4.0,
-        "Neither agree nor disagree": 3.0,
-        "Partially disagree": 2.0,
-        "Fully disagree": 1.0,
-    }
-    # Inverse satisfaction transformation: Score (5.0) --> Class ('Very satisfied')
-    satisfaction_score_to_class = {
-        score: the_class
-        for the_class, score in zip(satisfaction_classes, satisfaction_class_scores)
-    }
-    # Inverse satisfaction transformation: Class ('Very satisfied') --> Code ('A1')
-    satisfaction_class_to_code = {
-        the_class: code
-        for code, the_class in zip(satisfaction_class_codes, satisfaction_classes)
+    check_condition = {
+        "For how long have you been working on your PhD without pay": "noincome_duration",
+        "Right now, what is your monthly net income for your work at your research organization": "income_amount",
+        "How much do you pay for your rent and associated living costs per month in euros": "costs_amount",
+        "What was or is the longest duration of your contract or stipend related to your PhD project": "contract_duration",
+        "How many holidays per year can you take according to your contract or stipend": "holiday_amount",
+        "On average, how many hours do you typically work per week in total": "hours_amount",
+        "How many days did you take off (holiday) in the past year": "holidaytaken_amount",
     }
 
-    # Map responses from code to text then to score
+    # Assign new question label
+    for label in check_condition:
+        if label in question_label:
+            new_question_label = check_condition[label]
+
+    # Check if correct question has been chosen
+    if new_question_label is None:
+        raise ValueError("Question incompatible with specified condition type.")
+
     df = pd.DataFrame()
-    for column in responses.columns:
-        df[f"{column}_score"] = (
-            responses[column]
-            .map(choices)
-            .map(satisfaction_question_scores, na_action="ignore")
-        )
 
-    # Calculate mean rating and round (ignoring NaN)
-    df[f"{label}_score"] = df.mean(axis=1, skipna=True).round()
+    responses_numerical = responses.iloc[:, 0].apply(strRange_to_intRange)
 
-    # Classify into categories
-    df[f"{label}_class"] = pd.Categorical(
-        df[f"{label}_score"]
-        .map(satisfaction_score_to_class, na_action="ignore")
-        .map(satisfaction_class_to_code, na_action="ignore"),
-        categories=satisfaction_class_codes,
-        ordered=True,
-    )
-
-    if not keep_subscores:
-        df = df.drop(df.columns[:-2], axis=1)
+    df[f"{new_question_label}"] = responses_numerical
 
     return df

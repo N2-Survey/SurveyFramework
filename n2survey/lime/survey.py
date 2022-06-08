@@ -10,8 +10,8 @@ import pandas as pd
 
 from n2survey.lime.structure import read_lime_questionnaire_structure
 from n2survey.lime.transformations import (
+    range_to_numerical,
     rate_mental_health,
-    rate_satisfaction,
     rate_supervision,
 )
 from n2survey.plot import (
@@ -148,6 +148,34 @@ class LimeSurvey:
                 "A5": "severe depression",
             },
         },
+        "noincome_duration": {
+            "label": "For how long have you been working on your PhD without pay?",
+            "type": "free",
+        },
+        "income_amount": {
+            "label": "Right now, what is your monthly net income for your work at your research organization?",
+            "type": "free",
+        },
+        "costs_amount": {
+            "label": "How much do you pay for your rent and associated living costs per month in euros?",
+            "type": "free",
+        },
+        "contract_duration": {
+            "label": "What was or is the longest duration of your contract or stipend related to your PhD project?",
+            "type": "free",
+        },
+        "holiday_amount": {
+            "label": "How many holidays per year can you take according to your contract or stipend?",
+            "type": "free",
+        },
+        "hours_amount": {
+            "label": "On average, how many hours do you typically work per week in total?",
+            "type": "free",
+        },
+        "holidaytaken_amount": {
+            "label": "How many days did you take off (holiday) in the past year?",
+            "type": "free",
+        },
         "formal_supervision_score": {
             "label": "What is the formal supervision score?",
             "type": "free",
@@ -169,21 +197,6 @@ class LimeSurvey:
         },
         "direct_supervision_class": {
             "label": "What is the direct supervision class?",
-            "type": "single-choice",
-            "choices": {
-                "A1": "very satisfied",
-                "A2": "rather satisfied",
-                "A3": "neither satisfied nor dissatisfied",
-                "A4": "rather dissatisfied",
-                "A5": "very dissatisfied",
-            },
-        },
-        "satisfaction_score": {
-            "label": "What is the satisfaction score?",
-            "type": "free",
-        },
-        "satisfaction_class": {
-            "label": "What is the satisfaction class?",
             "type": "single-choice",
             "choices": {
                 "A1": "very satisfied",
@@ -385,7 +398,7 @@ class LimeSurvey:
             "trait_anxiety": "mental_health",
             "depression": "mental_health",
             "supervision": "supervision",
-            "satisfaction": "satisfaction",
+            "range": "range_to_numerical",
         }
 
         if transform_dict.get(transform) == "mental_health":
@@ -401,11 +414,10 @@ class LimeSurvey:
                 responses=self.get_responses(question, labels=False),
                 choices=self.get_choices(question),
             )
-        elif transform_dict.get(transform) == "satisfaction":
-            return rate_satisfaction(
+        elif transform_dict.get(transform) == "range_to_numerical":
+            return range_to_numerical(
                 question_label=self.get_label(question),
-                responses=self.get_responses(question, labels=False),
-                choices=self.get_choices(question),
+                responses=self.get_responses(question),
             )
 
     def __copy__(self):
@@ -564,6 +576,26 @@ class LimeSurvey:
         filtered_survey = self.__copy__()
         # Filter responses DataFrame
         filtered_survey.responses = self.responses.query(expr)
+
+        return filtered_survey
+
+    def filter_na(self, question: str) -> "LimeSurvey":
+        """Filter out entries in responses DataFrame with no answer
+        to specified question.
+
+        Args:
+            question (str): Question to which the entries are filtered.
+
+        returns:
+            LimeSurvey: LimeSurvey with filtered responses.
+        """
+
+        # Make copy of LimeSurvey instance
+        filtered_survey = self.__copy__()
+        # Filter responses DataFrame
+        filtered_survey.responses = filtered_survey.responses[
+            filtered_survey.responses[question].notna()
+        ]
 
         return filtered_survey
 
