@@ -109,6 +109,23 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
                 },
                 "is_contingent": False,
             },
+            "satisfaction_score": {
+                "label": "What is the satisfaction score?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "satisfaction_class": {
+                "label": "What is the satisfaction class?",
+                "type": "single-choice",
+                "choices": {
+                    "A1": "very satisfied",
+                    "A2": "rather satisfied",
+                    "A3": "neither satisfied nor dissatisfied",
+                    "A4": "rather dissatisfied",
+                    "A5": "very dissatisfied",
+                },
+                "is_contingent": False,
+            },
         }
         question_df = pd.concat(
             [
@@ -252,6 +269,39 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(
             survey.responses.iloc[6:9, -4:], ref, msg="DataFrames not equal."
+        )
+
+    def test_satisfaction_transformation_questions(self):
+        """Test adding responses to transformation questions in read_responses"""
+
+        satisfaction_questions = {"satisfaction": ["C1"]}
+
+        survey = LimeSurvey(structure_file=self.structure_file)
+        survey.read_responses(
+            responses_file=self.responses_file,
+            transformation_questions=satisfaction_questions,
+        )
+        ref = pd.DataFrame(
+            data={
+                "satisfaction_score": [5.0, 4.0, 3.0],
+                "satisfaction_class": pd.Categorical(
+                    ["A1", "A2", "A3"],
+                    categories=[
+                        "A1",
+                        "A2",
+                        "A3",
+                        "A4",
+                        "A5",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(
+            survey.responses.iloc[:3, -2:], ref, msg="DataFrames not equal."
         )
 
     def test_single_choice_dtype(self):
@@ -472,6 +522,40 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
             direct_supervision_ref,
             msg="Series not equal",
         )
+
+    def test_satisfaction_transforms(self):
+        """Test transforming satisfaction questions"""
+
+        satisfaction_transformed = self.survey.transform_question(
+            "C1", "satisfaction"
+        )
+
+        satisfaction_ref = pd.DataFrame(
+            data={
+                "satisfaction_score": [5.0, 4.0, 3.0],
+                "satisfaction_class": pd.Categorical(
+                    ["A1", "A2", "A3"],
+                    categories=[
+                        "A1",
+                        "A2",
+                        "A3",
+                        "A4",
+                        "A5",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[2, 3, 4],
+        )
+        satisfaction_ref.index.name = "id"
+
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(
+            satisfaction_transformed.iloc[:3],
+            satisfaction_ref,
+            msg="Series not equal",
+        )
+
 
 
 class TestLimeSurveyAddQuestion(BaseTestLimeSurvey2021Case):
