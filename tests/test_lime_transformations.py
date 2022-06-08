@@ -395,9 +395,6 @@ class TestRateSatisfaction(BaseTestLimeSurvey2021WithResponsesCase):
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
 
-<<<<<<< HEAD
 
-=======
->>>>>>> Implementation of tests (still shows errors).
 if __name__ == "__main__":
     unittest.main()

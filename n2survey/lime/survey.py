@@ -14,7 +14,6 @@ from n2survey.lime.transformations import (
     calculate_duration,
     range_to_numerical,
     rate_mental_health,
-    rate_satisfaction,
     rate_supervision,
 )
 from n2survey.plot import (
@@ -439,11 +438,10 @@ class LimeSurvey:
                 responses=self.get_responses(question, labels=False),
                 choices=self.get_choices(question),
             )
-        elif transform_dict.get(transform) == "satisfaction":
-            return rate_satisfaction(
+        elif transform_dict.get(transform) == "range_to_numerical":
+            return range_to_numerical(
                 question_label=self.get_label(question),
-                responses=self.get_responses(question, labels=False),
-                choices=self.get_choices(question),
+                responses=self.get_responses(question),
             )
         elif transform_dict.get(transform) == "range_to_numerical":
             return range_to_numerical(
