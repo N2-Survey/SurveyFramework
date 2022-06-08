@@ -451,8 +451,7 @@ class LimeSurvey:
         elif transform_dict.get(transform) == "satisfaction":
             return rate_satisfaction(
                 question_label=self.get_label(question),
-                responses=self.get_responses(question, labels=False),
-                choices=self.get_choices(question),
+                responses=self.get_responses(question),
             )
 
     def __copy__(self):
