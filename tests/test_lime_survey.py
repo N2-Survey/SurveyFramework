@@ -335,7 +335,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
             responses_file=self.responses_file,
             transformation_questions=phd_duration_questions,
         )
-        
+
         ref = pd.DataFrame(
             data={
                 "PhD duration (days)": np.array([1826.0, 1095.0, 1065.0]),
@@ -426,6 +426,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
             ).all(),
             True,
         )
+
 
 class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
     """Test LimeSurvey transform_question"""

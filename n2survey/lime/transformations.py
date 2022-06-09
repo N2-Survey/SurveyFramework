@@ -10,6 +10,7 @@ __all__ = [
     "calculate_phd_duration",
 ]
 
+
 def rate_supervision(
     question_label: str,
     responses: pd.DataFrame,
@@ -249,7 +250,7 @@ def rate_mental_health(
 
 
 def strRange_to_intRange(strAnswer: str) -> int:
-    
+
     """Calculate the mean of all numbers present in a string.
 
     Args:
@@ -308,6 +309,7 @@ def range_to_numerical(question_label: str, responses: pd.DataFrame) -> pd.DataF
     df[f"{new_question_label}"] = responses_numerical
 
     return df
+
 
 def calculate_phd_duration(start_responses: pd.DataFrame, end_responses: pd.DataFrame):
     """Calculate PhD duration
