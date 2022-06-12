@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from n2survey.lime.transformations import (
+    calculate_duration,
     range_to_numerical,
     rate_mental_health,
     rate_supervision,
@@ -195,6 +196,33 @@ class TestRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
         ref.index.name = "id"
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(result.iloc[6:9, -2:], ref, msg="DataFrames not equal.")
+
+
+class TestDuration(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test Transformation calculate_duration"""
+
+    def test_phd_duration(self):
+        """Test calculate_duration"""
+
+        start_question = "A8"
+        end_question = "A9"
+
+        result = calculate_duration(
+            start_responses=self.survey.get_responses(start_question, labels=False),
+            end_responses=self.survey.get_responses(end_question, labels=False),
+        )
+
+        ref = pd.DataFrame(
+            data={
+                "PhD duration (days)": [1826.0, 1095.0, 1065.0],
+                "PhD duration (months)": [60.0, 36.0, 35.0],
+                "PhD duration (years)": [5.0, 3.0, 3.0],
+            },
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(result.iloc[:3, :], ref, msg="DataFrames not equal.")
 
 
 class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
