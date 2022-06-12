@@ -325,10 +325,11 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
             survey.responses.iloc[:3, -7:], ref, msg="DataFrames not equal."
         )
 
-    def test_phd_duration_transformation_questions(self):
-        """Test adding responses to transformation questions in read_responses"""
+    def test_duration_transformation_questions(self):
+        """Test adding responses to duration transformation
+        questions in read_responses"""
 
-        phd_duration_questions = {"phd_duration": ("A8", "A9")}
+        phd_duration_questions = {"duration": ("A8", "A9")}
 
         survey = LimeSurvey(structure_file=self.structure_file)
         survey.read_responses(

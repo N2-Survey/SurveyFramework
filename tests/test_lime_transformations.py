@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from n2survey.lime.transformations import (
-    calculate_phd_duration,
+    calculate_duration,
     range_to_numerical,
     rate_mental_health,
     rate_supervision,
@@ -198,16 +198,16 @@ class TestRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
         self.assert_df_equal(result.iloc[6:9, -2:], ref, msg="DataFrames not equal.")
 
 
-class TestPhDDuration(BaseTestLimeSurvey2021WithResponsesCase):
-    """Test Transformations calculate_phd_duration"""
+class TestDuration(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test Transformation calculate_duration"""
 
     def test_phd_duration(self):
-        """Test calculated phd duration"""
+        """Test calculate_duration"""
 
         start_question = "A8"
         end_question = "A9"
 
-        result = calculate_phd_duration(
+        result = calculate_duration(
             start_responses=self.survey.get_responses(start_question, labels=False),
             end_responses=self.survey.get_responses(end_question, labels=False),
         )

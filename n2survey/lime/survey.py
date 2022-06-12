@@ -10,7 +10,7 @@ import pandas as pd
 
 from n2survey.lime.structure import read_lime_questionnaire_structure
 from n2survey.lime.transformations import (
-    calculate_phd_duration,
+    calculate_duration,
     range_to_numerical,
     rate_mental_health,
     rate_supervision,
@@ -404,7 +404,7 @@ class LimeSurvey:
             "depression": "mental_health",
             "supervision": "supervision",
             "range": "range_to_numerical",
-            "phd_duration": "duration",
+            "duration": "duration",
         }
 
         if transform_dict.get(transform) == "mental_health":
@@ -426,7 +426,7 @@ class LimeSurvey:
                 responses=self.get_responses(question),
             )
         elif transform_dict.get(transform) == "duration":
-            return calculate_phd_duration(
+            return calculate_duration(
                 start_responses=self.get_responses(question[0], labels=False),
                 end_responses=self.get_responses(question[1], labels=False),
             )

@@ -7,7 +7,7 @@ __all__ = [
     "rate_supervision",
     "rate_mental_health",
     "range_to_numerical",
-    "calculate_phd_duration",
+    "calculate_duration",
 ]
 
 
@@ -311,13 +311,16 @@ def range_to_numerical(question_label: str, responses: pd.DataFrame) -> pd.DataF
     return df
 
 
-def calculate_phd_duration(start_responses: pd.DataFrame, end_responses: pd.DataFrame):
-    """Calculate PhD duration
+def calculate_duration(start_responses: pd.DataFrame, end_responses: pd.DataFrame):
+    """Calculate duration
+
     Args:
         start_responses (pd.DataFrame): DataFrame containing responses data of the start of duration
         end_responses (pd.DataFrame): DataFrame containing responses data of the end of duration
+
     Returns:
-        pd.DataFrame: Rounded PhD duration in days, months and years"""
+        pd.DataFrame: Rounded PhD duration in days, months and years
+    """
 
     # get labels of start and end questions to get their data
     df = pd.concat(
@@ -335,7 +338,8 @@ def calculate_phd_duration(start_responses: pd.DataFrame, end_responses: pd.Data
     # convert PhD duration (days) to float type for consistency
     df["PhD duration (days)"] = df["PhD duration (days)"].dt.days
 
-    # drop temporary columns used for duration calculation and return only duration in day, month and year
+    # drop temporary columns used for duration calculation
+    # and return only duration in day, month and year
     df = df.iloc[:, 2:].round()
 
     return df
