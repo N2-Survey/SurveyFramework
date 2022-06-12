@@ -8,6 +8,7 @@ from n2survey.lime.transformations import (
     range_to_numerical,
     rate_mental_health,
     rate_supervision,
+    rate_satisfaction,
 )
 from tests.common import BaseTestLimeSurvey2021WithResponsesCase
 
@@ -195,6 +196,41 @@ class TestRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
         ref.index.name = "id"
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(result.iloc[6:9, -2:], ref, msg="DataFrames not equal.")
+
+
+class TestRateSatisfaction(BaseTestLimeSurvey2021WithResponsesCase):
+    """Test Transformations rate_satisfaction for overall satisfaction"""
+
+    def test_satisfaction(self):
+        """Test rating of satisfaction"""
+
+        question = "C1"
+        result = rate_satisfaction(
+            question_label=self.survey.get_label(question),
+            responses=self.survey.get_responses(question, labels=False),
+            choices=self.survey.get_choices(question),
+        )
+
+        ref = pd.DataFrame(
+            data={
+                "satisfaction_score": [5.0, 4.0, 3.0],
+                "satisfaction_class": pd.Categorical(
+                    ["A1", "A2", "A3"],
+                    categories=[
+                        "A1",
+                        "A2",
+                        "A3",
+                        "A4",
+                        "A5",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[2, 3, 4],
+        )
+        ref.index.name = "id"
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(result.iloc[:3, -2:], ref, msg="DataFrames not equal.")
 
 
 class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
