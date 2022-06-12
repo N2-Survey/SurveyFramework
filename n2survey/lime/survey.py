@@ -15,6 +15,7 @@ from n2survey.lime.transformations import (
     range_to_numerical,
     rate_mental_health,
     rate_supervision,
+    rate_satisfaction,
 )
 from n2survey.plot import (
     likert_bar_plot,
@@ -434,6 +435,12 @@ class LimeSurvey:
             )
         elif transform_dict.get(transform) == "supervision":
             return rate_supervision(
+                question_label=self.get_label(question),
+                responses=self.get_responses(question, labels=False),
+                choices=self.get_choices(question),
+            )
+        elif transform_dict.get(transform) == "satisfaction":
+            return rate_satisfaction(
                 question_label=self.get_label(question),
                 responses=self.get_responses(question, labels=False),
                 choices=self.get_choices(question),
