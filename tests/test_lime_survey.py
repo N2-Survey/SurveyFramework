@@ -649,6 +649,39 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
             msg="Series not equal",
         )
 
+    def test_satisfaction_transforms(self):
+        """Test transforming satisfaction questions"""
+
+        satisfaction_transformed = self.survey.transform_question(
+            "C1", "satisfaction"
+        )
+
+        satisfaction_ref = pd.DataFrame(
+            data={
+                "satisfaction_score": [5.0, 4.0, 3.0],
+                "satisfaction_class": pd.Categorical(
+                    ["A1", "A2", "A3"],
+                    categories=[
+                        "A1",
+                        "A2",
+                        "A3",
+                        "A4",
+                        "A5",
+                    ],
+                    ordered=True,
+                ),
+            },
+            index=[2, 3, 4],
+        )
+        satisfaction_ref.index.name = "id"
+
+        # "id" of dataframe starts at 2, therefore difference to "index" above
+        self.assert_df_equal(
+            satisfaction_transformed.iloc[:3],
+            satisfaction_ref,
+            msg="Series not equal",
+        ) 
+
     def test_range_transforms(self):
         """Test transforming range to numerical questions"""
 
