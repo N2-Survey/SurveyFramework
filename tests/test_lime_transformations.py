@@ -10,6 +10,7 @@ from n2survey.lime.transformations import (
     rate_mental_health,
     rate_satisfaction,
     rate_supervision,
+    rate_satisfaction,
 )
 from tests.common import BaseTestLimeSurvey2021WithResponsesCase
 
