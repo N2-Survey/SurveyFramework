@@ -420,7 +420,6 @@ class LimeSurvey:
             "trait_anxiety": "mental_health",
             "depression": "mental_health",
             "supervision": "supervision",
-            "satisfaction": "satisfaction",
             "range": "range_to_numerical",
             "duration": "duration",
             "satisfaction": "satisfaction",
@@ -435,12 +434,6 @@ class LimeSurvey:
             )
         elif transform_dict.get(transform) == "supervision":
             return rate_supervision(
-                question_label=self.get_label(question),
-                responses=self.get_responses(question, labels=False),
-                choices=self.get_choices(question),
-            )
-        elif transform_dict.get(transform) == "satisfaction":
-            return rate_satisfaction(
                 question_label=self.get_label(question),
                 responses=self.get_responses(question, labels=False),
                 choices=self.get_choices(question),
