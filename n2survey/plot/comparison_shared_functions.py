@@ -202,6 +202,10 @@ def form_bar_positions(
     distance_between_bars: float = None,
     no_sub_bars: bool = None,
 ):
+    """
+    calculates bar positions in a Plot, depending on bar_width etc., also
+    includes sub bars.
+    """
     bar_positions_complete = bar_positions or [0]
     if no_sub_bars:
         number_bars_per_answer = 1

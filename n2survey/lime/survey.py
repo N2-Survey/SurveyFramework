@@ -15,6 +15,7 @@ from n2survey.lime.transformations import (
     rate_supervision,
 )
 from n2survey.plot import (
+    array_single_comparison_plot,
     likert_bar_plot,
     multiple_choice_bar_plot,
     multiple_multiple_comparison_plot,
@@ -1076,6 +1077,28 @@ class LimeSurvey:
                 show_zeroes=show_zeroes,
                 bubbles=bubbles,
             )
+        elif all([question_type == "array", compare_with_type == "single-choice"]):
+            print("array_single")
+            fig, ax = array_single_comparison_plot(
+                plot_data_list,
+                totalbar=totalbar,
+                bar_width=bar_width,
+                suppress_answers=suppress_answers,
+                ignore_no_answer=ignore_no_answer,
+                bar_positions=bar_positions,
+                threshold_percentage=threshold_percentage,
+                legend_columns=legend_columns,
+                plot_title=plot_title,
+                plot_title_position=plot_title_position,
+                legend_title=legend_title,
+                answer_sequence=answer_sequence,
+                legend_sequence=legend_sequence,
+                calculate_aspect_ratio=calculate_aspect_ratio,
+                maximum_length_x_axis_answers=maximum_length_x_axis_answers,
+                theme=theme,
+                show_zeroes=show_zeroes,
+                bubbles=bubbles,
+            )
         return fig, ax
 
     def save_plot(
@@ -1121,6 +1144,7 @@ class LimeSurvey:
             ("single-choice", "single-choice"),
             ("multiple-choice", "single-choice"),
             ("multiple-choice", "multiple-choice"),
+            ("array", "single-choice"),
         ]
         all_plots = [question]
         if compare_with:
@@ -1155,15 +1179,21 @@ class LimeSurvey:
         Create answer sequence from given questions to keep sequence in
         plot consistent if answers that were never chosen are suppressed
         """
-        answer_sequence = [
-            list(self.count(question, labels=True).index.values.astype(str))
-        ]
-        for entry in add_questions:
-            answer_sequence.append(
-                list(self.count(entry, labels=True).index.values.astype(str))
-            )
-        if totalbar:
-            answer_sequence[0].insert(0, "Total")
+        if self.get_question_type(question) == "array":
+            answer_sequence = [
+                entry
+                for entry in self.get_responses(question, labels=True, drop_other=True)
+            ]
+        else:
+            answer_sequence = [
+                list(self.count(question, labels=True).index.values.astype(str))
+            ]
+            for entry in add_questions:
+                answer_sequence.append(
+                    list(self.count(entry, labels=True).index.values.astype(str))
+                )
+            if totalbar:
+                answer_sequence[0].insert(0, "Total")
         return answer_sequence
 
     def create_comparison_data(self, question, compare_with, add_questions=[]):
@@ -1221,6 +1251,18 @@ class LimeSurvey:
                         self.get_responses(compare_with, labels=True, drop_other=True),
                     )
                 )
+        if self.get_question_type(question) == "array":
+            # create Dataarray from all existing combinations of
+            # question and compare_with
+            plot_data_list.append(
+                (
+                    [
+                        self.get_responses(question, labels=True, drop_other=True),
+                        list(self.count(question, labels=True).index),
+                    ],
+                    self.get_responses(compare_with, labels=True, drop_other=True),
+                )
+            )
         return plot_data_list
 
     def create_total_bar_data(self, question_type, compare_with):
