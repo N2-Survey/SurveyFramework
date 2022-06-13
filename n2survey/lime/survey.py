@@ -14,8 +14,8 @@ from n2survey.lime.transformations import (
     calculate_duration,
     range_to_numerical,
     rate_mental_health,
-    rate_supervision,
     rate_satisfaction,
+    rate_supervision,
 )
 from n2survey.plot import (
     likert_bar_plot,
