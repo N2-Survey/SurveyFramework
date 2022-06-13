@@ -173,7 +173,7 @@ def wrap_title(title, wrap_text):
     return fill(title, 30)
 
 
-def calculate_median(survey, question):
+def get_median_and_range(survey, question):
     transformed_questions = {
         "B1b": "noincome_duration",
         "B2": "income_amount",
@@ -186,11 +186,16 @@ def calculate_median(survey, question):
     if question in transformed_questions.keys():
         transformed_question = transformed_questions[question]
         try:
-            return np.median(survey.get_responses(transformed_question))
+            # first calculate median by ignoring NaN
+            median = np.nanmedian(survey.get_responses(transformed_question))
+            # find corresponding range in original answers, used for plotting
+            index, _ = np.where(survey.get_responses(transformed_question) == median)
+            range = survey.get_responses(question).iloc[0, index[0]]
+            return median, range
         except ValueError:
-            return np.nan
+            return np.nan, np.nan
     else:
-        return np.nan
+        return np.nan, np.nan
 
 
 def comparison_numeric_bar_plot(
@@ -414,19 +419,18 @@ def comparison_numeric_bar_plot(
             ]
             ax[i].bar_label(ax[i].containers[0], labels)
         if display_median:
-            # `default_median`: placeholder for plotting
-            # probably something like: `median = calculate_median(survey, question)`
-            default_median = x[len(x) // 2]
-            plot_position = np.where(np.asarray(x) == default_median)[0]
-            ax[i].axvline(x=plot_position, ls="--", c="grey")
-            ax[i].text(
-                plot_position,
-                1.20 * np.max(y),
-                f"{default_median}",
-                c="white",
-                weight="bold",
-                path_effects=[pe.withStroke(linewidth=2, foreground="black")],
-            )
+            median, converted_range = get_median_and_range(survey, question)
+            if median != np.nan:
+                plot_position = np.where(np.asarray(x) == converted_range)[0]
+                ax[i].axvline(x=plot_position, ls="--", c="grey")
+                ax[i].text(
+                    plot_position,
+                    1.20 * np.max(y),
+                    f"{converted_range}",
+                    c="white",
+                    weight="bold",
+                    path_effects=[pe.withStroke(linewidth=2, foreground="black")],
+                )
         # Adjust yscale manually to show highest percentage values
         if yaxis_max is not None:
             ax[i].set_ylim(0, yaxis_max[i])
