@@ -316,7 +316,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
     def test_satisfaction_transformation_questions(self):
         """Test adding responses to satisfaction transformation questions in read_responses"""
 
-        satisfaction_questions = {"satisfaction": ["C1"]}
+        satisfaction_questions = {"satisfaction": "C1"}
 
         survey = LimeSurvey(structure_file=self.structure_file)
         survey.read_responses(

@@ -6,7 +6,6 @@ import pandas as pd
 __all__ = [
     "rate_supervision",
     "rate_mental_health",
-    "rate_satisfaction",
     "range_to_numerical",
     "calculate_duration",
     "rate_satisfaction",
