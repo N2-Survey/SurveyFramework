@@ -284,11 +284,11 @@ def rate_satisfaction(
 
     # Set up score conversion dicts for individual questions
     satisfaction_question_scores = {
-        "Fully agree": 5.0,
-        "Partially agree": 4.0,
-        "Neither agree nor disagree": 3.0,
-        "Partially disagree": 2.0,
-        "Fully disagree": 1.0,
+        "Very satisfied": 5.0,
+        "Satisfied": 4.0,
+        "Neither/nor": 3.0,
+        "Dissatisfied": 2.0,
+        "Very dissatisfied": 1.0,
     }
     # Inverse satisfaction transformation: Score (5.0) --> Class ('Very satisfied')
     satisfaction_score_to_class = {
