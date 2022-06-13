@@ -166,7 +166,7 @@ def multiple_choice_bar_plot(
     # sort=None,
     sort="descending",
     bar_thickness=1,
-    plot_title = False,
+    plot_title=False,
     # bar_spacing=1,
     bar_spacing=1.2,
     display_threshold=0,
@@ -204,7 +204,7 @@ def multiple_choice_bar_plot(
         fig_dim,
         bar_thickness,
         bar_spacing,
-        plot_title = plot_title,
+        plot_title=plot_title,
         **kwargs,
     )
 

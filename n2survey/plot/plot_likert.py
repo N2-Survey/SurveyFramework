@@ -320,7 +320,7 @@ def likert_bar_plot(
     grouped_choices=None,
     grouped_questions=None,
     sort_questions_by_choices="left",
-    plot_title = False,
+    plot_title=False,
     theme=None,
     bar_thickness=0.2,
     bar_spacing=0.5,
@@ -386,6 +386,7 @@ def likert_bar_plot(
         for position in ["left", "center", "right"]
         for choice in grouped_choices[position]
     ]
+
     _, sorted_responses = list(zip(*location_and_response))
     data_df = data_df.reindex(sorted_responses)
 

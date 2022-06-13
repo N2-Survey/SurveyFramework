@@ -3,7 +3,7 @@ import os
 import re
 import string
 import warnings
-from typing import Optional, Union, Dict, List, Tuple
+from typing import Dict, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,7 +19,6 @@ from n2survey.plot import (
     simple_comparison_plot,
     single_choice_bar_plot,
 )
-
 
 __all__ = ["LimeSurvey", "DEFAULT_THEME", "QUESTION_TYPES"]
 
@@ -860,28 +859,31 @@ class LimeSurvey:
                 counts_df, theme=theme, plot_title=plot_title, **non_theme_kwargs
             )
         elif question_type == "array":
-            #display_title = True
-            #display_no_answer = False
+            # display_title = True
+            # display_no_answer = False
 
             counts_df = self.count(
-                question, labels=True, percents=False, add_totals=True,
+                question,
+                labels=True,
+                percents=False,
+                add_totals=True,
             )
             counts_df.loc["Total", "Total"] = self.responses.shape[0]
-            #if not display_no_answer:
+            # if not display_no_answer:
             #    try:
             #        counts_df = counts_df.drop("No Answer")
             #    except KeyError:
             #        pass
 
-            #if display_title:
+            # if display_title:
             #    title_question = self.get_label(question)
-            #else:
+            # else:
             #    title_question = None
 
             fig, ax = likert_bar_plot(
                 counts_df,
                 theme=theme,
-                #title_question=title_question,
+                # title_question=title_question,
                 bar_spacing=0.2,
                 bar_thickness=0.4,
                 group_spacing=1,
