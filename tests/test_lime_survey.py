@@ -375,35 +375,6 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
             survey.responses.iloc[:3, -7:], ref, msg="DataFrames not equal."
         )
 
-    def test_range_to_numerical_transformation_questions(self):
-        """Test adding responses to range_to_numerical transformation questions
-        in read_responses"""
-
-        range_questions = {"range": ["B1b", "B2", "B3", "B4", "B10", "C4", "C8"]}
-
-        survey = LimeSurvey(structure_file=self.structure_file)
-        survey.read_responses(
-            responses_file=self.responses_file,
-            transformation_questions=range_questions,
-        )
-        ref = pd.DataFrame(
-            data={
-                "noincome_duration": [np.NaN, np.NaN, np.NaN],
-                "income_amount": [1650.0, 1950.0, 2050.0],
-                "costs_amount": [850.0, 750.0, 550.0],
-                "contract_duration": [30.0, 48.0, 30.0],
-                "holiday_amount": [28.0, 28.0, 28.0],
-                "hours_amount": [53.0, 38.0, 43.0],
-                "holidaytaken_amount": [8.0, 28.0, 13.0],
-            },
-            index=[2, 3, 4],
-        )
-        ref.index.name = "id"
-        # "id" of dataframe starts at 2, therefore difference to "index" above
-        self.assert_df_equal(
-            survey.responses.iloc[:3, -7:], ref, msg="DataFrames not equal."
-        )
-
     def test_duration_transformation_questions(self):
         """Test adding responses to duration transformation
         questions in read_responses"""
@@ -652,9 +623,7 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
     def test_satisfaction_transforms(self):
         """Test transforming satisfaction questions"""
 
-        satisfaction_transformed = self.survey.transform_question(
-            "C1", "satisfaction"
-        )
+        satisfaction_transformed = self.survey.transform_question("C1", "satisfaction")
 
         satisfaction_ref = pd.DataFrame(
             data={
@@ -680,7 +649,7 @@ class TestLimeSurveyTransformQuestion(BaseTestLimeSurvey2021WithResponsesCase):
             satisfaction_transformed.iloc[:3],
             satisfaction_ref,
             msg="Series not equal",
-        ) 
+        )
 
     def test_range_transforms(self):
         """Test transforming range to numerical questions"""
