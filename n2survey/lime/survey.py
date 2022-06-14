@@ -1106,9 +1106,31 @@ class LimeSurvey:
         display_median: bool = False,
         display_percents: bool = False,
         fig_size_inches: tuple = None,
-        save: Union[str, bool] = False,
+        save: bool = False,
         **kwargs,
     ):
+        """Plot comparison plots for numeric questions (with filtering).
+
+        Args:
+            question (str): Name of numeric question (for which filtering will be done)
+            questions_to_filter (dict): Dictionary of non-numeric questions with which `question` will
+                                        be filtered, e.g. {"A6": ["A1", "A3"]}
+            simple_filtering (bool, optional): Each entry of `questions_to_filter` is used for
+                                               individual filtering. Otherwise up to two entries will be
+                                               filtered simultaneously. Defaults to True.
+            valid_questions (list, optional): List of valid numeric questions for `question`.
+            display_title (bool, optional): Display question as title in resulting plot. Defaults to True.
+            display_no_answer (bool, optional): Hide invalid answers. Defaults to True.
+            display_median (bool, optional): Display median in each subplot. Defaults to True.
+            display_percents (bool, optional): Display percentages in each subplot. Defaults to False
+            fig_size_inches (tuple): Size of the resulting figure. Defaults to None.
+            save (bool, optional): Save the resulting figure. Defaults to True.
+
+        Raises:
+            NotImplementedError: - `question` NOT numeric single-choice
+                                 - `questions_to_filter` ARE numeric questions,
+                                    HAVE invalid keys or HAVE invalid values
+        """
         # Set up plot options
         theme = self.theme.copy()
         theme.update(kwargs)
@@ -1152,6 +1174,7 @@ class LimeSurvey:
         # First find indices to split data and store in list as arrays
         list_of_labels = list()
         list_of_counts_df = list()
+        list_of_responses = list()
         # First element is unfiltered data, then filtered data
         unfiltered_responses = self.get_responses(
             question, labels=True, drop_other=True
@@ -1159,6 +1182,7 @@ class LimeSurvey:
         unfiltered_counts_df = self.count(question, labels=True)
         list_of_labels.append("Total")
         list_of_counts_df.append(unfiltered_counts_df)
+        list_of_responses.append(unfiltered_responses)
 
         # Simple filtering: Filter `question` according to answers in `questions_to_filter` individually
         if simple_filtering:
@@ -1166,13 +1190,14 @@ class LimeSurvey:
             for key, values in questions_to_filter.items():
                 for value in values:
                     # Get indices and filter array according to these
-                    counts_df = self.filter_responses(
+                    filtered_responses, counts_df = self.filter_responses(
                         question, unfiltered_responses, [key, value]
                     )
-                    # Skip comparisons if filtered DataFrame has no counts left
+                    # Skip comparisons if filtered DataFrame has no counts
                     if counts_df.sum(axis=0)[0] > 0:
                         list_of_labels.append(self.get_choices(key)[value])
                         list_of_counts_df.append(counts_df)
+                        list_of_responses.append(filtered_responses)
 
         # Multiple filtering: Filter `question` according to all combinations of answers in `questions_to_filter`
         # e.g. `questions_to_filter`: {'gender': ['male', 'female'],
@@ -1191,13 +1216,13 @@ class LimeSurvey:
             # Go through all entries of first element of `questions_to_filter`
             for first_value in first_values:
                 for second_value in second_values:
-                    counts_df = self.filter_responses(
+                    filtered_responses, counts_df = self.filter_responses(
                         question,
                         unfiltered_responses,
                         [first_key, first_value],
                         [second_key, second_value],
                     )
-                    # Skip comparisons if filtered DataFrame has no counts left
+                    # Skip comparisons if filtered DataFrame has no counts
                     if counts_df.sum(axis=0)[0] > 0:
                         list_of_labels.append(
                             self.get_choices(first_key)[first_value]
@@ -1205,9 +1230,11 @@ class LimeSurvey:
                             + self.get_choices(second_key)[second_value]
                         )
                         list_of_counts_df.append(counts_df)
+                        list_of_responses.append(filtered_responses)
         fig, ax = comparison_numeric_bar_plot(
             self,
             question,
+            list_of_responses,
             list_of_counts_df,
             list_of_labels,
             display_no_answer=display_no_answer,
@@ -1223,14 +1250,25 @@ class LimeSurvey:
             self.save_plot(fig, question, save=filename)
 
     def filter_responses(self, question, unfiltered_responses, *args):
-        """Filtering of responses called in `plot_numeric_comparison`."""
+        """Filtering of responses called in `plot_numeric_comparison`.
+
+        Args:
+            question (str): Name of numeric question (for which filtering will be done)
+            unfiltered_responses (DataFrame): Unfiltered responses dataframe of `question`
+            *args: List(s) originating from `questions_to_filter` like [question, answer]; for
+                   multiple filtering: two lists are passed
+
+        Returns:
+            filtered_responses (DataFrame): Dataframe of filtered response dataframe
+            countes_filtered_responses (DataFrame): Dataframe of counts of filtered response dataframe
+        """
         # Simple filtering
         if len(args) == 1:
             key, value = args[0]
             indices, _ = np.where(
                 self.get_responses(key, labels=False, drop_other=True) == value
             )
-        # Multiple filtering (only works for two filtering options)
+        # Multiple filtering (only works for exactly two filtering options)
         elif len(args) == 2:
             first_key, first_value = args[0]
             second_key, second_value = args[1]
@@ -1243,8 +1281,10 @@ class LimeSurvey:
                 )
             )
         filtered_responses = unfiltered_responses.iloc[indices]
-        counts_df = self.count(question, responses=filtered_responses, labels=True)
-        return counts_df
+        counts_filtered_responses = self.count(
+            question, responses=filtered_responses, labels=True
+        )
+        return filtered_responses, counts_filtered_responses
 
     def save_plot(
         self,

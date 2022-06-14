@@ -1,4 +1,4 @@
-from textwrap import fill
+from textwrap import wrap
 from typing import Dict, Optional, Tuple, Union
 
 import matplotlib as mpl
@@ -10,32 +10,60 @@ import seaborn as sns
 __all__ = ["comparison_numeric_bar_plot"]
 
 
-def wrap_title(title, wrap_text):
-    if not wrap_text:
-        return title
-    return fill(title, 30)
+def get_median_and_range(survey, question, responses):
+    """Return the median (e.g. 550) and the corresponding range (e.g. 501-600)
 
+    Median calculation and conversion to range works only when there is not averaging
+    involved in median calculation, meaning that the number of array elements has to be
+    uneven!
+    If not, remove the largest element (making the array uneven) before calculation of
+    the median. This reproduces the 'correct' result as long as the ranges of the two
+    values in the middle of the array are of the same size!
 
-def get_median_and_range(survey, question):
+    Even input: ... (501-600) (601-700) ... --> ... (550) (650) ...
+    Median:                                 -->        (600)
+    Range conversion:     (501-600)         <--
+
+    Args:
+        survey (LimeSurvey): LimeSurvey object
+        question (str): investigated question, used for selecting data to calculate median.
+        responses (DataFrame): unfiltered responses DataFrame
+
+    Returns:
+         median (float): Median of the filtered DataFrame
+         range (str): Corresponding range needed for specifiying the x-plotting position
+    """
+    # question-codes for questions that were transformed from range --> numeric
+    # median calculation only works for these and the transformation has to be done before
     transformed_questions = {
         "B1b": "noincome_duration",
         "B2": "income_amount",
         "B3": "costs_amount",
         "B4": "contract_duration",
-        "B10": "hoiday_amount",
+        "B10": "holiday_amount",
         "C4": "hours_amount",
         "C8": "holidaytaken_amount",
     }
     if question in transformed_questions.keys():
         transformed_question = transformed_questions[question]
-        try:
-            # first calculate median by ignoring NaN
-            median = np.nanmedian(survey.get_responses(transformed_question))
+        transformed_answers = survey.get_responses(transformed_question)
+        filtered_transformed_answers = transformed_answers.loc[responses.index]
+        # check if at least one valid (non-NaN) value is there
+        if np.sum(filtered_transformed_answers.count()) > 0:
+            # calculate median depending on the number of non-NaN entries
+            if np.sum(filtered_transformed_answers.count()) % 2:  # uneven
+                median = np.nanmedian(filtered_transformed_answers)
+            else:  # even
+                # exclude the highest value to get uneven number of values
+                # otherwise median = average of both middle values which
+                # cannot be easily reversed back into a range
+                index_max = filtered_transformed_answers.idxmax()
+                median = np.nanmedian(filtered_transformed_answers.drop(index_max))
             # find corresponding range in original answers, used for plotting
-            index, _ = np.where(survey.get_responses(transformed_question) == median)
-            range = survey.get_responses(question).iloc[0, index[0]]
+            index, _ = np.where(transformed_answers == median)
+            range = survey.get_responses(question).iloc[index[0]][0]
             return median, range
-        except ValueError:
+        else:
             return np.nan, np.nan
     else:
         return np.nan, np.nan
@@ -44,6 +72,7 @@ def get_median_and_range(survey, question):
 def comparison_numeric_bar_plot(
     survey,
     question,
+    list_of_responses,
     list_of_data,
     list_of_labels: list = None,
     total: Union[int, float, None] = None,
@@ -62,7 +91,8 @@ def comparison_numeric_bar_plot(
 
     Args:
         question (str): investigated question, used for selecting data to calculate median.
-        list_of_data (list): unfiltered and filtered data to plot.
+        list_of_responses (list): unfiltered and filtered data to plot.
+        list_of_data (list): unfiltered and filtered counted data to plot.
         list_of_labels (list): labels for the entries in `list_of_data`.
         total (Union[int, float, None], optional): Total number to calculate percentage
           and to show on the figure. By default, sum of Y values is used.
@@ -146,9 +176,12 @@ def comparison_numeric_bar_plot(
                 "{:.1f}%".format(p) if p > percent_threshold else "" for p in percents
             ]
             ax[i].bar_label(ax[i].containers[0], labels)
+        # Add median as vertical dashed line
         if display_median:
-            median, converted_range = get_median_and_range(survey, question)
-            if median != np.nan:
+            median, converted_range = get_median_and_range(
+                survey, question, list_of_responses[i]
+            )
+            if converted_range in np.asarray(x):
                 plot_position = np.where(np.asarray(x) == converted_range)[0]
                 ax[i].axvline(x=plot_position, ls="--", c="grey")
                 ax[i].text(
@@ -171,8 +204,8 @@ def comparison_numeric_bar_plot(
 
     # Set title for uppermost axes
     if title is not None:
-        # ax[0].set_title(title)
-        ax[0].set_title(wrap_title(title, wrap_text), pad=20)
+        wrapped_title = "\n".join(wrap(title, 55))
+        ax[0].set_title(wrapped_title, pad=20)
 
     # Figure settings
     fig.tight_layout()
