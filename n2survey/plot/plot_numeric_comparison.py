@@ -108,6 +108,12 @@ def plot_subplot_barplot(
     """
     sns.barplot(x=x, y=y, ci=None, ax=ax, color=color, **additional_params)
     ax.set(ylabel=None)
+    # Adjust yscale manually to show highest percentage values
+    if y_axis_max is not None:
+        ax.set_ylim(0, y_axis_max)
+    else:
+        ax.set_ylim(0, 1.45 * np.max(y))
+    ax.yaxis.get_major_locator().set_params(integer=True)
     total = np.array(y).sum()
     if display_total:
         ax.text(
@@ -134,18 +140,13 @@ def plot_subplot_barplot(
             ax.axvline(x=plot_position, ls="--", c="grey")
             ax.text(
                 plot_position + 0.1,
-                1.20 * np.max(y),
+                0.85 * ax.get_ylim()[1],
                 f"{converted_range}",
                 c="white",
                 weight="bold",
                 path_effects=[pe.withStroke(linewidth=2, foreground="black")],
             )
-    # Adjust yscale manually to show highest percentage values
-    if y_axis_max is not None:
-        ax.set_ylim(0, y_axis_max)
-    else:
-        ax.set_ylim(0, 1.40 * np.max(y))
-    ax.yaxis.get_major_locator().set_params(integer=True)
+
     return ax
 
 
@@ -164,7 +165,7 @@ def comparison_numeric_bar_plot(
     display_no_answer: bool = True,
     wrap_text: bool = True,
     percent_threshold: int = 5,
-    y_axis_max: bool = None,
+    y_axis_max: int or list = None,
 ) -> Tuple[mpl.figure.Figure, mpl.axes.Axes]:
     """Do multiple bar plots for a numeric single-choice question with multiple filters.
 
@@ -184,7 +185,7 @@ def comparison_numeric_bar_plot(
         display_no_answer (bool, optional): Show 'No answer' possiblities. Defaults to True.
         wrap_text (bool, optional): Add line breaks to long questions. Defaults to True.
         percent_threshold (int, optional): Threshold for displaying percentages over bars.
-        y_axis_max (): Maximum of y-axis, array-like or the same value for all if int.
+        y_axis_max (int or list): Maximum of y-axes, list or the same value for all if int.
 
     Returns:
         tuple[mpl.figure.Figure, mpl.axes.Axes]: Tuple (fig, ax) of the plot
@@ -229,9 +230,15 @@ def comparison_numeric_bar_plot(
     if y_axis_max is not None:
         if isinstance(y_axis_max, int):
             y_axis_max = np.ones(len(list_of_counts)) * y_axis_max
-        else:
-            if len(np.asarray(y_axis_max)) == len(list_of_counts):
-                pass
+        elif isinstance(y_axis_max, list):
+            if len(y_axis_max) != len(list_of_counts):
+                raise NotImplementedError(
+                    "If passing an array to `y_axis_max`, make sure it has the correct "
+                    "number of entries, here: {}!".format(len(list_of_counts))
+                )
+    else:
+        y_axis_max = [None] * len(list_of_counts)
+
     # Do all subplots: unfiltered at top, then all subplots with filtered data
     for i in range(len(list_of_counts)):
         data = list_of_counts[i]
@@ -250,7 +257,7 @@ def comparison_numeric_bar_plot(
             display_percents,
             display_median,
             percent_threshold,
-            y_axis_max,
+            y_axis_max[i],
             **additional_params,
         )
     # Adjustments for the whole figure:
