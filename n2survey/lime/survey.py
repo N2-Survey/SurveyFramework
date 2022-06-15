@@ -1136,9 +1136,10 @@ class LimeSurvey:
                                  - `questions_to_filter` ARE numeric questions,
                                     HAVE invalid keys or HAVE invalid values
         """
-        # Set up plot options
+        # Prepare theme and non-theme arguments
         theme = self.theme.copy()
-        theme.update(kwargs)
+        theme_kwargs, non_theme_kwargs = _split_plot_kwargs(kwargs)
+        theme = deep_dict_update(theme, theme_kwargs)
 
         # Set up question as title for figure
         if display_title:
@@ -1198,8 +1199,9 @@ class LimeSurvey:
                     filtered_responses, counts_df = self.filter_responses(
                         question, unfiltered_responses, [key, value]
                     )
-                    # Skip comparisons if filtered DataFrame has no counts
-                    if counts_df.sum(axis=0)[0] > 0:
+                    # Skip comparisons if filtered DataFrame has no counts of valid answers
+                    # Last entry corresponds to 'No Answer'
+                    if counts_df[:-1].sum(axis=0)[0] > 0:
                         list_of_labels.append(self.get_choices(key)[value])
                         list_of_counts_df.append(counts_df)
                         list_of_responses.append(filtered_responses)
@@ -1227,8 +1229,9 @@ class LimeSurvey:
                         [first_key, first_value],
                         [second_key, second_value],
                     )
-                    # Skip comparisons if filtered DataFrame has no counts
-                    if counts_df.sum(axis=0)[0] > 0:
+                    # Skip comparisons if filtered DataFrame has no counts of valid answers
+                    # Last entry corresponds to 'No Answer'
+                    if counts_df[:-1].sum(axis=0)[0] > 0:
                         list_of_labels.append(
                             self.get_choices(first_key)[first_value]
                             + " + "
@@ -1246,6 +1249,7 @@ class LimeSurvey:
             display_percents=display_percents,
             title=title,
             fig_size_inches=fig_size_inches,
+            theme=theme,
             **kwargs,
         )
         # Save to a file
@@ -1277,12 +1281,16 @@ class LimeSurvey:
         elif len(args) == 2:
             first_key, first_value = args[0]
             second_key, second_value = args[1]
+            first_responses = self.get_responses(
+                first_key, labels=False, drop_other=True
+            )
+            second_responses = self.get_responses(
+                second_key, labels=False, drop_other=True
+            )
             indices, _ = np.where(
                 np.logical_and(
-                    self.get_responses(first_key, labels=False, drop_other=True)
-                    == first_value,
-                    self.get_responses(second_key, labels=False, drop_other=True)
-                    == second_value,
+                    np.asarray(first_responses) == first_value,
+                    np.asarray(second_responses) == second_value,
                 )
             )
         filtered_responses = unfiltered_responses.iloc[indices]
