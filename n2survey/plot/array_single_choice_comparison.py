@@ -100,6 +100,20 @@ def array_single_comparison_plot(
                     decimals=2,
                 )
             ]
+            # remove single neutral choices
+            remove_start = len(grouped_choices["left"])
+            remove_stop = remove_start + len(grouped_choices["center"])
+            print(choice_count)
+            index_list = list(np.arange(remove_start, remove_stop, 1))
+            count = 0
+            filtered_choices = []
+            for choice in choice_count:
+                if count in index_list:
+                    pass
+                else:
+                    filtered_choices.append(choice)
+                count = count + 1
+            choice_count = filtered_choices
             answer_dictionary[answer].append(choice_count)
 
     if totalbar:
@@ -159,16 +173,13 @@ def array_single_comparison_plot(
             index_list = list(np.arange(remove_start, remove_stop, 1))
             count = 0
             filtered_choices = []
-            print(index_list)
             for choice in choice_count:
-                print(choice)
                 if count in index_list:
-                    print("is in list")
+                    pass
                 else:
                     filtered_choices.append(choice)
                 count = count + 1
             choice_count = filtered_choices
-            brakk
             answer_dictionary[answer].append(choice_count)
     # remove answers from compare_with answers dictionary
     for answer in answer_dictionary.copy():
