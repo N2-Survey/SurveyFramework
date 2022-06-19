@@ -38,6 +38,7 @@ def array_single_comparison_plot(
     show_zeroes: bool = True,
     bubbles: Union[bool, float] = None,
     no_sub_bars: bool = False,
+    combine_neutral_choices: bool = True,
 ):
 
     """
@@ -50,137 +51,15 @@ def array_single_comparison_plot(
     grouped_choices = get_grouped_choices(
         options=plot_data_list[0][0][1], all_grouped_choices=DEFAULT_GROUPED_CHOICES
     )
-    answer_dictionary = {}
-    compare_with_data = plot_data_list[0][1]
-    choices = plot_data_list[0][0][1]
-    for answer in legend_sequence:
-        question_data = plot_data_list[0][0][0].iloc[
-            np.where(answer == compare_with_data)[0], :
-        ]
-        indicator_matrix = []
-        for row in np.asarray(question_data):
-            indicator_matrix.append(
-                [
-                    x
-                    if x in grouped_choices["left"]
-                    else 0
-                    if x in grouped_choices["center"]
-                    else x
-                    for x in row
-                ]
-            )
-        indicator_matrix = np.array(indicator_matrix)
-        participants_that_gave_answer = indicator_matrix.shape[0]
-        answer_dictionary[answer] = []
-        for column in np.transpose(indicator_matrix):
-            choice_count = [0] * len(choices)
-            count = 0
-            for position in choice_count:
-                choice_count[count] = np.round(
-                    (
-                        np.where(column == choices[count])[0].shape[0]
-                        / participants_that_gave_answer
-                        * 100
-                    ),
-                    decimals=2,
-                )
-                if choices[count] in grouped_choices["right"]:
-                    choice_count[count] = -choice_count[count]
-                count = count + 1
-
-            # add one count for all neutral choices together to not overcrowd
-            # the middle of the bar.
-            choice_count = choice_count + [
-                np.round(
-                    (
-                        np.where(column == "0")[0].shape[0]
-                        / participants_that_gave_answer
-                        * 100
-                    ),
-                    decimals=2,
-                )
-            ]
-            # remove single neutral choices
-            remove_start = len(grouped_choices["left"])
-            remove_stop = remove_start + len(grouped_choices["center"])
-            print(choice_count)
-            index_list = list(np.arange(remove_start, remove_stop, 1))
-            count = 0
-            filtered_choices = []
-            for choice in choice_count:
-                if count in index_list:
-                    pass
-                else:
-                    filtered_choices.append(choice)
-                count = count + 1
-            choice_count = filtered_choices
-            answer_dictionary[answer].append(choice_count)
-
-    if totalbar:
-        # add a total part to answer_dictionary, which should have the same
-        # values as the s.plot(question)
-        answer = "Total"
-        question_data = plot_data_list[0][0][0].iloc[:, :]
-        indicator_matrix = []
-        for row in np.asarray(question_data):
-            indicator_matrix.append(
-                [
-                    x
-                    if x in grouped_choices["left"]
-                    else 0
-                    if x in grouped_choices["center"]
-                    else x
-                    for x in row
-                ]
-            )
-        indicator_matrix = np.array(indicator_matrix)
-        participants_that_gave_answer = indicator_matrix.shape[0]
-        answer_dictionary[answer] = []
-        for column in np.transpose(indicator_matrix):
-            choice_count = [0] * len(choices)
-            count = 0
-            remove_indizes = []
-            for position in choice_count:
-                choice_count[count] = np.round(
-                    (
-                        np.where(column == choices[count])[0].shape[0]
-                        / participants_that_gave_answer
-                        * 100
-                    ),
-                    decimals=2,
-                )
-                if choices[count] in grouped_choices["right"]:
-                    choice_count[count] = -choice_count[count]
-                if choices[count] in grouped_choices["center"]:
-                    remove_indizes.append(count)
-                count = count + 1
-
-            # add one count for all neutral choices together
-            choice_count = choice_count + [
-                np.round(
-                    (
-                        np.where(column == "0")[0].shape[0]
-                        / participants_that_gave_answer
-                        * 100
-                    ),
-                    decimals=2,
-                )
-            ]
-            # remove single neutral choices
-            remove_start = len(grouped_choices["left"])
-            remove_stop = remove_start + len(grouped_choices["center"])
-            print(choice_count)
-            index_list = list(np.arange(remove_start, remove_stop, 1))
-            count = 0
-            filtered_choices = []
-            for choice in choice_count:
-                if count in index_list:
-                    pass
-                else:
-                    filtered_choices.append(choice)
-                count = count + 1
-            choice_count = filtered_choices
-            answer_dictionary[answer].append(choice_count)
+    answer_dictionary = get_answer_dictionary(
+        array_question_data=plot_data_list[0][0],
+        compare_with_data=plot_data_list[0][1],
+        legend_sequence=legend_sequence,
+        grouped_choices=grouped_choices,
+        totalbar=totalbar,
+    )
+    print(answer_dictionary)
+    brakk
     # remove answers from compare_with answers dictionary
     for answer in answer_dictionary.copy():
         if not answer_dictionary[answer]:
@@ -191,6 +70,8 @@ def array_single_comparison_plot(
             legend_sequence.remove(answer)
         else:
             pass
+    print(answer_dictionary)
+    brakk
     positionlist_per_answer = form_single_answer_bar_positions(
         answer_dictionary, bar_width, bar_positions_per_answer=bar_positions
     )
@@ -241,3 +122,103 @@ def get_grouped_choices(options, all_grouped_choices):
                 break
         count = count + 1
     return all_grouped_choices[index]
+
+
+def get_answer_dictionary(
+    array_question_data,
+    compare_with_data,
+    legend_sequence,
+    grouped_choices,
+    combine_neutral_choices: bool = True,
+    totalbar: bool = True,
+):
+    """
+    creates a dictionary with the compare_with answers as entries, each
+    compare_with answer gets their own set of percentages corresponding
+    to the number of people that answered the single_choice compare_with answer
+    and how they answered the array_question.
+    A Total bar is added if totalbar, and shows the answers to the array
+    question, not separated by answers to single_choice question.
+    The Total Bar should have the same results as the normal plot without
+    comparison.
+    """
+    answer_dictionary = {}
+    choices = array_question_data[1]
+    if combine_neutral_choices:
+        choices.append("all  neutral choices")
+    if totalbar:
+        legend_sequence.append("Total")
+    for answer in legend_sequence:
+        if answer == "Total":
+            question_data = array_question_data[0].iloc[:, :]
+        else:
+            question_data = array_question_data[0].iloc[
+                np.where(answer == compare_with_data)[0], :
+            ]
+        indicator_matrix = []
+        for row in np.asarray(question_data):
+            indicator_matrix.append(
+                [
+                    x
+                    if x in grouped_choices["left"]
+                    else "nan"
+                    if x in grouped_choices["center"]
+                    else x
+                    for x in row
+                ]
+            )
+        indicator_matrix = np.array(indicator_matrix)
+        participants_that_gave_answer = indicator_matrix.shape[0]
+        answer_dictionary[answer] = []
+        for column in np.transpose(indicator_matrix):
+            if combine_neutral_choices:
+                choice_count = [0] * (len(choices) - 1)
+            else:
+                raise NotImplementedError(
+                    """
+                                          only combined neutral choices
+                                          possible at the moment
+                                          """
+                )
+            count = 0
+            for position in choice_count:
+                choice_count[count] = np.round(
+                    (
+                        np.where(column == choices[count])[0].shape[0]
+                        / participants_that_gave_answer
+                        * 100
+                    ),
+                    decimals=2,
+                )
+                if choices[count] in grouped_choices["right"]:
+                    choice_count[count] = -choice_count[count]
+                count = count + 1
+
+            # add one count for all neutral choices together to not overcrowd
+            # the middle of the bar.
+
+            if combine_neutral_choices:
+                choice_count = choice_count + [
+                    np.round(
+                        (
+                            np.where(column == "nan")[0].shape[0]
+                            / participants_that_gave_answer
+                            * 100
+                        ),
+                        decimals=2,
+                    )
+                ]
+                # remove neither/nor, Does not apply I don't want to answer
+                # this question and 'No Answer' if neutral choices are combined
+                # in last element
+                count = 0
+                new_choice_count = []
+                for position in choice_count.copy():
+                    if choices[count] in grouped_choices["center"]:
+                        pass
+                    else:
+                        new_choice_count.append(position)
+                    count = count + 1
+                choice_count = new_choice_count
+            answer_dictionary[answer].append(choice_count)
+    return answer_dictionary
