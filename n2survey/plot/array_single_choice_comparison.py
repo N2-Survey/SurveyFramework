@@ -51,15 +51,13 @@ def array_single_comparison_plot(
     grouped_choices = get_grouped_choices(
         options=plot_data_list[0][0][1], all_grouped_choices=DEFAULT_GROUPED_CHOICES
     )
-    answer_dictionary = get_answer_dictionary(
+    answer_dictionary, choices = get_answer_dictionary(
         array_question_data=plot_data_list[0][0],
         compare_with_data=plot_data_list[0][1],
         legend_sequence=legend_sequence,
         grouped_choices=grouped_choices,
         totalbar=totalbar,
     )
-    print(answer_dictionary)
-    brakk
     # remove answers from compare_with answers dictionary
     for answer in answer_dictionary.copy():
         if not answer_dictionary[answer]:
@@ -70,8 +68,6 @@ def array_single_comparison_plot(
             legend_sequence.remove(answer)
         else:
             pass
-    print(answer_dictionary)
-    brakk
     positionlist_per_answer = form_single_answer_bar_positions(
         answer_dictionary, bar_width, bar_positions_per_answer=bar_positions
     )
@@ -85,16 +81,41 @@ def array_single_comparison_plot(
         positionlist_per_answer=list(positionlist_per_answer),
         no_sub_bars=no_sub_bars,
     )
-    print(positionlist_per_answer)
-    print(bar_positions_complete)
-    print(y)
-    print(answer_dictionary)
-    brakk
-    for answer in answer_dictionary:
-        percentage_groups = answer_dictionary[answer]
+    count_1 = 0
+    for answer in legend_sequence:
+        percentage_groups = np.array(answer_dictionary[answer])
+        print(percentage_groups)
+        widths = np.transpose(percentage_groups).flatten()
         label = [answer] * len(percentage_groups[0])
+        # calculate starts
+        # first calculate
+        nr_of_left_choices = len(grouped_choices["left"])
+        starts = np.ndarray(shape=[1, 0])
+        count = 0
+        for choice in grouped_choices["left"]:
+            starts_choice = percentage_groups[:, choices.index(choice)]
+            count = count + 1
+            while nr_of_left_choices > count:
+                starts_choice = (
+                    starts_choice + percentage_groups[:, choices.index(choices[count])]
+                )
+                count = count + 1
+            starts = np.append(starts, starts_choice)
+        count = 0
+        for choice in grouped_choices["right"]:
+            starts_choice = np.mean(
+                percentage_groups[
+                    :, choices.index(choice) - count : choices.index(choice) + 1
+                ],
+                axis=1,
+            )
+            print(starts_choice)
+            starts = np.append(starts, starts_choice)
+            count = count + 1
+        print(starts)
+        bar_positions = bar_positions_complete + positionlist_per_answer[count_1]
         ax.barh(
-            bar_positions_complete,
+            bar_positions,
             widths,
             left=starts,
             height=bar_width,
@@ -102,6 +123,7 @@ def array_single_comparison_plot(
             color=colors[position][index_response],
             **kwargs,
         )
+        count_1 = count_1 + 1
     plt.yticks(bar_positions, y_labels)
 
     return fig, ax
@@ -208,7 +230,7 @@ def get_answer_dictionary(
                         decimals=2,
                     )
                 ]
-                # remove neither/nor, Does not apply I don't want to answer
+                # remove neither/nor, Does not apply, I don't want to answer
                 # this question and 'No Answer' if neutral choices are combined
                 # in last element
                 count = 0
@@ -221,4 +243,10 @@ def get_answer_dictionary(
                     count = count + 1
                 choice_count = new_choice_count
             answer_dictionary[answer].append(choice_count)
-    return answer_dictionary
+            if combine_neutral_choices:
+                choices = [
+                    choice
+                    for choice in choices
+                    if choice not in grouped_choices["center"]
+                ]
+    return answer_dictionary, choices
