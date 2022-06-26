@@ -47,7 +47,7 @@ def array_single_comparison_plot(
     """
 
     # for answer in compare_with_answers:
-    y_labels = [entry for entry in plot_data_list[0][0]]
+    y_labels = [entry for entry in plot_data_list[0][0][0]]
     grouped_choices = get_grouped_choices(
         options=plot_data_list[0][0][1], all_grouped_choices=DEFAULT_GROUPED_CHOICES
     )
@@ -81,50 +81,47 @@ def array_single_comparison_plot(
         positionlist_per_answer=list(positionlist_per_answer),
         no_sub_bars=no_sub_bars,
     )
-    count_1 = 0
-    for answer in legend_sequence:
+    count = 0
+    fig, ax = plt.subplots()
+    fig.set_tight_layout(True)
+    for answer,sub_position in zip(legend_sequence,positionlist_per_answer):
         percentage_groups = np.array(answer_dictionary[answer])
-        print(percentage_groups)
-        widths = np.transpose(percentage_groups).flatten()
-        label = [answer] * len(percentage_groups[0])
-        # calculate starts
-        # first calculate
-        nr_of_left_choices = len(grouped_choices["left"])
-        starts = np.ndarray(shape=[1, 0])
-        count = 0
-        for choice in grouped_choices["left"]:
-            starts_choice = percentage_groups[:, choices.index(choice)]
-            count = count + 1
-            while nr_of_left_choices > count:
-                starts_choice = (
-                    starts_choice + percentage_groups[:, choices.index(choices[count])]
-                )
-                count = count + 1
-            starts = np.append(starts, starts_choice)
-        count = 0
-        for choice in grouped_choices["right"]:
-            starts_choice = np.mean(
-                percentage_groups[
-                    :, choices.index(choice) - count : choices.index(choice) + 1
-                ],
-                axis=1,
+        bar_positions = bar_positions_complete+sub_position
+        column_count = 0
+        for column,choice in zip(np.transpose(percentage_groups), choices):
+            starts = column
+            if choice in grouped_choices['left']:
+                width = -column
+                columns_to_add_to_starts = (
+                    len(grouped_choices['left'])-
+                    grouped_choices['left'].index(choice)
+                    )-1
+                i=1
+                while columns_to_add_to_starts>0:
+                    starts = starts+percentage_groups[:,count+i]
+                    columns_to_add_to_starts=columns_to_add_to_starts-1
+                    i = i+1
+            print(starts)
+            brakk
+            # add start points for positive bars
+            ax.barh(
+                bar_positions,
+                width=-1*widths,
+                left=starts,
+                height=1,
+                label=answer,
             )
-            print(starts_choice)
-            starts = np.append(starts, starts_choice)
-            count = count + 1
-        print(starts)
-        bar_positions = bar_positions_complete + positionlist_per_answer[count_1]
-        ax.barh(
-            bar_positions,
-            widths,
-            left=starts,
-            height=bar_width,
-            label=label,
-            color=colors[position][index_response],
-            **kwargs,
-        )
-        count_1 = count_1 + 1
-    plt.yticks(bar_positions, y_labels)
+        count=count+1
+    
+    ax.legend(
+        legend_sequence,
+        loc=(0.1, 1),
+        ncol=legend_columns,
+        frameon=False,
+        title=legend_title,
+    )
+    ax.invert_xaxis()
+    plt.yticks(bar_positions_complete, y_labels)
 
     return fig, ax
 
