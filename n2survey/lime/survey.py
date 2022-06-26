@@ -890,7 +890,7 @@ class LimeSurvey:
                 compare_with,
                 question_type,
                 theme,
-                bar_width = bar_width,
+                bar_width=bar_width,
                 add_questions=add_questions,
                 totalbar=totalbar,
                 suppress_answers=suppress_answers,

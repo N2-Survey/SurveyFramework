@@ -109,6 +109,7 @@ def aspect_ratio_from_arguments(
     bubble_size: float = None,
     max_lines_xtick: float = 3,
     max_lines_ytick: float = 3,
+    multiplicator: float = 0.4,
 ):
     """
     calculates the width of the plot, depending on total number of bars,
@@ -126,7 +127,7 @@ def aspect_ratio_from_arguments(
         len(bar_positions_complete) * len(positionlist_per_answer) * bar_width
         + distance_between_answers * len(bar_positions_complete)
         + distance_between_bars * len(positionlist_per_answer)
-    ) * 0.4
+    ) * multiplicator
     if theme["font_scale"] > bar_width:
         width = width / bar_width * 0.8 * theme["font_scale"]
     if width < space_nedded_for_x_ticks:
@@ -201,6 +202,7 @@ def form_bar_positions(
     additional_question_start_indizes: list = [],
     distance_between_bars: float = None,
     no_sub_bars: bool = None,
+    multiplicator=1.0,
 ):
     """
     calculates bar positions in a Plot, depending on bar_width etc., also
@@ -210,8 +212,10 @@ def form_bar_positions(
     if no_sub_bars:
         number_bars_per_answer = 1
     else:
-        number_bars_per_answer = len(y)
-    space_per_answer = max(positionlist_per_answer) - min(positionlist_per_answer)
+        number_bars_per_answer = len(positionlist_per_answer)
+    space_per_answer = (
+        max(positionlist_per_answer) - min(positionlist_per_answer)
+    ) * multiplicator
     if not distance_between_bars:
         distance_between_bars = 1.5 * space_per_answer / number_bars_per_answer
     while len(bar_positions_complete) < len(x):
@@ -221,13 +225,15 @@ def form_bar_positions(
     return bar_positions_complete
 
 
-def form_single_answer_bar_positions(y, bar_width, bar_positions_per_answer: list = []):
+def form_single_answer_bar_positions(
+    y, bar_width, bar_positions_per_answer: list = [], multiplicator=1
+):
     """
     calculates the offset of multiple bars given in dictionary 'y'
     to a single x-position, depending on 'bar_width'
     """
     number_of_bars = len(y)
-    space_per_answer = bar_width * number_of_bars
+    space_per_answer = bar_width * number_of_bars * multiplicator
     if bar_positions_per_answer:
         while len(bar_positions_per_answer) < number_of_bars:
             bar_positions_per_answer.append(bar_positions_per_answer[-1] + bar_width)

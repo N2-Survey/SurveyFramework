@@ -6,12 +6,16 @@ Created on Tue Jun  7 09:38:31 2022
 @author: theflike
 """
 
+from textwrap import wrap
 from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 from .comparison_shared_functions import (
+    aspect_ratio_from_arguments,
+    calculate_title_pad,
     form_bar_positions,
     form_single_answer_bar_positions,
 )
@@ -69,7 +73,10 @@ def array_single_comparison_plot(
         else:
             pass
     positionlist_per_answer = form_single_answer_bar_positions(
-        answer_dictionary, bar_width, bar_positions_per_answer=bar_positions
+        answer_dictionary,
+        bar_width,
+        bar_positions_per_answer=bar_positions,
+        multiplicator=1,
     )
     y = answer_sequence
     bar_positions_complete = form_bar_positions(
@@ -80,48 +87,112 @@ def array_single_comparison_plot(
         distance_between_bars=2,
         positionlist_per_answer=list(positionlist_per_answer),
         no_sub_bars=no_sub_bars,
+        multiplicator=1,
     )
-    count = 0
+    # %%% calculate dimensions of figure
+    if theme is not None:
+        if calculate_aspect_ratio:
+            height, width = aspect_ratio_from_arguments(
+                bar_positions_complete,
+                positionlist_per_answer,
+                theme,
+                bar_width,
+                max_lines_xtick=3,
+                max_lines_ytick=3,
+                multiplicator=0.4,
+            )
+            width = theme["rc"]["figure.figsize"][0]
+        else:
+            width, height = theme["rc"]["figure.figsize"]
+        theme["rc"]["figure.figsize"] = (width, height)
+        sns.set_theme(**theme)
+
+    # initialize Figure
     fig, ax = plt.subplots()
     fig.set_tight_layout(True)
-    for answer,sub_position in zip(legend_sequence,positionlist_per_answer):
+    colormap = plt.get_cmap(theme["palette"])
+    ax.set_prop_cycle(
+        color=[
+            colormap(1.0 * i / len(legend_sequence))
+            for i in range(len(legend_sequence))
+        ]
+    )
+    colors = [
+        colormap(1.0 * i / len(legend_sequence)) for i in range(len(legend_sequence))
+    ]
+
+    # plot
+    answer_count = 0
+    for answer, sub_position in zip(legend_sequence, positionlist_per_answer):
+        count = 0
         percentage_groups = np.array(answer_dictionary[answer])
-        bar_positions = bar_positions_complete+sub_position
-        column_count = 0
-        for column,choice in zip(np.transpose(percentage_groups), choices):
-            starts = column
-            if choice in grouped_choices['left']:
+        bar_positions = bar_positions_complete + sub_position
+        for column, choice in zip(np.transpose(percentage_groups), choices):
+            starts = calculate_bar_starts_from_data(
+                column, choice, grouped_choices, percentage_groups, count
+            )
+            if choice in grouped_choices["left"]:
                 width = -column
-                columns_to_add_to_starts = (
-                    len(grouped_choices['left'])-
-                    grouped_choices['left'].index(choice)
-                    )-1
-                i=1
-                while columns_to_add_to_starts>0:
-                    starts = starts+percentage_groups[:,count+i]
-                    columns_to_add_to_starts=columns_to_add_to_starts-1
-                    i = i+1
-            print(starts)
-            brakk
-            # add start points for positive bars
+            else:
+                width = column
             ax.barh(
                 bar_positions,
-                width=-1*widths,
+                width=width,
                 left=starts,
-                height=1,
+                height=bar_width,
                 label=answer,
+                align="edge",
+                edgecolor="black",
+                color=colors[answer_count],
             )
-        count=count+1
-    
-    ax.legend(
+            count = count + 1
+        answer_count = answer_count + 1
+    plt.legend(
         legend_sequence,
         loc=(0.1, 1),
         ncol=legend_columns,
         frameon=False,
         title=legend_title,
     )
+    legend = ax.get_legend()
+    count = 0
+    for color in colors:
+        legend.legendHandles[count].set_color(color)
+        count = count + 1
+
+    labels = grouped_choices["left"]
+    labels.append("all neutral choices")
+    labels = labels + grouped_choices["right"]
+    separator = " "
+    while len(separator) <= 2 * (theme["rc"]["figure.figsize"][0] / len(labels)):
+        separator = separator + " "
+    labels = separator.join(labels)
+    plt.xlabel(
+        labels,
+    )
+    plt.xlim(-100, 100)
+    if plot_title:
+        if plot_title_position:
+            ax.text(plot_title_position[0], plot_title_position[1], plot_title)
+        else:
+            ax.set_title(
+                plot_title,
+                pad=calculate_title_pad(
+                    legend_sequence,
+                    legend_columns,
+                    theme=theme,
+                    legend_title=legend_title,
+                ),
+            )
     ax.invert_xaxis()
+
+    # wrap text in x-axis and, if bubbles, y-axis texts as well
+    y_labels = [
+        "\n".join(wrap(entry, width=maximum_length_x_axis_answers))
+        for entry in y_labels
+    ]
     plt.yticks(bar_positions_complete, y_labels)
+    plt.setp(ax.get_yticklabels(), rotation=30, horizontalalignment="right")
 
     return fig, ax
 
@@ -164,7 +235,7 @@ def get_answer_dictionary(
     answer_dictionary = {}
     choices = array_question_data[1]
     if combine_neutral_choices:
-        choices.append("all  neutral choices")
+        choices.append("all neutral choices")
     if totalbar:
         legend_sequence.append("Total")
     for answer in legend_sequence:
@@ -247,3 +318,43 @@ def get_answer_dictionary(
                     if choice not in grouped_choices["center"]
                 ]
     return answer_dictionary, choices
+
+
+def calculate_bar_starts_from_data(
+    column, choice, grouped_choices, percentage_groups, position_of_column
+):
+    if choice in grouped_choices["left"]:
+        # add 0.5 neutral bar
+        starts = column + percentage_groups[:, -1] * 0.5
+        column_index = grouped_choices["left"].index(choice)
+        if column_index == 0:
+            if len(grouped_choices["left"]) == 3:
+                starts = (
+                    starts
+                    + percentage_groups[:, position_of_column + 1]
+                    + percentage_groups[:, position_of_column + 2]
+                )
+            elif len(grouped_choices["left"]) == 2:
+                starts = starts + percentage_groups[:, position_of_column + 1]
+            elif len(grouped_choices["left"]) == 1:
+                pass
+        elif column_index == 1:
+            if len(grouped_choices["left"]) == 3:
+                starts = starts + percentage_groups[:, position_of_column + 1]
+            else:
+                pass
+    # add start points for positive bars
+    if choice in grouped_choices["right"]:
+        starts = np.array([0] * len(column)) - 0.5 * percentage_groups[:, -1]
+        right_count = grouped_choices["right"].index(choice)
+        if right_count == 1:
+            starts = starts + percentage_groups[:, position_of_column - 1]
+        elif right_count == 2:
+            starts = (
+                starts
+                + percentage_groups[:, position_of_column - 1]
+                + percentage_groups[:, position_of_column - 2]
+            )
+    if choice == "all neutral choices":
+        starts = np.array([0] * len(column)) - 0.5 * column
+    return starts
