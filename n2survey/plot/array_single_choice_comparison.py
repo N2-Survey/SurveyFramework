@@ -227,7 +227,7 @@ def get_answer_dictionary(
     compare_with answer gets their own set of percentages corresponding
     to the number of people that answered the single_choice compare_with answer
     and how they answered the array_question.
-    A Total bar is added if totalbar, and shows the answers to the array
+    A Total bar is added if totalbar=True, and shows the answers to the array
     question, not separated by answers to single_choice question.
     The Total Bar should have the same results as the normal plot without
     comparison.
