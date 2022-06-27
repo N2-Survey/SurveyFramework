@@ -49,18 +49,23 @@ def array_single_comparison_plot(
     Plots correlations between array answers and the answers of
     single choice questions.
     """
-
-    # for answer in compare_with_answers:
-    y_labels = [entry for entry in plot_data_list[0][0][0]]
+    y_labels = answer_sequence
+    y_labels = [answer for answer in y_labels if answer not in suppress_answers]
+    for answer in plot_data_list[0][0][0].copy():
+        if answer not in y_labels:
+            plot_data_list[0][0][0].pop(answer)
+    if ignore_no_answer:
+        suppress_answers.append("No Answer")
     grouped_choices = get_grouped_choices(
         options=plot_data_list[0][0][1], all_grouped_choices=DEFAULT_GROUPED_CHOICES
     )
-    answer_dictionary, choices = get_answer_dictionary(
+    answer_dictionary, choices, grouped_choices = get_answer_dictionary(
         array_question_data=plot_data_list[0][0],
         compare_with_data=plot_data_list[0][1],
         legend_sequence=legend_sequence,
         grouped_choices=grouped_choices,
         totalbar=totalbar,
+        suppress_answers=suppress_answers,
     )
     # remove answers from compare_with answers dictionary
     for answer in answer_dictionary.copy():
@@ -72,15 +77,16 @@ def array_single_comparison_plot(
             legend_sequence.remove(answer)
         else:
             pass
+        if answer not in legend_sequence:
+            answer_dictionary.pop(answer, None)
     positionlist_per_answer = form_single_answer_bar_positions(
         answer_dictionary,
         bar_width,
         bar_positions_per_answer=bar_positions,
         multiplicator=1,
     )
-    y = answer_sequence
     bar_positions_complete = form_bar_positions(
-        y,
+        y_labels,
         answer_dictionary,
         bar_width=bar_width,
         totalbar=totalbar,
@@ -89,7 +95,7 @@ def array_single_comparison_plot(
         no_sub_bars=no_sub_bars,
         multiplicator=1,
     )
-    # %%% calculate dimensions of figure
+    # calculate dimensions of figure
     if theme is not None:
         if calculate_aspect_ratio:
             height, width = aspect_ratio_from_arguments(
@@ -161,7 +167,10 @@ def array_single_comparison_plot(
         count = count + 1
 
     labels = grouped_choices["left"]
-    labels.append("all neutral choices")
+    if len(grouped_choices["center"]) > 1:
+        labels.append("all neutral choices")
+    else:
+        labels.append(grouped_choices["center"][0])
     labels = labels + grouped_choices["right"]
     separator = " "
     while len(separator) <= 2 * (theme["rc"]["figure.figsize"][0] / len(labels)):
@@ -184,6 +193,7 @@ def array_single_comparison_plot(
                     legend_title=legend_title,
                 ),
             )
+    plt.xticks(np.arange(-100, 110, 10))
     ax.invert_xaxis()
 
     # wrap text in x-axis and, if bubbles, y-axis texts as well
@@ -221,6 +231,7 @@ def get_answer_dictionary(
     grouped_choices,
     combine_neutral_choices: bool = True,
     totalbar: bool = True,
+    suppress_answers: list = [],
 ):
     """
     creates a dictionary with the compare_with answers as entries, each
@@ -234,6 +245,17 @@ def get_answer_dictionary(
     """
     answer_dictionary = {}
     choices = array_question_data[1]
+    for answer in suppress_answers:
+        if answer in grouped_choices["left"]:
+            grouped_choices["left"].remove(answer)
+            choices.remove(answer)
+        if answer in grouped_choices["right"]:
+            grouped_choices["right"].remove(answer)
+            choices.remove(answer)
+        if answer in grouped_choices["center"]:
+            grouped_choices["center"].remove(answer)
+            choices.remove(answer)
+
     if combine_neutral_choices:
         choices.append("all neutral choices")
     if totalbar:
@@ -254,6 +276,8 @@ def get_answer_dictionary(
                     else "nan"
                     if x in grouped_choices["center"]
                     else x
+                    if x in grouped_choices["right"]
+                    else None
                     for x in row
                 ]
             )
@@ -317,7 +341,7 @@ def get_answer_dictionary(
                     for choice in choices
                     if choice not in grouped_choices["center"]
                 ]
-    return answer_dictionary, choices
+    return answer_dictionary, choices, grouped_choices
 
 
 def calculate_bar_starts_from_data(
