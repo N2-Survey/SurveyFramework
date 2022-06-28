@@ -45,9 +45,9 @@ def likert_plot_all_kwargs(
             pass
 
     if display_title:
-        title_question = survey.get_label(question)
+        plot_title = survey.get_label(question)
     else:
-        title_question = None
+        plot_title = False
 
     fig, ax = likert_bar_plot(
         counts_df,
@@ -55,7 +55,7 @@ def likert_plot_all_kwargs(
         grouped_questions=grouped_questions,
         grouped_choices=grouped_choices,
         sort_questions_by_choices=sort_questions_by_choices,
-        title_question=title_question,
+        plot_title=plot_title,
         bar_spacing=0.2,
         bar_thickness=0.4,
         group_spacing=1,
