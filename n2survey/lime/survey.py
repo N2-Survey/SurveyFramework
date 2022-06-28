@@ -3,8 +3,9 @@ import os
 import re
 import string
 import warnings
-from typing import Optional, Union
+from typing import Dict, Optional, Tuple, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -63,7 +64,7 @@ def _clean_file_name(filename: str) -> str:
     return "".join(c for c in filename if c in valid_chars)
 
 
-def _split_plot_kwargs(mixed_kwargs: dict) -> tuple[dict, dict]:
+def _split_plot_kwargs(mixed_kwargs: dict) -> Tuple[Dict, Dict]:
     """Split dict of arguments into theme and non-theme arguments
 
     Args:
@@ -77,7 +78,7 @@ def _split_plot_kwargs(mixed_kwargs: dict) -> tuple[dict, dict]:
     return theme_args, nontheme_args
 
 
-def deep_dict_update(source: dict, update_dict: dict) -> dict:
+def deep_dict_update(source: dict, update_dict: dict) -> Dict:
     """Recursive dictionary update
 
     Args:
@@ -911,11 +912,10 @@ class LimeSurvey:
             )
         elif question_type == "single-choice":
             counts_df = self.count(question, labels=True)
-            if "title" not in non_theme_kwargs:
-                non_theme_kwargs.update({"title": counts_df.columns[0]})
             fig, ax = single_choice_bar_plot(
                 x=counts_df.index.values,
                 y=pd.Series(counts_df.iloc[:, 0], name="Number of Responses"),
+                plot_title=plot_title,
                 theme=theme,
                 **non_theme_kwargs,
             )
@@ -927,37 +927,42 @@ class LimeSurvey:
             counts_df.iloc[-1, :] = np.nan
             counts_df.iloc[:, 0] = counts_df.iloc[:, 0].astype("float64")
             fig, ax = multiple_choice_bar_plot(
-                counts_df, theme=theme, **non_theme_kwargs
+                counts_df, theme=theme, plot_title=plot_title, **non_theme_kwargs
             )
         elif question_type == "array":
-            display_title = True
-            display_no_answer = False
+            # display_title = True
+            # display_no_answer = False
 
             counts_df = self.count(
-                question, labels=True, percents=False, add_totals=True
+                question,
+                labels=True,
+                percents=False,
+                add_totals=True,
             )
             counts_df.loc["Total", "Total"] = self.responses.shape[0]
-            if not display_no_answer:
-                try:
-                    counts_df = counts_df.drop("No Answer")
-                except KeyError:
-                    pass
+            # if not display_no_answer:
+            #    try:
+            #        counts_df = counts_df.drop("No Answer")
+            #    except KeyError:
+            #        pass
 
-            if display_title:
-                title_question = self.get_label(question)
-            else:
-                title_question = None
+            # if display_title:
+            #    title_question = self.get_label(question)
+            # else:
+            #    title_question = None
 
             fig, ax = likert_bar_plot(
                 counts_df,
                 theme=theme,
-                title_question=title_question,
+                # title_question=title_question,
                 bar_spacing=0.2,
                 bar_thickness=0.4,
                 group_spacing=1,
                 calc_fig_size=True,
+                plot_title=plot_title,
                 **non_theme_kwargs,
             )
+            plt.tight_layout()
 
         # Save to a file
         if save:

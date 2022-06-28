@@ -1208,7 +1208,7 @@ class TestLimeSurveyplot(BaseTestLimeSurvey2021WithResponsesCase):
         self.survey.plot(
             self.multiple_choice_column,
             rc={"font.sans-serif": "Tahoma"},
-            display_title=True,
+            plot_title=True,
         )
 
         self.survey.plot(
