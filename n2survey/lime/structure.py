@@ -1,4 +1,5 @@
 """Lime Survey related helper functions
+
 The module contains helper functions for parsing
 lime survey data such as *.xml structure files
 """
@@ -35,10 +36,13 @@ def _get_clean_string(tag: Tag) -> str:
 
 def _parse_question_title(question: Tag) -> str:
     """Get a question title from <question> element
+
     Args:
         question (Tag): bs4 tag of <question> element
+
     Raises:
         AssertionError: There is not children <text> section
+
     Returns:
         str: Parsed question title cleaned from HTML tags and extra spaces
     """
@@ -58,8 +62,10 @@ def _parse_question_title(question: Tag) -> str:
 
 def _parse_question_description(question: Tag) -> str:
     """Get a question description from <question> element
+
     Args:
         question (Tag): bs4 tag of <question> element
+
     Returns:
         str: Parsed question description cleaned from HTML
           tags and extra spaces. Or empty string if there is
@@ -84,9 +90,12 @@ def _parse_question_description(question: Tag) -> str:
 
 def _parse_question_subquestions(question: Tag) -> List[Tuple[str, str]]:
     """Collect subquestions data
+
     Collects names and labes of each <subQuestion> sections
+
     Args:
         question (Tag): bs4 tag of <question> element
+
     Returns:
         list[tuple[str, str]]: List of pairs (<subsection varName>,
           <subsection cleaned label>)
@@ -101,11 +110,14 @@ def _parse_question_subquestions(question: Tag) -> List[Tuple[str, str]]:
 
 def _parse_single_question_response(response: Tag) -> Tuple[Dict, Optional[Dict]]:
     """Parse single <response> element of a question
+
     Args:
         response (Tag): bs4 tag of <response> element
+
     Raises:
         AssertionError: Unknown response type. First child must be
           either "free" or "fixed".
+
     Returns:
         tuple[dict, Optional[dict]]: Pair:
           1. Main response data: name, format, length, label, choices
@@ -170,6 +182,7 @@ def _parse_single_question_response(response: Tag) -> Tuple[Dict, Optional[Dict]
 
 def _parse_question_responses(question: Tag) -> List[Tuple[Dict, Optional[Dict]]]:
     """Parse all question responses
+
     Simply runs `_parse_single_question_response` for each <response>
     section. See `_parse_single_question_response` for the details.
     """
@@ -190,14 +203,18 @@ def _parse_question_responses(question: Tag) -> List[Tuple[Dict, Optional[Dict]]
 
 def _get_question_group_name(responses: List[Dict]) -> str:
     """Get a question group name
+
     Some questions consist of many columns (subQuestions, contingent
     question, etc.), for them we try to get question group name. If there
     is only one <response> section, then we use its name. Otherwise, we are
     looking for a longest common prefix.
+
     Args:
         responses (list[dict, Optional[dict]]): List of parsed responses
+
     Raises:
         ValueError: At least one response with a (var)name is required
+
     Returns:
         str: the question group name
     """
@@ -215,9 +232,11 @@ def _get_question_group_name(responses: List[Dict]) -> str:
 
 def _get_question_type(subquestions: List[Tuple], responses: List[Dict]) -> str:
     """Infer question type
+
     Args:
         subquestions (list): Parsed subquestions in the question
         responses (list): Parsed responses in the question
+
     Returns:
         str: Inferred question type
     """
@@ -242,8 +261,10 @@ def _get_question_type(subquestions: List[Tuple], responses: List[Dict]) -> str:
 
 def _parse_question(question: Tag) -> List[Dict]:
     """Parse single <question> section
+
     Args:
         question (Tag): bs4 tag of <question> element
+
     Returns:
         list[dict]: List of parsed response columns. The list consists of
         of dictionaries. Each dictionary corresponds to only one data column
@@ -359,8 +380,10 @@ def _parse_question(question: Tag) -> List[Dict]:
 
 def _parse_section(section: Tag) -> Dict:
     """Parse questionnaire section
+
     Args:
         section (Tag): bs4 element of a section like `soup.find("section")`
+
     Returns:
         dict: A dictionary with the section information consisting of "id", "title",
           and "info"
@@ -410,8 +433,10 @@ def _parse_section(section: Tag) -> Dict:
 
 def read_lime_questionnaire_structure(filepath: str) -> dict[str, list[dict]]:
     """Read LimeSurvey XML structure file
+
     Args:
         filepath (str): Path to the XML structure file
+
     Returns:
         dict[str, list[dict]]: A dictionary
         {
