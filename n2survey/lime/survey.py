@@ -219,6 +219,7 @@ class LimeSurvey:
         structure_file: str = None,
         theme: Optional[dict] = None,
         output_folder: Optional[str] = None,
+        org: str = None,
     ) -> None:
         """Get an instance of the Survey
 
@@ -230,6 +231,7 @@ class LimeSurvey:
             output_folder (Optional[str], optional): A path to a folder where outputs,
             i.e. plots, repotrs, etc. will be saved. By default, current woring
             directory is used.
+            org (str, optional): Name of the organization.
         """
 
         # Store path to structure file
@@ -244,6 +246,9 @@ class LimeSurvey:
 
         # Set a folder for output results
         self.output_folder = output_folder or os.path.abspath(os.curdir)
+
+        # Store organization information
+        self.org = org
 
     def read_structure(self, structure_file: str) -> None:
         """Read structure XML file
@@ -884,6 +889,8 @@ class LimeSurvey:
         # get plot title
         if plot_title is True:
             plot_title = self.get_label(question)
+            if self.org is not None:
+                plot_title = f"{self.org}: {plot_title}"
         if compare_with:
             fig, ax = self.plot_comparison(
                 question,
