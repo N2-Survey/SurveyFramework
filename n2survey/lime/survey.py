@@ -266,10 +266,6 @@ class LimeSurvey:
         self.output_folder = output_folder or os.path.abspath(os.curdir)
 
         # Store organization information
-        if org is not None and org not in self.allowed_orgs:
-            raise AssertionError(
-                f"Only the following organizations are allowed: {self.allowed_orgs}"
-            )
         self.org = org
 
     def read_structure(self, structure_file: str) -> None:
