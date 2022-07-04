@@ -917,28 +917,14 @@ class LimeSurvey:
                 counts_df, theme=theme, plot_title=plot_title, **non_theme_kwargs
             )
         elif question_type == "array":
-            # display_title = True
-            # display_no_answer = False
 
             counts_df = self.count(
                 question, labels=True, percents=False, add_totals=True,
             )
             counts_df.loc["Total", "Total"] = self.responses.shape[0]
-            # if not display_no_answer:
-            #    try:
-            #        counts_df = counts_df.drop("No Answer")
-            #    except KeyError:
-            #        pass
-
-            # if display_title:
-            #    title_question = self.get_label(question)
-            # else:
-            #    title_question = None
-
             fig, ax = likert_bar_plot(
                 counts_df,
                 theme=theme,
-                # title_question=title_question,
                 bar_spacing=0.2,
                 bar_thickness=0.4,
                 group_spacing=1,

@@ -163,11 +163,9 @@ def sort_data(data_df, sort):
 def multiple_choice_bar_plot(
     data_df,
     theme=None,
-    # sort=None,
     sort="descending",
     bar_thickness=1,
     plot_title=False,
-    # bar_spacing=1,
     bar_spacing=1.2,
     display_threshold=0,
     wrap_text=True,
