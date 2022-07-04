@@ -3,7 +3,7 @@ import os
 import re
 import string
 import warnings
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -35,9 +35,7 @@ DEFAULT_THEME = {
     "font": "sans-serif",
     "font_scale": 1,
     "color_codes": True,
-    "rc": {
-        "figure.figsize": (12, 12),
-    },
+    "rc": {"figure.figsize": (12, 12),},
 }
 
 QUESTION_TYPES = (
@@ -63,7 +61,7 @@ def _clean_file_name(filename: str) -> str:
     return "".join(c for c in filename if c in valid_chars)
 
 
-def _split_plot_kwargs(mixed_kwargs: dict) -> Tuple[Dict, Dict]:
+def _split_plot_kwargs(mixed_kwargs: dict) -> tuple[dict, dict]:
     """Split dict of arguments into theme and non-theme arguments
 
     Args:
@@ -77,7 +75,7 @@ def _split_plot_kwargs(mixed_kwargs: dict) -> Tuple[Dict, Dict]:
     return theme_args, nontheme_args
 
 
-def deep_dict_update(source: dict, update_dict: dict) -> Dict:
+def deep_dict_update(source: dict, update_dict: dict) -> dict:
     """Recursive dictionary update
 
     Args:
@@ -135,10 +133,7 @@ class LimeSurvey:
                 "A3": "high anxiety",
             },
         },
-        "depression_score": {
-            "label": "What is the depression score?",
-            "type": "free",
-        },
+        "depression_score": {"label": "What is the depression score?", "type": "free",},
         "depression_class": {
             "label": "What is the depression class?",
             "type": "single-choice",
@@ -208,10 +203,7 @@ class LimeSurvey:
                 "A5": "very dissatisfied",
             },
         },
-        "phd_duration": {
-            "label": "What is the length of PhD?",
-            "type": "free",
-        },
+        "phd_duration": {"label": "What is the length of PhD?", "type": "free",},
     }
 
     def __init__(
@@ -457,10 +449,7 @@ class LimeSurvey:
         return survey_copy
 
     def get_responses(
-        self,
-        question: str,
-        labels: bool = True,
-        drop_other: bool = False,
+        self, question: str, labels: bool = True, drop_other: bool = False,
     ) -> pd.DataFrame:
         """Get responses for a given question with or without labels
 
@@ -932,10 +921,7 @@ class LimeSurvey:
             # display_no_answer = False
 
             counts_df = self.count(
-                question,
-                labels=True,
-                percents=False,
-                add_totals=True,
+                question, labels=True, percents=False, add_totals=True,
             )
             counts_df.loc["Total", "Total"] = self.responses.shape[0]
             # if not display_no_answer:

@@ -58,9 +58,7 @@ def plot_bubbles(
         )
         z_scatter = y[entry]
         ax.scatter(
-            x_scatter,
-            y_scatter,
-            s=list(np.array(z_scatter) * bubble_size),
+            x_scatter, y_scatter, s=list(np.array(z_scatter) * bubble_size),
         )
         plt.xticks(bar_positions, x)
         # collect and wrap up y_axis entries

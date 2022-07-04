@@ -38,11 +38,7 @@ class TestRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
                 ],
                 "state_anxiety_class": pd.Categorical(
                     ["A3", "A1", "A2", "A3", np.nan, np.nan, "A3"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                    ],
+                    categories=["A1", "A2", "A3",],
                     ordered=True,
                 ),
             },
@@ -79,11 +75,7 @@ class TestRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
                 ],
                 "trait_anxiety_class": pd.Categorical(
                     ["A3", "A1", "A3", "A3", "A3", np.nan, np.nan],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                    ],
+                    categories=["A1", "A2", "A3",],
                     ordered=True,
                 ),
             },
@@ -112,13 +104,7 @@ class TestRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
                 "depression_score": [8.0, 5.0, 8.0, 10.0, 52 / 3, np.nan, np.nan],
                 "depression_class": pd.Categorical(
                     ["A2", "A2", "A2", "A3", "A4", np.nan, np.nan],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
+                    categories=["A1", "A2", "A3", "A4", "A5",],
                     ordered=True,
                 ),
             },
@@ -151,13 +137,7 @@ class TestRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
                 "formal_supervision_score": [4.0, 5.0, 1.0],
                 "formal_supervision_class": pd.Categorical(
                     ["A2", "A1", "A5"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
+                    categories=["A1", "A2", "A3", "A4", "A5",],
                     ordered=True,
                 ),
             },
@@ -181,13 +161,7 @@ class TestRateSupervision(BaseTestLimeSurvey2021WithResponsesCase):
                 "direct_supervision_score": [4.0, 5.0, 1.0],
                 "direct_supervision_class": pd.Categorical(
                     ["A2", "A1", "A5"],
-                    categories=[
-                        "A1",
-                        "A2",
-                        "A3",
-                        "A4",
-                        "A5",
-                    ],
+                    categories=["A1", "A2", "A3", "A4", "A5",],
                     ordered=True,
                 ),
             },
@@ -239,10 +213,7 @@ class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
         ref = pd.DataFrame(
-            data={
-                "noincome_duration": [np.NaN, np.NaN, np.NaN],
-            },
-            index=[2, 3, 4],
+            data={"noincome_duration": [np.NaN, np.NaN, np.NaN],}, index=[2, 3, 4],
         )
         ref.index.name = "id"
         # "id" of dataframe starts at 2, therefore difference to "index" above
@@ -259,10 +230,7 @@ class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
         ref = pd.DataFrame(
-            data={
-                "income_amount": [1650.0, 1950.0, 2050.0],
-            },
-            index=[2, 3, 4],
+            data={"income_amount": [1650.0, 1950.0, 2050.0],}, index=[2, 3, 4],
         )
         ref.index.name = "id"
         # "id" of dataframe starts at 2, therefore difference to "index" above
@@ -279,10 +247,7 @@ class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
         ref = pd.DataFrame(
-            data={
-                "costs_amount": [850.0, 750.0, 550.0],
-            },
-            index=[2, 3, 4],
+            data={"costs_amount": [850.0, 750.0, 550.0],}, index=[2, 3, 4],
         )
         ref.index.name = "id"
         # "id" of dataframe starts at 2, therefore difference to "index" above
@@ -299,8 +264,7 @@ class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
         ref = pd.DataFrame(
-            data={"contract_duration": [30.0, 48.0, 30.0]},
-            index=[2, 3, 4],
+            data={"contract_duration": [30.0, 48.0, 30.0]}, index=[2, 3, 4],
         )
         ref.index.name = "id"
         # "id" of dataframe starts at 2, therefore difference to "index" above
@@ -317,8 +281,7 @@ class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
         ref = pd.DataFrame(
-            data={"holiday_amount": [28.0, 28.0, 28.0]},
-            index=[2, 3, 4],
+            data={"holiday_amount": [28.0, 28.0, 28.0]}, index=[2, 3, 4],
         )
         ref.index.name = "id"
         # "id" of dataframe starts at 2, therefore difference to "index" above
@@ -334,10 +297,7 @@ class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
             responses=self.survey.get_responses(question),
         )
 
-        ref = pd.DataFrame(
-            data={"hours_amount": [53.0, 38.0, 43.0]},
-            index=[2, 3, 4],
-        )
+        ref = pd.DataFrame(data={"hours_amount": [53.0, 38.0, 43.0]}, index=[2, 3, 4],)
         ref.index.name = "id"
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(result.iloc[:3, -1:], ref, msg="DataFrames not equal.")
@@ -353,8 +313,7 @@ class TestRangeToNumerical(BaseTestLimeSurvey2021WithResponsesCase):
         )
 
         ref = pd.DataFrame(
-            data={"holidaytaken_amount": [8.0, 28.0, 13.0]},
-            index=[2, 3, 4],
+            data={"holidaytaken_amount": [8.0, 28.0, 13.0]}, index=[2, 3, 4],
         )
         ref.index.name = "id"
         # "id" of dataframe starts at 2, therefore difference to "index" above
