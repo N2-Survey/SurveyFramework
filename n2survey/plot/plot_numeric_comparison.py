@@ -159,6 +159,7 @@ def comparison_numeric_bar_plot(
     title: str = None,
     fig_size_inches: tuple = None,
     theme: Optional[Dict] = None,
+    display_unfiltered_data: bool = True,
     display_percents: bool = False,
     display_total: bool = True,
     display_median: bool = True,
@@ -179,6 +180,7 @@ def comparison_numeric_bar_plot(
         fig_size_inches (tuple, optional): Size of the resulting Figure. Defaults to None.
         theme (Optional[Dict], optional): Seaborn theme parameters.
           See `seaborn.set_theme` for the details. Defaults to None.
+        display_unfiltered_data (bool, optional): Display distribution of total data (without filtering). Defaults to True.
         display_percents (bool, optional): Show percents on top of bars. Defaults to False.
         display_total (bool, optional): Show total number on the figure. Defaults to True.
         display_median (bool, optional): Show median of distribution. Defaults to True.
@@ -199,6 +201,13 @@ def comparison_numeric_bar_plot(
         palette_cmap = sns.color_palette(theme.get("palette", None), as_cmap=True)
     else:
         palette_cmap = sns.color_palette(as_cmap=True)
+
+    # Only plot unfiltered data ('Total') as first subplot if specified
+    if not display_unfiltered_data:
+        list_of_counts = list_of_counts[1:]
+        list_of_responses = list_of_responses[1:]
+        list_of_labels = list_of_labels[1:]
+
     # Get a list of colors in line with palette (some palettes are almost white at edges
     # Therefore, do not go from 0-1, but from 0.2-0.8
     list_colors = [palette_cmap(i) for i in np.linspace(0.2, 0.8, len(list_of_counts))]
