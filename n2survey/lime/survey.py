@@ -1102,6 +1102,7 @@ class LimeSurvey:
         simple_filtering: bool = True,
         valid_questions: list = None,
         display_title: bool = True,
+        display_unfiltered_data: bool = True,
         display_no_answer: bool = True,
         display_median: bool = False,
         display_percents: bool = False,
@@ -1120,6 +1121,7 @@ class LimeSurvey:
                                                filtered simultaneously. Defaults to True.
             valid_questions (list, optional): List of valid numeric questions for `question`.
             display_title (bool, optional): Display question as title in resulting plot. Defaults to True.
+            display_unfiltered_data (bool, optional): Display distribution of total data (without filtering). Defaults to True.
             display_no_answer (bool, optional): Hide invalid answers. Defaults to True.
             display_median (bool, optional): Display median in each subplot. Defaults to True.
             display_percents (bool, optional): Display percentages in each subplot. Defaults to False
@@ -1247,6 +1249,7 @@ class LimeSurvey:
             list_of_responses,
             list_of_counts_df,
             list_of_labels,
+            display_unfiltered_data=display_unfiltered_data,
             display_no_answer=display_no_answer,
             display_percents=display_percents,
             title=title,
