@@ -112,7 +112,7 @@ def plot_subplot_barplot(
     if y_axis_max is not None:
         ax.set_ylim(0, y_axis_max)
     else:
-        ax.set_ylim(0, 1.45 * np.max(y))
+        ax.set_ylim(0, 1.6 * np.max(y))
     ax.yaxis.get_major_locator().set_params(integer=True)
     total = np.array(y).sum()
     if display_total:
