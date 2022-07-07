@@ -1119,7 +1119,7 @@ class LimeSurvey:
         Args:
             question (str): Name of numeric question (for which filtering will be done)
             questions_to_filter (dict): Dictionary of non-numeric questions with which `question` will
-                                        be filtered, e.g. {"A6": ["A1", "A3"]}
+                                        be filtered, e.g. {"A6": ["A1", "A3"]}, {"A6": "all"}/{"A6": ["all"]}
             simple_filtering (bool, optional): Each entry of `questions_to_filter` is used for
                                                individual filtering. Otherwise up to two entries will be
                                                filtered simultaneously. Defaults to True.
@@ -1170,7 +1170,14 @@ class LimeSurvey:
                     f"{key} is either not a single-choice question or a numeric question."
                 )
             possible_answers = list(self.questions.loc[key, "choices"])
-            if not all(answer in possible_answers for answer in values):
+            if "-oth-" in possible_answers:
+                possible_answers.remove("-oth-")
+            # If `all` is specified {"A6": "all"}/{"A6": ["all"]}, use all answer possibilities
+            if "all" in values:
+                questions_to_filter[key] = possible_answers
+            if not all(
+                answer in possible_answers for answer in questions_to_filter[key]
+            ):
                 raise ValueError(
                     f"Selected answer possibilities ({values}) are not in question {key}!"
                     f"Question {key} has valid possibilties: {possible_answers}!"
