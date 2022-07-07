@@ -159,9 +159,9 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
                 "type": "single-choice",
                 "choices": {
                     "A1": "very satisfied",
-                    "A2": "rather satisfied",
-                    "A3": "neither satisfied nor dissatisfied",
-                    "A4": "rather dissatisfied",
+                    "A2": "satisfied",
+                    "A3": "neither/nor",
+                    "A4": "dissatisfied",
                     "A5": "very dissatisfied",
                 },
                 "is_contingent": False,

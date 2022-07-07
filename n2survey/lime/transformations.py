@@ -371,9 +371,9 @@ def rate_satisfaction(
     # Satisfation classes sorted from high to low (high score equals high satisfaction)
     satisfaction_classes = [
         "very satisfied",
-        "rather satisfied",
-        "neither satisfied nor dissatisfied",
-        "rather dissatisfied",
+        "satisfied",
+        "neither/nor",
+        "dissatisfied",
         "very dissatisfied",
     ]
     satisfaction_class_codes = ["A1", "A2", "A3", "A4", "A5"]
