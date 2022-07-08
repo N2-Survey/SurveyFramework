@@ -284,7 +284,7 @@ def comparison_numeric_bar_plot(
 
     # Figure settings
     fig.tight_layout()
-    fig.autofmt_xdate()
-    fig.subplots_adjust(top=0.90, hspace=0.3)
+    fig.autofmt_xdate(rotation=55)
+    fig.subplots_adjust(top=0.90, hspace=0.3, left=0.15)
 
     return fig, ax
