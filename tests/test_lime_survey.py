@@ -12,9 +12,6 @@ from tests.common import (
     BaseTestLimeSurvey2021WithResponsesCase,
 )
 
-# Adding a comment to rerun black, but I doubt it will help, why did black
-# change that file anyways? stupid.
-
 
 class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
     """Test LimeSurvey class initialisation"""
