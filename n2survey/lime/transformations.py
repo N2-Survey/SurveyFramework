@@ -238,7 +238,9 @@ def rate_mental_health(
 
     # Classify into categories
     df[f"{label}_class"] = pd.cut(
-        df[f"{label}_score"], bins=classification_boundaries, labels=classes,
+        df[f"{label}_score"],
+        bins=classification_boundaries,
+        labels=classes,
     ).map(invert_dict, na_action="ignore")
 
     if not keep_subscores:
@@ -321,7 +323,10 @@ def calculate_duration(start_responses: pd.DataFrame, end_responses: pd.DataFram
     """
 
     # get labels of start and end questions to get their data
-    df = pd.concat([start_responses, end_responses], axis=1,)
+    df = pd.concat(
+        [start_responses, end_responses],
+        axis=1,
+    )
 
     # duration calculation, return as day
     df["PhD duration (days)"] = df.iloc[:, 1] - df.iloc[:, 0]

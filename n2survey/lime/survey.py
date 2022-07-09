@@ -35,7 +35,9 @@ DEFAULT_THEME = {
     "font": "sans-serif",
     "font_scale": 1,
     "color_codes": True,
-    "rc": {"figure.figsize": (12, 12),},
+    "rc": {
+        "figure.figsize": (12, 12),
+    },
 }
 
 QUESTION_TYPES = (
@@ -133,7 +135,10 @@ class LimeSurvey:
                 "A3": "high anxiety",
             },
         },
-        "depression_score": {"label": "What is the depression score?", "type": "free",},
+        "depression_score": {
+            "label": "What is the depression score?",
+            "type": "free",
+        },
         "depression_class": {
             "label": "What is the depression class?",
             "type": "single-choice",
@@ -203,7 +208,10 @@ class LimeSurvey:
                 "A5": "very dissatisfied",
             },
         },
-        "phd_duration": {"label": "What is the length of PhD?", "type": "free",},
+        "phd_duration": {
+            "label": "What is the length of PhD?",
+            "type": "free",
+        },
     }
 
     def __init__(
@@ -449,7 +457,10 @@ class LimeSurvey:
         return survey_copy
 
     def get_responses(
-        self, question: str, labels: bool = True, drop_other: bool = False,
+        self,
+        question: str,
+        labels: bool = True,
+        drop_other: bool = False,
     ) -> pd.DataFrame:
         """Get responses for a given question with or without labels
 
@@ -919,7 +930,10 @@ class LimeSurvey:
         elif question_type == "array":
 
             counts_df = self.count(
-                question, labels=True, percents=False, add_totals=True,
+                question,
+                labels=True,
+                percents=False,
+                add_totals=True,
             )
             counts_df.loc["Total", "Total"] = self.responses.shape[0]
             fig, ax = likert_bar_plot(

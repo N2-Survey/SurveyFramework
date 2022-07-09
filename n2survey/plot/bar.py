@@ -69,7 +69,10 @@ def single_choice_bar_plot(
 
     if show_total:
         plt.text(
-            len(y) * 0.9, max(y) * 1.1, f"Total: {total}", size=fig_width * 1.5,
+            len(y) * 0.9,
+            max(y) * 1.1,
+            f"Total: {total}",
+            size=fig_width * 1.5,
         )
 
     # scale

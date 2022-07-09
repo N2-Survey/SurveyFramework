@@ -15,7 +15,9 @@ DEFAULT_THEME = {
     "font": "sans-serif",
     "font_scale": 1,
     "color_codes": True,
-    "rc": {"figure.figsize": (12, 12),},
+    "rc": {
+        "figure.figsize": (12, 12),
+    },
 }
 
 
@@ -109,7 +111,9 @@ if __name__ == "__main__":
                 question_type = survey.get_question_type(q_label)
                 if question_type == "array" and survey.get_choices(q_label) is not None:
                     survey.plot(
-                        q_label, save=q_label, palette=None,
+                        q_label,
+                        save=q_label,
+                        palette=None,
                     )
 
     # plot example array question with different settings
