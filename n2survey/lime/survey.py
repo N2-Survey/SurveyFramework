@@ -443,11 +443,6 @@ class LimeSurvey:
                 question_label=self.get_label(question),
                 responses=self.get_responses(question),
             )
-        elif transform_dict.get(transform) == "range_to_numerical":
-            return range_to_numerical(
-                question_label=self.get_label(question),
-                responses=self.get_responses(question),
-            )
         elif transform_dict.get(transform) == "duration":
             return calculate_duration(
                 start_responses=self.get_responses(question[0], labels=False),
