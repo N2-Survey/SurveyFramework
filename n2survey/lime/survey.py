@@ -795,6 +795,7 @@ class LimeSurvey:
         show_zeroes: bool = True,
         bubbles: Union[bool, float] = None,
         kind: str = None,
+        overview: bool = True,
         **kwargs,
     ):
         """
@@ -865,6 +866,9 @@ class LimeSurvey:
                 x-Axis and answers to 'compare_with' on the y-Axis.
                 size of the bubbles depends on overleap percentage and the
                 base-value given in bubble_size or on the float given.
+            'overview': standard True, only for comparison plots array,
+                combines positive choices to one bar and negative choices to
+                one bar for simplified likert bar plot in comparisons.
         """
         if kind is not None:
             raise NotImplementedError(
@@ -908,6 +912,7 @@ class LimeSurvey:
                 maximum_length_x_axis_answers=maximum_length_x_axis_answers,
                 show_zeroes=show_zeroes,
                 bubbles=bubbles,
+                overview=overview,
                 **kwargs,
             )
         elif question_type == "single-choice":
@@ -1001,6 +1006,7 @@ class LimeSurvey:
         kind: str = None,
         show_zeroes: bool = True,
         bubbles: Union[bool, float] = None,
+        overview: bool = True,
         **kwargs,
     ):
         """
@@ -1115,6 +1121,7 @@ class LimeSurvey:
                 theme=theme,
                 show_zeroes=show_zeroes,
                 bubbles=bubbles,
+                overview=overview,
             )
         return fig, ax
 

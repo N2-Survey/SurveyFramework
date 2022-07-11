@@ -19,7 +19,118 @@ from .comparison_shared_functions import (
     form_bar_positions,
     form_single_answer_bar_positions,
 )
-from .plot_likert import DEFAULT_GROUPED_CHOICES
+
+def_grouped_choices = [
+    {
+        "left": ["Yes"],
+        "center": ["I don’t know", "I don’t want to answer this question", "No Answer"],
+        "right": ["No"],
+    },
+    {
+        "left": ["Very satisfied", "Satisfied"],
+        "center": [
+            "Neither/nor",
+            "Does not apply",
+            "I don’t want to answer this question",
+            "No Answer",
+        ],
+        "right": ["Dissatisfied", "Very dissatisfied"],
+    },
+    {
+        "left": ["Very attractive", "Attractive"],
+        "center": ["Neutral", "I don’t want to answer this question", "No Answer"],
+        "right": ["Unattractive", "Very unattractive"],
+    },
+    {
+        "left": ["Very much", "To some extent"],
+        "center": [
+            "Does not apply",
+            "I don’t want to answer this question",
+            "No Answer",
+        ],
+        "right": [
+            "Rather not",
+            "Not at all",
+        ],
+    },
+    {
+        "left": ["Very much", "Moderately"],
+        "center": ["I don’t want to answer this question", "No Answer"],
+        "right": ["Somewhat", "Not at all"],
+    },
+    {
+        "left": ["Not at all"],
+        "center": ["I don’t want to answer this question", "No Answer"],
+        "right": ["Several days", "More than half the days", "Nearly every day"],
+    },
+    {
+        "left": ["Male"],
+        "center": [
+            "Diverse",
+            "I don’t know",
+            "Does not apply",
+            "I don’t want to answer this question",
+            "No Answer",
+        ],
+        "right": ["Female"],
+    },
+    {
+        "left": ["Fully agree", "Partially agree"],
+        "center": [
+            "Neither agree nor disagree",
+            "I don’t know",
+            "I don’t want to answer this question",
+            "No Answer",
+        ],
+        "right": ["Partially disagree", "Fully disagree"],
+    },
+    {
+        "left": ["Very much", "Rather yes"],
+        "center": [
+            "Indifferent",
+            "I don’t know",
+            "I don’t want to answer this question",
+            "No Answer",
+        ],
+        "right": ["Rather not", "Not at all"],
+    },
+    {
+        "left": ["Yes, to a great extent", "Yes, to some extent"],
+        "center": ["I don’t know", "I don’t want to answer this question", "No Answer"],
+        "right": ["No"],
+    },
+    {
+        "left": ["very positively", "positively"],
+        "center": [
+            "neutral",
+            "no base for comparison in my case",
+            "I don’t know",
+            "I don’t want to answer this question",
+            "No Answer",
+        ],
+        "right": ["negatively", "very negatively"],
+    },
+    {
+        "left": ["never", "rarely"],
+        "center": [
+            "sometimes",
+            "I don’t want to answer this question",
+            "Does not apply",
+            "No Answer",
+        ],
+        "right": ["often", "always"],
+    },
+    {
+        "left": ["not at all", "rather not"],
+        "center": [
+            "I never had the option",
+            "I don’t know",
+            "I don’t want to answer this question",
+            "No Answer",
+        ],
+        "right": ["to some extent", "very much"],
+    },
+]
 
 
 def array_single_comparison_plot(
@@ -43,12 +154,132 @@ def array_single_comparison_plot(
     bubbles: Union[bool, float] = None,
     no_sub_bars: bool = False,
     combine_neutral_choices: bool = True,
+    overview: bool = True,
 ):
 
     """
     Plots correlations between array answers and the answers of
     single choice questions.
     """
+    def_grouped_choices = [
+        {
+            "left": ["Yes"],
+            "center": [
+                "I don’t know",
+                "I don’t want to answer this question",
+                "No Answer",
+            ],
+            "right": ["No"],
+        },
+        {
+            "left": ["Very satisfied", "Satisfied"],
+            "center": [
+                "Neither/nor",
+                "Does not apply",
+                "I don’t want to answer this question",
+                "No Answer",
+            ],
+            "right": ["Dissatisfied", "Very dissatisfied"],
+        },
+        {
+            "left": ["Very attractive", "Attractive"],
+            "center": ["Neutral", "I don’t want to answer this question", "No Answer"],
+            "right": ["Unattractive", "Very unattractive"],
+        },
+        {
+            "left": ["Very much", "To some extent"],
+            "center": [
+                "Does not apply",
+                "I don’t want to answer this question",
+                "No Answer",
+            ],
+            "right": [
+                "Rather not",
+                "Not at all",
+            ],
+        },
+        {
+            "left": ["Very much", "Moderately"],
+            "center": ["I don’t want to answer this question", "No Answer"],
+            "right": ["Somewhat", "Not at all"],
+        },
+        {
+            "left": ["Not at all"],
+            "center": ["I don’t want to answer this question", "No Answer"],
+            "right": ["Several days", "More than half the days", "Nearly every day"],
+        },
+        {
+            "left": ["Male"],
+            "center": [
+                "Diverse",
+                "I don’t know",
+                "Does not apply",
+                "I don’t want to answer this question",
+                "No Answer",
+            ],
+            "right": ["Female"],
+        },
+        {
+            "left": ["Fully agree", "Partially agree"],
+            "center": [
+                "Neither agree nor disagree",
+                "I don’t know",
+                "I don’t want to answer this question",
+                "No Answer",
+            ],
+            "right": ["Partially disagree", "Fully disagree"],
+        },
+        {
+            "left": ["Very much", "Rather yes"],
+            "center": [
+                "Indifferent",
+                "I don’t know",
+                "I don’t want to answer this question",
+                "No Answer",
+            ],
+            "right": ["Rather not", "Not at all"],
+        },
+        {
+            "left": ["Yes, to a great extent", "Yes, to some extent"],
+            "center": [
+                "I don’t know",
+                "I don’t want to answer this question",
+                "No Answer",
+            ],
+            "right": ["No"],
+        },
+        {
+            "left": ["very positively", "positively"],
+            "center": [
+                "neutral",
+                "no base for comparison in my case",
+                "I don’t know",
+                "I don’t want to answer this question",
+                "No Answer",
+            ],
+            "right": ["negatively", "very negatively"],
+        },
+        {
+            "left": ["never", "rarely"],
+            "center": [
+                "sometimes",
+                "I don’t want to answer this question",
+                "Does not apply",
+                "No Answer",
+            ],
+            "right": ["often", "always"],
+        },
+        {
+            "left": ["not at all", "rather not"],
+            "center": [
+                "I never had the option",
+                "I don’t know",
+                "I don’t want to answer this question",
+                "No Answer",
+            ],
+            "right": ["to some extent", "very much"],
+        },
+    ]
     y_labels = answer_sequence
     y_labels = [answer for answer in y_labels if answer not in suppress_answers]
     for answer in plot_data_list[0][0][0].copy():
@@ -56,17 +287,25 @@ def array_single_comparison_plot(
             plot_data_list[0][0][0].pop(answer)
     if ignore_no_answer:
         suppress_answers.append("No Answer")
+    print(def_grouped_choices)
     grouped_choices = get_grouped_choices(
-        options=plot_data_list[0][0][1], all_grouped_choices=DEFAULT_GROUPED_CHOICES
+        options=plot_data_list[0][0][1], all_grouped_choices=def_grouped_choices
     )
-    answer_dictionary, choices, grouped_choices = get_answer_dictionary(
+    answer_dictionary, choices, grouped_choices_new = get_answer_dictionary(
         array_question_data=plot_data_list[0][0],
         compare_with_data=plot_data_list[0][1],
         legend_sequence=legend_sequence,
         grouped_choices=grouped_choices,
         totalbar=totalbar,
         suppress_answers=suppress_answers,
+        combine_neutral_choices=combine_neutral_choices,
     )
+    if overview:
+        answer_dictionary, choices = combine_to_overview(
+            answer_dictionary,
+            choices,
+            grouped_choices_new,
+        )
     # remove answers from compare_with answers dictionary
     for answer in answer_dictionary.copy():
         if not answer_dictionary[answer]:
@@ -135,9 +374,14 @@ def array_single_comparison_plot(
         bar_positions = bar_positions_complete + sub_position
         for column, choice in zip(np.transpose(percentage_groups), choices):
             starts = calculate_bar_starts_from_data(
-                column, choice, grouped_choices, percentage_groups, count
+                column,
+                choice,
+                grouped_choices_new,
+                percentage_groups,
+                count,
+                overview=overview,
             )
-            if choice in grouped_choices["left"]:
+            if choice in grouped_choices_new["left"]:
                 width = -column
             else:
                 width = column
@@ -166,12 +410,12 @@ def array_single_comparison_plot(
         legend.legendHandles[count].set_color(color)
         count = count + 1
 
-    labels = grouped_choices["left"]
-    if len(grouped_choices["center"]) > 1:
+    labels = grouped_choices_new["left"]
+    if len(grouped_choices_new["center"]) > 1:
         labels.append("all neutral choices")
     else:
-        labels.append(grouped_choices["center"][0])
-    labels = labels + grouped_choices["right"]
+        labels.append(grouped_choices_new["center"][0])
+    labels = labels + grouped_choices_new["right"]
     separator = " "
     while len(separator) <= 2 * (theme["rc"]["figure.figsize"][0] / len(labels)):
         separator = separator + " "
@@ -213,6 +457,7 @@ def get_grouped_choices(options, all_grouped_choices):
     from the list of dictionaries contanining all options of every question
     """
     count = 0
+    # print(all_grouped_choices)
     for entry in all_grouped_choices:
         entry_list = [entry[x] for x in entry]
         for option in options:
@@ -221,6 +466,8 @@ def get_grouped_choices(options, all_grouped_choices):
             else:
                 break
         count = count + 1
+    if "Neither/nor" in all_grouped_choices[index]["left"]:
+        brakk
     return all_grouped_choices[index]
 
 
@@ -245,15 +492,16 @@ def get_answer_dictionary(
     """
     answer_dictionary = {}
     choices = array_question_data[1]
+    grouped_choices_new = grouped_choices.copy()
     for answer in suppress_answers:
         if answer in grouped_choices["left"]:
-            grouped_choices["left"].remove(answer)
+            grouped_choices_new["left"].remove(answer)
             choices.remove(answer)
         if answer in grouped_choices["right"]:
-            grouped_choices["right"].remove(answer)
+            grouped_choices_new["right"].remove(answer)
             choices.remove(answer)
         if answer in grouped_choices["center"]:
-            grouped_choices["center"].remove(answer)
+            grouped_choices_new["center"].remove(answer)
             choices.remove(answer)
 
     if combine_neutral_choices:
@@ -272,11 +520,11 @@ def get_answer_dictionary(
             indicator_matrix.append(
                 [
                     x
-                    if x in grouped_choices["left"]
+                    if x in grouped_choices_new["left"]
                     else "nan"
-                    if x in grouped_choices["center"]
+                    if x in grouped_choices_new["center"]
                     else x
-                    if x in grouped_choices["right"]
+                    if x in grouped_choices_new["right"]
                     else None
                     for x in row
                 ]
@@ -304,7 +552,7 @@ def get_answer_dictionary(
                     ),
                     decimals=2,
                 )
-                if choices[count] in grouped_choices["right"]:
+                if choices[count] in grouped_choices_new["right"]:
                     choice_count[count] = -choice_count[count]
                 count = count + 1
 
@@ -328,25 +576,73 @@ def get_answer_dictionary(
                 count = 0
                 new_choice_count = []
                 for position in choice_count.copy():
-                    if choices[count] in grouped_choices["center"]:
+                    if choices[count] in grouped_choices_new["center"]:
                         pass
                     else:
                         new_choice_count.append(position)
                     count = count + 1
                 choice_count = new_choice_count
             answer_dictionary[answer].append(choice_count)
+            # add choices positive and negative to comnine left and right
+            # grouped choices.
             if combine_neutral_choices:
                 choices = [
                     choice
                     for choice in choices
-                    if choice not in grouped_choices["center"]
+                    if choice not in grouped_choices_new["center"]
                 ]
-    return answer_dictionary, choices, grouped_choices
+    return answer_dictionary, choices, grouped_choices_new
+
+
+def combine_to_overview(answer_dictionary, choices, grouped_choices):
+    answer_dictionary_new = {}
+    for answer in answer_dictionary:
+        answer_dictionary_new[answer] = answer_dictionary[answer]
+        if answer_dictionary_new[answer]:
+            for percentage_list in answer_dictionary_new[answer].copy():
+                combined_left = []
+                combined_right = []
+                count = 0
+                for choice in choices:
+                    if choice in grouped_choices["left"]:
+                        combined_left.append(percentage_list.copy()[count])
+                    if choice in grouped_choices["right"]:
+                        combined_right.append(percentage_list.copy()[count])
+                    count = count + 1
+                combined_left = np.round(np.sum(np.array(combined_left)), decimals=2)
+                combined_right = np.round(np.sum(np.array(combined_right)), decimals=2)
+                percentage_list.append(combined_left)
+                percentage_list.append(combined_right)
+        else:
+            pass
+    choices.append("Positive")
+    choices.append("Negative")
+    choices_new = ["all neutral choices", "Positive", "Negative"]
+    # removing choices and answers
+    for answer in answer_dictionary_new.copy():
+        if answer_dictionary_new[answer]:
+            for percentage_list in answer_dictionary_new[answer].copy():
+                count = 0
+                for choice in choices:
+                    if choice not in choices_new:
+                        percentage_list.remove(percentage_list[count])
+                    else:
+                        count = count + 1
+    return answer_dictionary_new, choices_new
 
 
 def calculate_bar_starts_from_data(
-    column, choice, grouped_choices, percentage_groups, position_of_column
+    column,
+    choice,
+    grouped_choices,
+    percentage_groups,
+    position_of_column,
+    overview: bool = True,
 ):
+    print(choice)
+    if overview:
+        grouped_choices["left"] = ["Positive"]
+        grouped_choices["right"] = ["Negative"]
     if choice in grouped_choices["left"]:
         # add 0.5 neutral bar
         starts = column + percentage_groups[:, -1] * 0.5
