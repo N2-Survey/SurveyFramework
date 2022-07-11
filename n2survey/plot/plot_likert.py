@@ -6,7 +6,6 @@ import seaborn as sns
 
 __all__ = ["likert_bar_plot"]
 
-
 DEFAULT_GROUPED_CHOICES = [
     {
         "left": ["Yes"],

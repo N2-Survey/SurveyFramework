@@ -3,7 +3,7 @@ import os
 import re
 import string
 import warnings
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -63,7 +63,7 @@ def _clean_file_name(filename: str) -> str:
     return "".join(c for c in filename if c in valid_chars)
 
 
-def _split_plot_kwargs(mixed_kwargs: dict) -> Tuple[Dict, Dict]:
+def _split_plot_kwargs(mixed_kwargs: dict) -> tuple[dict, dict]:
     """Split dict of arguments into theme and non-theme arguments
 
     Args:
@@ -77,7 +77,7 @@ def _split_plot_kwargs(mixed_kwargs: dict) -> Tuple[Dict, Dict]:
     return theme_args, nontheme_args
 
 
-def deep_dict_update(source: dict, update_dict: dict) -> Dict:
+def deep_dict_update(source: dict, update_dict: dict) -> dict:
     """Recursive dictionary update
 
     Args:
@@ -928,8 +928,6 @@ class LimeSurvey:
                 counts_df, theme=theme, plot_title=plot_title, **non_theme_kwargs
             )
         elif question_type == "array":
-            # display_title = True
-            # display_no_answer = False
 
             counts_df = self.count(
                 question,
@@ -938,21 +936,9 @@ class LimeSurvey:
                 add_totals=True,
             )
             counts_df.loc["Total", "Total"] = self.responses.shape[0]
-            # if not display_no_answer:
-            #    try:
-            #        counts_df = counts_df.drop("No Answer")
-            #    except KeyError:
-            #        pass
-
-            # if display_title:
-            #    title_question = self.get_label(question)
-            # else:
-            #    title_question = None
-
             fig, ax = likert_bar_plot(
                 counts_df,
                 theme=theme,
-                # title_question=title_question,
                 bar_spacing=0.2,
                 bar_thickness=0.4,
                 group_spacing=1,
