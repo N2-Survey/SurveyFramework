@@ -1222,13 +1222,13 @@ class LimeSurvey:
         #                              'male'+'Non-German', 'female'+'Non-German'
         else:
             label = "multiple"
-            first_key, first_values = list(questions_to_filter.items())[0]
-            second_key, second_values = list(questions_to_filter.items())[1]
             # Multiple comparisons only done for: - max. 2 `questions_to_filter`
             if len(questions_to_filter.keys()) != 2:
                 raise NotImplementedError(
-                    "Multiple comparisons only available for two `questions_to_filter`!"
+                    "When specifying `simple_filtering=False` please provide exactly two `questions_to_filter`!"
                 )
+            first_key, first_values = list(questions_to_filter.items())[0]
+            second_key, second_values = list(questions_to_filter.items())[1]
             # Go through all entries of first element of `questions_to_filter`
             for first_value in first_values:
                 for second_value in second_values:
