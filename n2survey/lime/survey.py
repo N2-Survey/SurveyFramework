@@ -3,7 +3,7 @@ import os
 import re
 import string
 import warnings
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,6 +14,7 @@ from n2survey.lime.transformations import (
     calculate_duration,
     range_to_numerical,
     rate_mental_health,
+    rate_satisfaction,
     rate_supervision,
 )
 from n2survey.plot import (
@@ -64,7 +65,7 @@ def _clean_file_name(filename: str) -> str:
     return "".join(c for c in filename if c in valid_chars)
 
 
-def _split_plot_kwargs(mixed_kwargs: dict) -> Tuple[Dict, Dict]:
+def _split_plot_kwargs(mixed_kwargs: dict) -> tuple[dict, dict]:
     """Split dict of arguments into theme and non-theme arguments
 
     Args:
@@ -78,7 +79,7 @@ def _split_plot_kwargs(mixed_kwargs: dict) -> Tuple[Dict, Dict]:
     return theme_args, nontheme_args
 
 
-def deep_dict_update(source: dict, update_dict: dict) -> Dict:
+def deep_dict_update(source: dict, update_dict: dict) -> dict:
     """Recursive dictionary update
 
     Args:
@@ -212,6 +213,21 @@ class LimeSurvey:
         "phd_duration": {
             "label": "What is the length of PhD?",
             "type": "free",
+        },
+        "satisfaction_score": {
+            "label": "What is the satisfaction score?",
+            "type": "free",
+        },
+        "satisfaction_class": {
+            "label": "What is the satisfaction class?",
+            "type": "single-choice",
+            "choices": {
+                "A1": "very satisfied",
+                "A2": "satisfied",
+                "A3": "neither/nor",
+                "A4": "dissatisfied",
+                "A5": "very dissatisfied",
+            },
         },
     }
 
@@ -407,6 +423,7 @@ class LimeSurvey:
             "supervision": "supervision",
             "range": "range_to_numerical",
             "duration": "duration",
+            "satisfaction": "satisfaction",
         }
 
         if transform_dict.get(transform) == "mental_health":
@@ -431,6 +448,12 @@ class LimeSurvey:
             return calculate_duration(
                 start_responses=self.get_responses(question[0], labels=False),
                 end_responses=self.get_responses(question[1], labels=False),
+            )
+        elif transform_dict.get(transform) == "satisfaction":
+            return rate_satisfaction(
+                question_label=self.get_label(question),
+                responses=self.get_responses(question, labels=False),
+                choices=self.get_choices(question),
             )
 
     def __copy__(self):
@@ -935,8 +958,6 @@ class LimeSurvey:
                 counts_df, theme=theme, plot_title=plot_title, **non_theme_kwargs
             )
         elif question_type == "array":
-            # display_title = True
-            # display_no_answer = False
 
             counts_df = self.count(
                 question,
@@ -945,21 +966,9 @@ class LimeSurvey:
                 add_totals=True,
             )
             counts_df.loc["Total", "Total"] = self.responses.shape[0]
-            # if not display_no_answer:
-            #    try:
-            #        counts_df = counts_df.drop("No Answer")
-            #    except KeyError:
-            #        pass
-
-            # if display_title:
-            #    title_question = self.get_label(question)
-            # else:
-            #    title_question = None
-
             fig, ax = likert_bar_plot(
                 counts_df,
                 theme=theme,
-                # title_question=title_question,
                 bar_spacing=0.2,
                 bar_thickness=0.4,
                 group_spacing=1,
