@@ -287,7 +287,6 @@ def array_single_comparison_plot(
             plot_data_list[0][0][0].pop(answer)
     if ignore_no_answer:
         suppress_answers.append("No Answer")
-    print(def_grouped_choices)
     grouped_choices = get_grouped_choices(
         options=plot_data_list[0][0][1], all_grouped_choices=def_grouped_choices
     )
@@ -307,17 +306,10 @@ def array_single_comparison_plot(
             grouped_choices_new,
         )
     # remove answers from compare_with answers dictionary
-    for answer in answer_dictionary.copy():
-        if not answer_dictionary[answer]:
-            answer_dictionary.pop(answer, None)
-            legend_sequence.remove(answer)
-        elif answer in suppress_answers:
-            answer_dictionary.pop(answer, None)
-            legend_sequence.remove(answer)
-        else:
-            pass
-        if answer not in legend_sequence:
-            answer_dictionary.pop(answer, None)
+    answer_dictionary, legend_sequence = filter_out_suppressed_answers(
+        answer_dictionary, legend_sequence, suppress_answers
+    )
+    # get y-positions of the horizontal bars in the plot
     positionlist_per_answer = form_single_answer_bar_positions(
         answer_dictionary,
         bar_width,
@@ -367,7 +359,11 @@ def array_single_comparison_plot(
     ]
 
     # plot
+    if overview:
+        grouped_choices_new["left"] = ["Positive"]
+        grouped_choices_new["right"] = ["Negative"]
     answer_count = 0
+    print(choices[1])
     for answer, sub_position in zip(legend_sequence, positionlist_per_answer):
         count = 0
         percentage_groups = np.array(answer_dictionary[answer])
@@ -385,6 +381,9 @@ def array_single_comparison_plot(
                 width = -column
             else:
                 width = column
+            if answer == "Woman":
+                print(starts)
+                print(width)
             ax.barh(
                 bar_positions,
                 width=width,
@@ -457,7 +456,6 @@ def get_grouped_choices(options, all_grouped_choices):
     from the list of dictionaries contanining all options of every question
     """
     count = 0
-    # print(all_grouped_choices)
     for entry in all_grouped_choices:
         entry_list = [entry[x] for x in entry]
         for option in options:
@@ -466,8 +464,6 @@ def get_grouped_choices(options, all_grouped_choices):
             else:
                 break
         count = count + 1
-    if "Neither/nor" in all_grouped_choices[index]["left"]:
-        brakk
     return all_grouped_choices[index]
 
 
@@ -596,10 +592,13 @@ def get_answer_dictionary(
 
 def combine_to_overview(answer_dictionary, choices, grouped_choices):
     answer_dictionary_new = {}
+    stop_index_original_choices = None
     for answer in answer_dictionary:
         answer_dictionary_new[answer] = answer_dictionary[answer]
-        if answer_dictionary_new[answer]:
-            for percentage_list in answer_dictionary_new[answer].copy():
+        if answer_dictionary[answer]:
+            for percentage_list in answer_dictionary_new[answer]:
+                if not stop_index_original_choices:
+                    stop_index_original_choices = len(percentage_list)
                 combined_left = []
                 combined_right = []
                 count = 0
@@ -611,23 +610,28 @@ def combine_to_overview(answer_dictionary, choices, grouped_choices):
                     count = count + 1
                 combined_left = np.round(np.sum(np.array(combined_left)), decimals=2)
                 combined_right = np.round(np.sum(np.array(combined_right)), decimals=2)
+                combined_center = percentage_list[-1].copy()
                 percentage_list.append(combined_left)
+                percentage_list.append(combined_center)
                 percentage_list.append(combined_right)
         else:
             pass
+    neutral_string = choices[-1]
     choices.append("Positive")
+    choices.append(neutral_string)
+    if len(grouped_choices["center"]) > 1:
+        choices_new = ["Positive", "all neutral choices", "Negative"]
+    else:
+        choices_new = ["Positive", grouped_choices["center"][0], "Negative"]
     choices.append("Negative")
-    choices_new = ["all neutral choices", "Positive", "Negative"]
-    # removing choices and answers
+    # removing choices and answers that were grouped before
     for answer in answer_dictionary_new.copy():
         if answer_dictionary_new[answer]:
-            for percentage_list in answer_dictionary_new[answer].copy():
-                count = 0
-                for choice in choices:
-                    if choice not in choices_new:
-                        percentage_list.remove(percentage_list[count])
-                    else:
-                        count = count + 1
+            new_percentages = []
+            for percentage_list in answer_dictionary_new[answer]:
+                del percentage_list[:stop_index_original_choices]
+                new_percentages.append(percentage_list)
+            answer_dictionary_new[answer] = new_percentages
     return answer_dictionary_new, choices_new
 
 
@@ -639,42 +643,71 @@ def calculate_bar_starts_from_data(
     position_of_column,
     overview: bool = True,
 ):
-    print(choice)
     if overview:
-        grouped_choices["left"] = ["Positive"]
-        grouped_choices["right"] = ["Negative"]
-    if choice in grouped_choices["left"]:
-        # add 0.5 neutral bar
-        starts = column + percentage_groups[:, -1] * 0.5
-        column_index = grouped_choices["left"].index(choice)
-        if column_index == 0:
-            if len(grouped_choices["left"]) == 3:
+        if choice == "Positive":
+            starts = column + percentage_groups[:, 1] * 0.5
+        elif choice == "Negative":
+            starts = -percentage_groups[:, 1] * 0.5
+        else:
+            starts = np.array([0] * len(column)) - 0.5 * column
+    else:
+        if choice in grouped_choices["left"]:
+            # add 0.5 neutral bar
+            starts = column + percentage_groups[:, -1] * 0.5
+            column_index = grouped_choices["left"].index(choice)
+            if column_index == 0:
+                if len(grouped_choices["left"]) == 3:
+                    starts = (
+                        starts
+                        + percentage_groups[:, position_of_column + 1]
+                        + percentage_groups[:, position_of_column + 2]
+                    )
+                elif len(grouped_choices["left"]) == 2:
+                    starts = starts + percentage_groups[:, position_of_column + 1]
+                elif len(grouped_choices["left"]) == 1:
+                    pass
+            elif column_index == 1:
+                if len(grouped_choices["left"]) == 3:
+                    starts = starts + percentage_groups[:, position_of_column + 1]
+                else:
+                    pass
+        # add start points for positive bars
+        if choice in grouped_choices["right"]:
+            starts = np.array([0] * len(column)) - 0.5 * percentage_groups[:, -1]
+            right_count = grouped_choices["right"].index(choice)
+            if right_count == 1:
+                starts = starts + percentage_groups[:, position_of_column - 1]
+            elif right_count == 2:
                 starts = (
                     starts
-                    + percentage_groups[:, position_of_column + 1]
-                    + percentage_groups[:, position_of_column + 2]
+                    + percentage_groups[:, position_of_column - 1]
+                    + percentage_groups[:, position_of_column - 2]
                 )
-            elif len(grouped_choices["left"]) == 2:
-                starts = starts + percentage_groups[:, position_of_column + 1]
-            elif len(grouped_choices["left"]) == 1:
-                pass
-        elif column_index == 1:
-            if len(grouped_choices["left"]) == 3:
-                starts = starts + percentage_groups[:, position_of_column + 1]
-            else:
-                pass
-    # add start points for positive bars
-    if choice in grouped_choices["right"]:
-        starts = np.array([0] * len(column)) - 0.5 * percentage_groups[:, -1]
-        right_count = grouped_choices["right"].index(choice)
-        if right_count == 1:
-            starts = starts + percentage_groups[:, position_of_column - 1]
-        elif right_count == 2:
-            starts = (
-                starts
-                + percentage_groups[:, position_of_column - 1]
-                + percentage_groups[:, position_of_column - 2]
-            )
-    if choice == "all neutral choices":
-        starts = np.array([0] * len(column)) - 0.5 * column
+        if choice == "all neutral choices":
+            starts = np.array([0] * len(column)) - 0.5 * column
     return starts
+
+
+def filter_out_suppressed_answers(
+    answer_dictionary,
+    legend_sequence,
+    suppress_answers,
+):
+    """
+    This functions takes suppressed_answers and filters them out of the
+    answer_dictionary for plotting.
+    It also checks if an answer is not in the legend_sequence and filters it
+    out, this is if legend_sequence is given by hand
+    """
+    for answer in answer_dictionary.copy():
+        if not answer_dictionary[answer]:
+            answer_dictionary.pop(answer, None)
+            legend_sequence.remove(answer)
+        elif answer in suppress_answers:
+            answer_dictionary.pop(answer, None)
+            legend_sequence.remove(answer)
+        else:
+            pass
+        if answer not in legend_sequence:
+            answer_dictionary.pop(answer, None)
+    return answer_dictionary, legend_sequence
