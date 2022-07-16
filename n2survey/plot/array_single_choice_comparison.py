@@ -251,7 +251,6 @@ def array_single_comparison_plot(
         grouped_choices_new["left"] = ["Positive"]
         grouped_choices_new["right"] = ["Negative"]
     answer_count = 0
-    print(choices[1])
     for answer, sub_position in zip(legend_sequence, positionlist_per_answer):
         count = 0
         percentage_groups = np.array(answer_dictionary[answer])
@@ -269,9 +268,6 @@ def array_single_comparison_plot(
                 width = -column
             else:
                 width = column
-            if answer == "Woman":
-                print(starts)
-                print(width)
             ax.barh(
                 bar_positions,
                 width=width,
