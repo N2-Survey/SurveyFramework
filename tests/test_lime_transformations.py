@@ -218,6 +218,16 @@ class TestDuration(BaseTestLimeSurvey2021WithResponsesCase):
                 "PhD duration (days)": [1826.0, 1095.0, 1065.0],
                 "PhD duration (months)": [60.0, 36.0, 35.0],
                 "PhD duration (years)": [5.0, 3.0, 3.0],
+                "PhD duration category": pd.Categorical(
+                    [">36 months", "25-36 months", "25-36 months"],
+                    categories=[
+                        "<12 months",
+                        "13-24 months",
+                        "25-36 months",
+                        ">36 months",
+                    ],
+                    ordered=True,
+                ),
             },
             index=[2, 3, 4],
         )

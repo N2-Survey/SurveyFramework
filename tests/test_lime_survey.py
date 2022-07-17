@@ -392,13 +392,23 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
                 "PhD duration (days)": np.array([1826.0, 1095.0, 1065.0]),
                 "PhD duration (months)": np.array([60.0, 36.0, 35.0]),
                 "PhD duration (years)": np.array([5.0, 3.0, 3.0]),
+                "PhD duration category": pd.Categorical(
+                    [">36 months", "25-36 months", "25-36 months"],
+                    categories=[
+                        "<12 months",
+                        "13-24 months",
+                        "25-36 months",
+                        ">36 months",
+                    ],
+                    ordered=True,
+                ),
             },
             index=[2, 3, 4],
         )
         ref.index.name = "id"
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(
-            survey.responses.iloc[:3, -3:], ref, msg="DataFrames not equal."
+            survey.responses.iloc[:3, -4:], ref, msg="DataFrames not equal."
         )
 
     def test_single_choice_dtype(self):

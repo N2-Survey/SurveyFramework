@@ -320,7 +320,7 @@ def calculate_duration(start_responses: pd.DataFrame, end_responses: pd.DataFram
         end_responses (pd.DataFrame): DataFrame containing responses data of the end of duration
 
     Returns:
-        pd.DataFrame: Rounded PhD duration in days, months and years
+        pd.DataFrame: Rounded PhD duration in days, months, years and a column containing binned month which is saved in categorical dtype
     """
 
     # get labels of start and end questions to get their data
@@ -339,9 +339,15 @@ def calculate_duration(start_responses: pd.DataFrame, end_responses: pd.DataFram
     # convert PhD duration (days) to float type for consistency
     df["PhD duration (days)"] = df["PhD duration (days)"].dt.days
 
+    # set up bins and labels for the bins
+    labels = ["<12 months", "13-24 months", "25-36 months", ">36 months"]
+    bins = [0, 12, 24, 36, float("inf")]
+    binned = pd.cut(df["PhD duration (months)"], bins=bins, labels=labels, right=True)
+
     # drop temporary columns used for duration calculation
     # and return only duration in day, month and year
     df = df.iloc[:, 2:].round()
+    df = pd.concat([df, binned.rename("PhD duration category")], axis=1)
 
     return df
 
