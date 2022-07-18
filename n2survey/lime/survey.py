@@ -1507,7 +1507,7 @@ class LimeSurvey:
         # Ensure org name is among supported ones
         if org not in self.allowed_orgs:
             raise AssertionError(
-                f"Only the following organizations are allowed: {self.allowed_orgs}"
+                f"Only the following organisations are allowed: {self.allowed_orgs}"
             )
         new_data.insert(0, "organisation", org)
 
