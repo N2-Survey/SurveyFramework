@@ -109,6 +109,7 @@ class LimeSurvey:
     na_label: str = "No Answer"
     theme: dict = None
     output_folder: str = None
+    allowed_orgs = ["MPS", "Helmholtz", "Leibniz", "TUM", "N2"]
     additional_questions = {
         "state_anxiety_score": {
             "label": "What is the state anxiety score?",
@@ -264,6 +265,10 @@ class LimeSurvey:
         self.output_folder = output_folder or os.path.abspath(os.curdir)
 
         # Store organization information
+        if org is not None and org not in self.allowed_orgs:
+            raise AssertionError(
+                f"Only the following organizations are allowed: {self.allowed_orgs}"
+            )
         self.org = org
 
     def read_structure(self, structure_file: str) -> None:
@@ -342,6 +347,11 @@ class LimeSurvey:
             raw_data = False
             question_responses = responses
             system_info = pd.DataFrame()
+            self.org = responses["organisation"].iloc[0]
+            if self.org not in self.allowed_orgs:
+                raise AssertionError(
+                    f"Imported data not from supported organizations: {self.allowed_orgs}"
+                )
 
         # Set correct categories for categorical fields
         for column in self.questions.index:
@@ -1426,7 +1436,7 @@ class LimeSurvey:
 
     def export_to_file(
         self,
-        organisation: str,
+        org: str = None,
         drop_columns: Union[str, list] = [],
         rename_columns: dict = {},
         directory: str = None,
@@ -1435,8 +1445,9 @@ class LimeSurvey:
         """Export anonymised data for question to file
 
         Args:
-            organisation (str): Name of the organisation to which the
-                exported data belong
+            org (str): Name of the organisation to which the
+                exported data belong. Optional if org is specified
+                in instantiation, but overrides it if given here
             drop_columns (str or list, optional): One or list of columns
                 to remove in addition to free inputs
             rename_columns (dict, optional): Dict of columns to rename
@@ -1494,11 +1505,24 @@ class LimeSurvey:
         if rename_columns:
             new_data = new_data.rename(columns=rename_columns)
 
-        new_data.insert(0, "organisation", organisation)
+        # Check org name is given or available from instantiation
+        if org is None:
+            if self.org is None:
+                raise AssertionError(
+                    f"Must provide name of organisation as one of the following: {self.allowed_orgs}"
+                )
+            else:
+                org = self.org
+        # Ensure org name is among supported ones
+        if org not in self.allowed_orgs:
+            raise AssertionError(
+                f"Only the following organizations are allowed: {self.allowed_orgs}"
+            )
+        new_data.insert(0, "organisation", org)
 
         # Generate file name if not given
         if not directory.endswith(".csv"):
-            directory = os.path.join(directory, f"{organisation}-anonymised-data.csv")
+            directory = os.path.join(directory, f"{org}-anonymised-data.csv")
 
         new_data.to_csv(directory)
 
