@@ -271,10 +271,10 @@ class LimeSurvey:
         self.org = org
 
     def _validate_org(self, org):
-        """Validate organisation is among supported ones
+        """Validate organization is among supported ones
 
         Args:
-            org (str): organisation name
+            org (str): organization name
 
         Raises:
             AssertionError: org from user input not supported
@@ -321,7 +321,7 @@ class LimeSurvey:
             transformation_questions (dict, optional): Dict of questions
                 requiring transformation of raw data, e.g. {'depression': 'D3'}
                 or {'supervision': ['E7a', 'E7b']}
-            org (str): organisation name
+            org (str): organization name
 
         """
 
@@ -366,10 +366,10 @@ class LimeSurvey:
             question_responses = responses
             system_info = pd.DataFrame()
             if org is None:
-                org = responses["organisation"].iloc[0]
+                org = responses["organization"].iloc[0]
                 if np.isnan(org):
                     raise ValueError(
-                        "No organisation name found in imported data. Please specify."
+                        "No organization name found in imported data. Please specify."
                     )
                 else:
                     self.org = org
@@ -905,7 +905,7 @@ class LimeSurvey:
             'plot_title_position': tuple (x,y), if empty, position of the
                 title is calculated depending on number of legend entries
                 and 'legend_columns'
-            'plot_title_org': whether to display organisation name in title
+            'plot_title_org': whether to display organization name in title
             'save': save plot as png or pdf either with question indicator as
                 name if True or as string if string is added here.
                 Ending of String determines file_format.
@@ -956,7 +956,7 @@ class LimeSurvey:
             if plot_title_org:
                 if self.org is None:
                     raise ValueError(
-                        f"Must specify organisation name as one of {self.supported_orgs}"
+                        f"Must specify organization name as one of {self.supported_orgs}"
                     )
                 else:
                     self._validate_org(self.org)
@@ -1691,7 +1691,7 @@ class LimeSurvey:
         """Export anonymised data for question to file
 
         Args:
-            org (str): Name of the organisation to which the
+            org (str): Name of the organization to which the
                 exported data belong. Optional if org is specified
                 in instantiation, but overrides it if given here
             drop_columns (str or list, optional): One or list of columns
@@ -1760,7 +1760,7 @@ class LimeSurvey:
         else:
             # Validate org name
             self._validate_org(org)
-        new_data.insert(0, "organisation", org)
+        new_data.insert(0, "organization", org)
 
         # Generate file name if not given
         if not directory.endswith(".csv"):

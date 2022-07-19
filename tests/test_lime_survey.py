@@ -196,14 +196,14 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
         self.assertEqual(survey.output_folder, "somefolder")
 
     def test_init_correct_org(self):
-        """Test initialisation with supported organisation name"""
+        """Test initialisation with supported organization name"""
 
         survey = LimeSurvey(structure_file=self.structure_file, org="MPS")
 
         self.assertEqual(survey.org, "MPS")
 
     def test_init_wrong_org(self):
-        """Test initialisation with unsupported organisation name"""
+        """Test initialisation with unsupported organization name"""
 
         with self.assertRaises(AssertionError):
             LimeSurvey(structure_file=self.structure_file, org="mps")
