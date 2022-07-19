@@ -37,12 +37,12 @@ def array_single_comparison_plot(
     legend_sequence: list = [],
     theme=None,
     calculate_aspect_ratio: bool = True,
-    maximum_length_x_axis_answers=20,
+    maximum_length_x_axis_answers: int = 20,
     show_zeroes: bool = True,
     bubbles: Union[bool, float] = None,
     no_sub_bars: bool = False,
     combine_neutral_choices: bool = True,
-    overview: bool = True,
+    overview: str = None,
 ):
 
     """
@@ -250,11 +250,69 @@ def array_single_comparison_plot(
     if overview:
         grouped_choices_new["left"] = ["Positive"]
         grouped_choices_new["right"] = ["Negative"]
+    if overview not in ["neutral", "positive", "negative"]:
+        ax = plot_horizontal(
+            ax,
+            answer_dictionary,
+            choices,
+            legend_sequence,
+            positionlist_per_answer,
+            bar_positions_complete,
+            grouped_choices_new,
+            colors,
+            y_labels,
+            theme=theme,
+            overview=overview,
+            bar_width=bar_width,
+            legend_columns=legend_columns,
+            legend_title=legend_title,
+            plot_title=plot_title,
+            plot_title_position=plot_title_position,
+            maximum_length_x_axis_answers=maximum_length_x_axis_answers,
+        )
+    """
+    else:
+        plot_vertical()
+    """
+
+    return fig, ax
+
+
+def plot_horizontal(
+    ax,
+    answer_dictionary,
+    choices,
+    legend_sequence,
+    positionlist_per_answer,
+    bar_positions_complete,
+    grouped_choices_new,
+    colors,
+    y_labels,
+    theme=None,
+    overview: str = "all",
+    bar_width: float = 0.8,
+    legend_columns: int = 2,
+    legend_title=None,
+    plot_title=None,
+    plot_title_position: tuple = (()),
+    maximum_length_x_axis_answers: int = 20,
+):
+    """
+    This functions is a crude cutout of the array_single_comparison_plot
+    function, has a lot of necessary variables put in. It exists because
+    the implementation of the options overview='positive' and
+    overview='negative' overview = 'neutral' makes a switch to a different
+    plotting function necessary but if the script is restructured, this
+    function could be simplified and probably, usable by other scripts as well.
+    """
+    # iterate through answers of 'compare_with' question and previously
+    # calculated positioning of answers.
     answer_count = 0
     for answer, sub_position in zip(legend_sequence, positionlist_per_answer):
         count = 0
         percentage_groups = np.array(answer_dictionary[answer])
         bar_positions = bar_positions_complete + sub_position
+        # calculate where bars have to start and their length
         for column, choice in zip(np.transpose(percentage_groups), choices):
             starts = calculate_bar_starts_from_data(
                 column,
@@ -265,12 +323,12 @@ def array_single_comparison_plot(
                 overview=overview,
             )
             if choice in grouped_choices_new["left"]:
-                width = -column
+                length = -column
             else:
-                width = column
+                length = column
             ax.barh(
                 bar_positions,
-                width=width,
+                width=length,
                 left=starts,
                 height=bar_width,
                 label=answer,
@@ -330,8 +388,7 @@ def array_single_comparison_plot(
     ]
     plt.yticks(bar_positions_complete, y_labels)
     plt.setp(ax.get_yticklabels(), rotation=30, horizontalalignment="right")
-
-    return fig, ax
+    return ax
 
 
 def get_grouped_choices(options, all_grouped_choices):
