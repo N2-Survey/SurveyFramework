@@ -110,7 +110,7 @@ class LimeSurvey:
     na_label: str = "No Answer"
     theme: dict = None
     output_folder: str = None
-    allowed_orgs = ["MPS", "Helmholtz", "Leibniz", "TUM", "N2"]
+    supported_orgs = ["MPS", "Helmholtz", "Leibniz", "TUM", "N2"]
     additional_questions = {
         "state_anxiety_score": {
             "label": "What is the state anxiety score?",
@@ -266,11 +266,24 @@ class LimeSurvey:
         self.output_folder = output_folder or os.path.abspath(os.curdir)
 
         # Store organization information
-        if org is not None and org not in self.allowed_orgs:
-            raise AssertionError(
-                f"Only the following organizations are allowed: {self.allowed_orgs}"
-            )
+        if org is not None:
+            self._validate_org(org)
         self.org = org
+
+    def _validate_org(self, org):
+        """Validate organisation is among supported ones
+
+        Args:
+            org (str): organisation name
+
+        Raises:
+            AssertionError: org from user input not supported
+        """
+
+        if org not in self.supported_orgs:
+            raise AssertionError(
+                f"Only the following organizations are allowed: {self.supported_orgs}"
+            )
 
     def read_structure(self, structure_file: str) -> None:
         """Read structure XML file
@@ -296,7 +309,10 @@ class LimeSurvey:
             self.add_question(question, **info)
 
     def read_responses(
-        self, responses_file: str, transformation_questions: dict = {}
+        self,
+        responses_file: str,
+        transformation_questions: dict = {},
+        org: str = None,
     ) -> None:
         """Read responses CSV file
 
@@ -305,6 +321,7 @@ class LimeSurvey:
             transformation_questions (dict, optional): Dict of questions
                 requiring transformation of raw data, e.g. {'depression': 'D3'}
                 or {'supervision': ['E7a', 'E7b']}
+            org (str): organisation name
 
         """
 
@@ -348,11 +365,17 @@ class LimeSurvey:
             raw_data = False
             question_responses = responses
             system_info = pd.DataFrame()
-            self.org = responses["organisation"].iloc[0]
-            if self.org not in self.allowed_orgs:
-                raise AssertionError(
-                    f"Imported data not from supported organizations: {self.allowed_orgs}"
-                )
+            if org is None:
+                org = responses["organisation"].iloc[0]
+                if np.isnan(org):
+                    raise ValueError(
+                        "No organisation name found in imported data. Please specify."
+                    )
+                else:
+                    self.org = org
+            else:
+                self._validate_org(org)
+                self.org = org
 
         # Set correct categories for categorical fields
         for column in self.questions.index:
@@ -827,6 +850,7 @@ class LimeSurvey:
         legend_columns: int = 2,
         plot_title: Union[str, bool] = True,
         plot_title_position: tuple = (()),
+        plot_title_org: bool = False,
         save: Union[str, bool] = False,
         file_format: str = "png",
         dpi: Union[str, float] = "figure",
@@ -881,6 +905,7 @@ class LimeSurvey:
             'plot_title_position': tuple (x,y), if empty, position of the
                 title is calculated depending on number of legend entries
                 and 'legend_columns'
+            'plot_title_org': whether to display organisation name in title
             'save': save plot as png or pdf either with question indicator as
                 name if True or as string if string is added here.
                 Ending of String determines file_format.
@@ -928,8 +953,14 @@ class LimeSurvey:
         # get plot title
         if plot_title is True:
             plot_title = self.get_label(question)
-            if self.org is not None:
-                plot_title = f"{self.org}: {plot_title}"
+            if plot_title_org:
+                if self.org is None:
+                    raise ValueError(
+                        f"Must specify organisation name as one of {self.supported_orgs}"
+                    )
+                else:
+                    self._validate_org(self.org)
+                    plot_title = f"{self.org}: {plot_title}"
         if compare_with:
             fig, ax = self.plot_comparison(
                 question,
@@ -1361,7 +1392,7 @@ class LimeSurvey:
                 filename = filename + f"_{entry}"
             if compare_with:
                 filename = filename + f"_vs_{compare_with}"
-            filename = filename + f".{file_format}"
+            filename = f"{self.org}-{filename}.{file_format}"
         filename = _clean_file_name(filename)
         fullpath = os.path.join(self.output_folder, filename)
         fig.savefig(fullpath, dpi=dpi)
@@ -1723,16 +1754,12 @@ class LimeSurvey:
         # Check org name is given or available from instantiation
         if org is None:
             if self.org is None:
-                raise AssertionError(
-                    f"Must provide name of organisation as one of the following: {self.allowed_orgs}"
-                )
+                org = ""
             else:
                 org = self.org
-        # Ensure org name is among supported ones
-        if org not in self.allowed_orgs:
-            raise AssertionError(
-                f"Only the following organisations are allowed: {self.allowed_orgs}"
-            )
+        else:
+            # Validate org name
+            self._validate_org(org)
         new_data.insert(0, "organisation", org)
 
         # Generate file name if not given
