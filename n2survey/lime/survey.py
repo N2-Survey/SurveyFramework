@@ -282,7 +282,7 @@ class LimeSurvey:
 
         if org not in self.supported_orgs:
             raise AssertionError(
-                f"Only the following organizations are allowed: {self.supported_orgs}"
+                f"Only the following organizations are supported: {self.supported_orgs}"
             )
 
     def read_structure(self, structure_file: str) -> None:
