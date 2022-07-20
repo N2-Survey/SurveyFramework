@@ -382,7 +382,6 @@ class LimeSurvey:
                         "No organization name found in imported data. Please specify."
                     )
                 else:
-                    print(org)
                     self.set_org(org)
             else:
                 self.set_org(org)
