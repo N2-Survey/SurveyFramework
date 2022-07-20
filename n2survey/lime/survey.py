@@ -270,6 +270,16 @@ class LimeSurvey:
             self._validate_org(org)
         self.org = org
 
+    def set_org(self, org):
+        """Set organization attribute
+
+        Args:
+            org (str): organization name
+        """
+
+        self._validate_org(org)
+        self.org = org
+
     def _validate_org(self, org):
         """Validate organization is among supported ones
 
@@ -367,15 +377,15 @@ class LimeSurvey:
             system_info = pd.DataFrame()
             if org is None:
                 org = responses["organization"].iloc[0]
-                if np.isnan(org):
+                if pd.isna(org):
                     raise ValueError(
                         "No organization name found in imported data. Please specify."
                     )
                 else:
-                    self.org = org
+                    print(org)
+                    self.set_org(org)
             else:
-                self._validate_org(org)
-                self.org = org
+                self.set_org(org)
 
         # Set correct categories for categorical fields
         for column in self.questions.index:
@@ -959,7 +969,6 @@ class LimeSurvey:
                         f"Must specify organization name as one of {self.supported_orgs}"
                     )
                 else:
-                    self._validate_org(self.org)
                     plot_title = f"{self.org}: {plot_title}"
         if compare_with:
             fig, ax = self.plot_comparison(
