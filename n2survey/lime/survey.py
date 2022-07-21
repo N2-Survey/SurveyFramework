@@ -110,6 +110,7 @@ class LimeSurvey:
     na_label: str = "No Answer"
     theme: dict = None
     output_folder: str = None
+    supported_orgs = ["MPS", "Helmholtz", "Leibniz", "TUM", "N2"]
     additional_questions = {
         "state_anxiety_score": {
             "label": "What is the state anxiety score?",
@@ -236,6 +237,7 @@ class LimeSurvey:
         structure_file: str = None,
         theme: Optional[dict] = None,
         output_folder: Optional[str] = None,
+        org: str = None,
     ) -> None:
         """Get an instance of the Survey
 
@@ -247,6 +249,7 @@ class LimeSurvey:
             output_folder (Optional[str], optional): A path to a folder where outputs,
             i.e. plots, repotrs, etc. will be saved. By default, current woring
             directory is used.
+            org (str, optional): Name of the organization.
         """
 
         # Store path to structure file
@@ -261,6 +264,36 @@ class LimeSurvey:
 
         # Set a folder for output results
         self.output_folder = output_folder or os.path.abspath(os.curdir)
+
+        # Store organization information
+        if org is not None:
+            self._validate_org(org)
+        self.org = org
+
+    def set_org(self, org):
+        """Set organization attribute
+
+        Args:
+            org (str): organization name
+        """
+
+        self._validate_org(org)
+        self.org = org
+
+    def _validate_org(self, org):
+        """Validate organization is among supported ones
+
+        Args:
+            org (str): organization name
+
+        Raises:
+            AssertionError: org from user input not supported
+        """
+
+        if org not in self.supported_orgs:
+            raise AssertionError(
+                f"Only the following organizations are supported: {self.supported_orgs}"
+            )
 
     def read_structure(self, structure_file: str) -> None:
         """Read structure XML file
@@ -286,7 +319,10 @@ class LimeSurvey:
             self.add_question(question, **info)
 
     def read_responses(
-        self, responses_file: str, transformation_questions: dict = {}
+        self,
+        responses_file: str,
+        transformation_questions: dict = {},
+        org: str = None,
     ) -> None:
         """Read responses CSV file
 
@@ -295,6 +331,7 @@ class LimeSurvey:
             transformation_questions (dict, optional): Dict of questions
                 requiring transformation of raw data, e.g. {'depression': 'D3'}
                 or {'supervision': ['E7a', 'E7b']}
+            org (str): organization name
 
         """
 
@@ -338,6 +375,16 @@ class LimeSurvey:
             raw_data = False
             question_responses = responses
             system_info = pd.DataFrame()
+            if org is None:
+                org = responses["organization"].iloc[0]
+                if pd.isna(org):
+                    raise ValueError(
+                        "No organization name found in imported data. Please specify."
+                    )
+                else:
+                    self.set_org(org)
+            else:
+                self.set_org(org)
 
         # Set correct categories for categorical fields
         for column in self.questions.index:
@@ -812,6 +859,7 @@ class LimeSurvey:
         legend_columns: int = 2,
         plot_title: Union[str, bool] = True,
         plot_title_position: tuple = (()),
+        plot_title_org: bool = False,
         save: Union[str, bool] = False,
         file_format: str = "png",
         dpi: Union[str, float] = "figure",
@@ -866,6 +914,7 @@ class LimeSurvey:
             'plot_title_position': tuple (x,y), if empty, position of the
                 title is calculated depending on number of legend entries
                 and 'legend_columns'
+            'plot_title_org': whether to display organization name in title
             'save': save plot as png or pdf either with question indicator as
                 name if True or as string if string is added here.
                 Ending of String determines file_format.
@@ -913,6 +962,13 @@ class LimeSurvey:
         # get plot title
         if plot_title is True:
             plot_title = self.get_label(question)
+            if plot_title_org:
+                if self.org is None:
+                    raise ValueError(
+                        f"Must specify organization name as one of {self.supported_orgs}"
+                    )
+                else:
+                    plot_title = f"{self.org}: {plot_title}"
         if compare_with:
             fig, ax = self.plot_comparison(
                 question,
@@ -1344,7 +1400,7 @@ class LimeSurvey:
                 filename = filename + f"_{entry}"
             if compare_with:
                 filename = filename + f"_vs_{compare_with}"
-            filename = filename + f".{file_format}"
+            filename = f"{self.org}-{filename}.{file_format}"
         filename = _clean_file_name(filename)
         fullpath = os.path.join(self.output_folder, filename)
         fig.savefig(fullpath, dpi=dpi)
@@ -1634,7 +1690,7 @@ class LimeSurvey:
 
     def export_to_file(
         self,
-        organisation: str,
+        org: str = None,
         drop_columns: Union[str, list] = [],
         rename_columns: dict = {},
         directory: str = None,
@@ -1643,8 +1699,9 @@ class LimeSurvey:
         """Export anonymised data for question to file
 
         Args:
-            organisation (str): Name of the organisation to which the
-                exported data belong
+            org (str): Name of the organization to which the
+                exported data belong. Optional if org is specified
+                in instantiation, but overrides it if given here
             drop_columns (str or list, optional): One or list of columns
                 to remove in addition to free inputs
             rename_columns (dict, optional): Dict of columns to rename
@@ -1702,11 +1759,20 @@ class LimeSurvey:
         if rename_columns:
             new_data = new_data.rename(columns=rename_columns)
 
-        new_data.insert(0, "organisation", organisation)
+        # Check org name is given or available from instantiation
+        if org is None:
+            if self.org is None:
+                org = ""
+            else:
+                org = self.org
+        else:
+            # Validate org name
+            self._validate_org(org)
+        new_data.insert(0, "organization", org)
 
         # Generate file name if not given
         if not directory.endswith(".csv"):
-            directory = os.path.join(directory, f"{organisation}-anonymised-data.csv")
+            directory = os.path.join(directory, f"{org}-anonymised-data.csv")
 
         new_data.to_csv(directory)
 
