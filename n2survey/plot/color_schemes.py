@@ -25,8 +25,9 @@ class ColorSchemes:
                     np.array([111, 152, 204]) / 255],
 
         "helmholtz": [np.array([0, 40, 100]) / 255,
-                      # np.array([34, 238, 251]) / 255],
-                      np.array([34, 176, 248]) / 255],
+                      np.array([34, 176, 248]) / 255,
+                      np.array([143, 184, 39]) / 255,
+                      ],
 
         "tum": [np.array([230, 230, 230]) / 255,
                 np.array([48, 112, 179]) / 255],
