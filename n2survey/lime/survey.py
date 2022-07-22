@@ -17,6 +17,8 @@ from n2survey.lime.transformations import (
     rate_satisfaction,
     rate_supervision,
 )
+
+from n2survey.plot.color_schemes import ColorSchemes
 from n2survey.plot import (
     comparison_numeric_bar_plot,
     likert_bar_plot,
@@ -25,12 +27,10 @@ from n2survey.plot import (
     multiple_simple_comparison_plot,
     simple_comparison_plot,
     single_choice_bar_plot,
-    color_schemes
 )
 
 __all__ = ["LimeSurvey", "DEFAULT_THEME", "QUESTION_TYPES"]
 
-from n2survey.plot.color_schemes import ColorSchemes
 
 DEFAULT_THEME = {
     "context": "notebook",
@@ -273,7 +273,7 @@ class LimeSurvey:
         # Store organization information
         if org is not None:
             self._validate_org(org)
-            self.theme.update({'palette': org})
+            self.theme.update({"palette": org})
         self.org = org
 
     def set_org(self, org):
