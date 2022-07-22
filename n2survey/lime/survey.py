@@ -17,8 +17,6 @@ from n2survey.lime.transformations import (
     rate_satisfaction,
     rate_supervision,
 )
-
-from n2survey.plot.color_schemes import ColorSchemes
 from n2survey.plot import (
     comparison_numeric_bar_plot,
     likert_bar_plot,
@@ -28,6 +26,7 @@ from n2survey.plot import (
     simple_comparison_plot,
     single_choice_bar_plot,
 )
+from n2survey.plot.color_schemes import ColorSchemes
 
 __all__ = ["LimeSurvey", "DEFAULT_THEME", "QUESTION_TYPES"]
 

@@ -4,9 +4,6 @@ import seaborn as sns
 from matplotlib.colors import LinearSegmentedColormap
 
 
-# __all__ = ["ColorSchemes"]
-
-
 def example_plot(palette):
     plt.figure(figsize=(len(palette), 1))
     sns.set_theme(palette=palette)
