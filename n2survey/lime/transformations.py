@@ -336,7 +336,7 @@ def calculate_duration(
             "I don't want to answer this question",
             "No Answer",
         ],
-        value="01",
+        value="06",
     )
     end_month_responses = end_month_responses.replace(
         to_replace=[
@@ -344,7 +344,7 @@ def calculate_duration(
             "I don't want to answer this question",
             "No Answer",
         ],
-        value="01",
+        value="06",
     )
 
     # concat the year, month and a dummy date '01' with '-' for datetime parsing later
