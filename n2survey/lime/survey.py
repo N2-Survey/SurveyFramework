@@ -25,10 +25,12 @@ from n2survey.plot import (
     multiple_simple_comparison_plot,
     simple_comparison_plot,
     single_choice_bar_plot,
+    color_schemes
 )
 
 __all__ = ["LimeSurvey", "DEFAULT_THEME", "QUESTION_TYPES"]
 
+from n2survey.plot.color_schemes import ColorSchemes
 
 DEFAULT_THEME = {
     "context": "notebook",
@@ -262,12 +264,16 @@ class LimeSurvey:
         if theme:
             self.theme.update(theme)
 
+        # Initialize the colorschemes
+        ColorSchemes()
+
         # Set a folder for output results
         self.output_folder = output_folder or os.path.abspath(os.curdir)
 
         # Store organization information
         if org is not None:
             self._validate_org(org)
+            self.theme.update({'palette': org})
         self.org = org
 
     def set_org(self, org):
