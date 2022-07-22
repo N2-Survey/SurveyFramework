@@ -379,21 +379,24 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         """Test adding responses to duration transformation
         questions in read_responses"""
 
-        phd_duration_questions = {"duration": ("A8", "A9")}
+        structure_file = "data/survey_structure_2021_v2.xml"
+        responses_file = "data/dummy_data_2021_codeonly_v2.csv"
 
-        survey = LimeSurvey(structure_file=self.structure_file)
+        phd_duration_questions = {"duration": (("A8a", "A8b"), ("A9a", "A9b"))}
+
+        survey = LimeSurvey(structure_file=structure_file)
         survey.read_responses(
-            responses_file=self.responses_file,
+            responses_file=responses_file,
             transformation_questions=phd_duration_questions,
         )
 
         ref = pd.DataFrame(
             data={
-                "PhD duration (days)": np.array([1826.0, 1095.0, 1065.0]),
-                "PhD duration (months)": np.array([60.0, 36.0, 35.0]),
-                "PhD duration (years)": np.array([5.0, 3.0, 3.0]),
-                "PhD duration category": pd.Categorical(
-                    [">36 months", "25-36 months", "25-36 months"],
+                "phd_duration_days": [1461.0, 1218.0, 1249.0],
+                "phd_duration_months": [48.0, 40.0, 41.0],
+                "phd_duration_years": [4.0, 3.0, 3.0],
+                "phd_duration_category": pd.Categorical(
+                    [">36 months", ">36 months", ">36 months"],
                     categories=[
                         "<12 months",
                         "13-24 months",

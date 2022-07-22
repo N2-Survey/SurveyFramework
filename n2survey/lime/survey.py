@@ -444,9 +444,15 @@ class LimeSurvey:
                 responses=self.get_responses(question),
             )
         elif transform_dict.get(transform) == "duration":
+            # given in the form of ((start_month,start_year),(end_month,end_year))
+            start, end = question
+            start_month, start_year = start
+            end_month, end_year = end
             return calculate_duration(
-                start_responses=self.get_responses(question[0], labels=False),
-                end_responses=self.get_responses(question[1], labels=False),
+                start_month_responses=self.get_responses(start_month, labels=True),
+                start_year_responses=self.get_responses(start_year, labels=True),
+                end_month_responses=self.get_responses(end_month, labels=True),
+                end_year_responses=self.get_responses(end_year, labels=True),
             )
         elif transform_dict.get(transform) == "satisfaction":
             return rate_satisfaction(
