@@ -1,3 +1,7 @@
+[![DOI](https://zenodo.org/badge/403667928.svg)](https://zenodo.org/badge/latestdoi/403667928)
+
+
+
 # N2 Survey Framework
 Python framework to analyze the N2 Network surveys.
 
