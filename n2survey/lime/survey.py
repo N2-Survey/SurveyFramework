@@ -212,9 +212,28 @@ class LimeSurvey:
                 "A5": "very dissatisfied",
             },
         },
-        "phd_duration": {
-            "label": "What is the length of PhD?",
+        "phd_duration_days": {
+            "label": "What is the length of PhD in days?",
             "type": "free",
+        },
+        "phd_duration_months": {
+            "label": "What is the length of PhD in months?",
+            "type": "free",
+        },
+        "phd_duration_years": {
+            "label": "What is the length of PhD in years?",
+            "type": "free",
+        },
+        "phd_duration_category": {
+            "label": "What is the length of PhD",
+            "type": "single-choice",
+            "choices": {
+                "A1": "<12 months",
+                "A2": "13-24 months",
+                "A3": "25-36 months",
+                "A4": "37-48 months",
+                "A5": ">48 months",
+            },
         },
         "satisfaction_score": {
             "label": "What is the satisfaction score?",
@@ -497,9 +516,15 @@ class LimeSurvey:
                 responses=self.get_responses(question),
             )
         elif transform_dict.get(transform) == "duration":
+            # given in the form of ((start_month,start_year),(end_month,end_year))
+            start, end = question
+            start_month, start_year = start
+            end_month, end_year = end
             return calculate_duration(
-                start_responses=self.get_responses(question[0], labels=False),
-                end_responses=self.get_responses(question[1], labels=False),
+                start_month_responses=self.get_responses(start_month, labels=True),
+                start_year_responses=self.get_responses(start_year, labels=True),
+                end_month_responses=self.get_responses(end_month, labels=True),
+                end_year_responses=self.get_responses(end_year, labels=True),
             )
         elif transform_dict.get(transform) == "satisfaction":
             return rate_satisfaction(
