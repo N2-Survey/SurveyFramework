@@ -209,9 +209,27 @@ class LimeSurvey:
                 "A5": "very dissatisfied",
             },
         },
-        "phd_duration": {
-            "label": "What is the length of PhD?",
+        "phd_duration_days": {
+            "label": "What is the length of PhD in days?",
             "type": "free",
+        },
+        "phd_duration_months": {
+            "label": "What is the length of PhD in months?",
+            "type": "free",
+        },
+        "phd_duration_years": {
+            "label": "What is the length of PhD in years?",
+            "type": "free",
+        },
+        "phd_duration_category": {
+            "label": "What is the length of PhD",
+            "type": "single-choice",
+            "choices": {
+                "A1": "<12 months",
+                "A2": "13-24 months",
+                "A3": "25-36 months",
+                "A4": ">36 months",
+            },
         },
         "satisfaction_score": {
             "label": "What is the satisfaction score?",

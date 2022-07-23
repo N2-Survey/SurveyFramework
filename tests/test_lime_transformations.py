@@ -4,7 +4,6 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from n2survey.lime import LimeSurvey
 from n2survey.lime.transformations import (
     calculate_duration,
     range_to_numerical,
@@ -206,28 +205,24 @@ class TestDuration(BaseTestLimeSurvey2021WithResponsesCase):
     def test_phd_duration(self):
         """Test calculate_duration"""
 
-        structure_file = "data/survey_structure_2021_v2.xml"
-        responses_file = "data/dummy_data_2021_codeonly_v2.csv"
-
         start_month_responses = "A8a"
         start_year_responses = "A8b"
         end_month_responses = "A9a"
         end_year_responses = "A9b"
 
-        survey = LimeSurvey(structure_file=structure_file)
-        survey.read_responses(
-            responses_file=responses_file,
-        )
-
         result = calculate_duration(
-            start_month_responses=survey.get_responses(
+            start_month_responses=self.survey.get_responses(
                 start_month_responses, labels=True
             ),
-            start_year_responses=survey.get_responses(
+            start_year_responses=self.survey.get_responses(
                 start_year_responses, labels=True
             ),
-            end_month_responses=survey.get_responses(end_month_responses, labels=True),
-            end_year_responses=survey.get_responses(end_year_responses, labels=True),
+            end_month_responses=self.survey.get_responses(
+                end_month_responses, labels=True
+            ),
+            end_year_responses=self.survey.get_responses(
+                end_year_responses, labels=True
+            ),
         )
 
         ref = pd.DataFrame(

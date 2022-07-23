@@ -144,9 +144,30 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
                 },
                 "is_contingent": False,
             },
-            "phd_duration": {
-                "label": "What is the length of PhD?",
+            "phd_duration_days": {
+                "label": "What is the length of PhD in days?",
                 "type": "free",
+                "is_contingent": False,
+            },
+            "phd_duration_months": {
+                "label": "What is the length of PhD in months?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "phd_duration_years": {
+                "label": "What is the length of PhD in years?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "phd_duration_category": {
+                "label": "What is the length of PhD",
+                "type": "single-choice",
+                "choices": {
+                    "A1": "<12 months",
+                    "A2": "13-24 months",
+                    "A3": "25-36 months",
+                    "A4": ">36 months",
+                },
                 "is_contingent": False,
             },
             "satisfaction_score": {
@@ -379,14 +400,11 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         """Test adding responses to duration transformation
         questions in read_responses"""
 
-        structure_file = "data/survey_structure_2021_v2.xml"
-        responses_file = "data/dummy_data_2021_codeonly_v2.csv"
-
         phd_duration_questions = {"duration": (("A8a", "A8b"), ("A9a", "A9b"))}
 
-        survey = LimeSurvey(structure_file=structure_file)
+        survey = LimeSurvey(structure_file=self.structure_file)
         survey.read_responses(
-            responses_file=responses_file,
+            responses_file=self.responses_file,
             transformation_questions=phd_duration_questions,
         )
 
@@ -1029,32 +1047,20 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
 
     def test_get_response_free(self):
         """Test get response for free question type"""
-        expected_response = pd.to_datetime(
-            [
-                "2017-01-01 00:00:00",
-                "2020-06-01 00:00:00",
-                "2019-08-01 00:00:00",
-                "2017-05-01 00:00:00",
-                "",
-                "2017-08-01 00:00:00",
-                "2018-01-01 00:00:00",
-                "2020-09-01 00:00:00",
-                "2017-08-01 00:00:00",
-                "2019-12-01 00:00:00",
-            ]
-        )
-        response = self.survey.get_responses(self.free_column, labels=False)
-        self.assertEqual(response.shape[1], 1)
-        np.testing.assert_array_equal(
-            expected_response.values, response.iloc[:10, 0].values
+        expected_response = np.asarray(
+            ["Test, if this field is working :)"], dtype=object
         )
 
-        expected_columns = ["When did you start your PhD?"]
+        response = self.survey.get_responses(self.free_column, labels=False)
+        self.assertEqual(response.shape[1], 1)
+        np.testing.assert_array_equal(expected_response, response.iloc[14, 0])
+
+        expected_columns = [
+            "Anything regarding this section you would like to tell us?"
+        ]
         response = self.survey.get_responses(self.free_column, labels=True)
         np.testing.assert_array_equal(expected_columns, response.columns)
-        np.testing.assert_array_equal(
-            expected_response.values, response.iloc[:10, 0].values
-        )
+        np.testing.assert_array_equal(expected_response, response.iloc[14, 0])
 
     def test_get_response_array(self):
         """Test get response for array question type"""
@@ -1200,7 +1206,7 @@ class TestLimeSurveyGetLabel(BaseTestLimeSurvey2021Case):
 
         self.assertEqual(
             label,
-            "When did you start your PhD?",
+            "Anything regarding this section you would like to tell us?",
         )
 
 
