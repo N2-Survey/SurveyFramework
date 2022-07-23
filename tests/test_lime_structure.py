@@ -516,7 +516,7 @@ class TestXMLQuestionnarieParsing(unittest.TestCase):
             "data/survey_structure_2021.xml"
         )
         self.assertEqual(len(structure["sections"]), 13)
-        self.assertEqual(len(structure["questions"]), 549)
+        self.assertEqual(len(structure["questions"]), 550)
 
 
 if __name__ == "__main__":
