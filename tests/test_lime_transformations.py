@@ -231,12 +231,13 @@ class TestDuration(BaseTestLimeSurvey2021WithResponsesCase):
                 "phd_duration_months": [48.0, 40.0, 41.0],
                 "phd_duration_years": [4.0, 3.0, 3.0],
                 "phd_duration_category": pd.Categorical(
-                    [">36 months", ">36 months", ">36 months"],
+                    [">48 months", "37-48 months", "37-48 months"],
                     categories=[
                         "<12 months",
                         "13-24 months",
                         "25-36 months",
-                        ">36 months",
+                        "37-48 months",
+                        ">48 months",
                     ],
                     ordered=True,
                 ),

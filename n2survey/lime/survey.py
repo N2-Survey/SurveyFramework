@@ -228,7 +228,8 @@ class LimeSurvey:
                 "A1": "<12 months",
                 "A2": "13-24 months",
                 "A3": "25-36 months",
-                "A4": ">36 months",
+                "A4": "37-48 months",
+                "A5": ">48 months",
             },
         },
         "satisfaction_score": {

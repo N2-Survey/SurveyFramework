@@ -385,8 +385,14 @@ def calculate_duration(
     df["phd_duration_days"] = df["phd_duration_days"].dt.days
 
     # set up bins and labels for the bins
-    labels = ["<12 months", "13-24 months", "25-36 months", ">36 months"]
-    bins = [0, 12, 24, 36, float("inf")]
+    labels = [
+        "<12 months",
+        "13-24 months",
+        "25-36 months",
+        "37-48 months",
+        ">48 months",
+    ]
+    bins = [0, 12, 24, 36, 48, float("inf")]
     binned = pd.cut(df["phd_duration_months"], bins=bins, labels=labels, right=True)
 
     # drop temporary columns used for duration calculation
