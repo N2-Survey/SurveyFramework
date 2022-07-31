@@ -1,3 +1,4 @@
+from .array_single_choice_comparison import *
 from .bar import *
 from .comparison_shared_functions import *
 from .multiple_multiple_comparison import *
