@@ -650,22 +650,178 @@
       </response>
     </question>
     <question>
-      <text>When did you start your PhD?</text>
+      <text>In which &lt;u&gt;year&lt;/u&gt; did you start your PhD?</text>
       <directive>
         <position>during</position>
         <text>Explanation: The start of your doctoral research is either the start of your first contract/stipend or your enrollment in a university as a doctoral researcher, whichever is earlier.</text>
         <administration>self</administration>
       </directive>
-      <response varName="A8">
-        <free>
-          <format>date</format>
-          <length>19</length>
-          <label/>
-        </free>
+      <response varName="A8b">
+        <fixed>
+          <category>
+            <label>2021</label>
+            <value>A1</value>
+          </category>
+          <category>
+            <label>2020</label>
+            <value>A2</value>
+          </category>
+          <category>
+            <label>2019</label>
+            <value>A3</value>
+          </category>
+          <category>
+            <label>2018</label>
+            <value>A4</value>
+          </category>
+          <category>
+            <label>2017</label>
+            <value>A5</value>
+          </category>
+          <category>
+            <label>2016</label>
+            <value>A6</value>
+          </category>
+          <category>
+            <label>2015</label>
+            <value>A7</value>
+          </category>
+          <category>
+            <label>2014 or earlier</label>
+            <value>A8</value>
+          </category>
+          <category>
+            <label>I don't know</label>
+            <value>A9</value>
+          </category>
+          <category>
+            <label>I don't want to answer this question</label>
+            <value>A10</value>
+          </category>
+        </fixed>
       </response>
     </question>
     <question>
-      <text>When do you expect to submit your PhD Thesis?</text>
+      <text>In which &lt;u&gt;month&lt;/u&gt; did you start your PhD?</text>
+      <directive>
+        <position>during</position>
+        <text>Explanation: The start of your doctoral research is either the start of your first contract/stipend or your enrollment in a university as a doctoral researcher, whichever is earlier.</text>
+        <administration>self</administration>
+      </directive>
+      <response varName="A8a">
+        <fixed>
+          <category>
+            <label>01</label>
+            <value>A1</value>
+          </category>
+          <category>
+            <label>02</label>
+            <value>A2</value>
+          </category>
+          <category>
+            <label>03</label>
+            <value>A3</value>
+          </category>
+          <category>
+            <label>04</label>
+            <value>A4</value>
+          </category>
+          <category>
+            <label>05</label>
+            <value>A5</value>
+          </category>
+          <category>
+            <label>06</label>
+            <value>A6</value>
+          </category>
+          <category>
+            <label>07</label>
+            <value>A7</value>
+          </category>
+          <category>
+            <label>08</label>
+            <value>A8</value>
+          </category>
+          <category>
+            <label>09</label>
+            <value>A9</value>
+          </category>
+          <category>
+            <label>10</label>
+            <value>A10</value>
+          </category>
+          <category>
+            <label>11</label>
+            <value>A11</value>
+          </category>
+          <category>
+            <label>12</label>
+            <value>A12</value>
+          </category>
+          <category>
+            <label>I don't know</label>
+            <value>A13</value>
+          </category>
+          <category>
+            <label>I don't want to answer this question</label>
+            <value>A14</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+    <question>
+      <text>In which &lt;u&gt;year&lt;/u&gt; do you expect to submit your PhD Thesis?</text>
+      <response varName="A9b">
+        <fixed>
+          <category>
+            <label>2021</label>
+            <value>A1</value>
+          </category>
+          <category>
+            <label>2022</label>
+            <value>A2</value>
+          </category>
+          <category>
+            <label>2023</label>
+            <value>A3</value>
+          </category>
+          <category>
+            <label>2024</label>
+            <value>A4</value>
+          </category>
+          <category>
+            <label>2025</label>
+            <value>A5</value>
+          </category>
+          <category>
+            <label>2026</label>
+            <value>A6</value>
+          </category>
+          <category>
+            <label>2027</label>
+            <value>A7</value>
+          </category>
+          <category>
+            <label>2028</label>
+            <value>A8</value>
+          </category>
+          <category>
+            <label>2029 or later</label>
+            <value>A9</value>
+          </category>
+          <category>
+            <label>I don't know</label>
+            <value>A10</value>
+          </category>
+          <category>
+            <label>I don't want to answer this question</label>
+            <value>A11</value>
+          </category>
+        </fixed>
+      </response>
+    </question>
+    <question>
+      <text>In which &lt;u&gt;month&lt;/u&gt; do you expect to submit your PhD Thesis?</text>
       <directive>
         <position>during</position>
         <text>&lt;p&gt; &lt;/p&gt;
@@ -673,12 +829,65 @@
 &lt;p&gt; &lt;/p&gt;</text>
         <administration>self</administration>
       </directive>
-      <response varName="A9">
-        <free>
-          <format>date</format>
-          <length>19</length>
-          <label/>
-        </free>
+      <response varName="A9a">
+        <fixed>
+          <category>
+            <label>01</label>
+            <value>A1</value>
+          </category>
+          <category>
+            <label>02</label>
+            <value>A2</value>
+          </category>
+          <category>
+            <label>03</label>
+            <value>A3</value>
+          </category>
+          <category>
+            <label>04</label>
+            <value>A4</value>
+          </category>
+          <category>
+            <label>05</label>
+            <value>A5</value>
+          </category>
+          <category>
+            <label>06</label>
+            <value>A6</value>
+          </category>
+          <category>
+            <label>07</label>
+            <value>A7</value>
+          </category>
+          <category>
+            <label>08</label>
+            <value>A8</value>
+          </category>
+          <category>
+            <label>09</label>
+            <value>A9</value>
+          </category>
+          <category>
+            <label>10</label>
+            <value>A10</value>
+          </category>
+          <category>
+            <label>11</label>
+            <value>A11</value>
+          </category>
+          <category>
+            <label>12</label>
+            <value>A12</value>
+          </category>
+          <category>
+            <label>I don't know</label>
+            <value>A13</value>
+          </category>
+          <category>
+            <label>I don't want to answer this question</label>
+            <value>A14</value>
+          </category>
+        </fixed>
       </response>
     </question>
     <question>

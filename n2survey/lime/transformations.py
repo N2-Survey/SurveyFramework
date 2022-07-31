@@ -312,36 +312,93 @@ def range_to_numerical(question_label: str, responses: pd.DataFrame) -> pd.DataF
     return df
 
 
-def calculate_duration(start_responses: pd.DataFrame, end_responses: pd.DataFrame):
+def calculate_duration(
+    start_month_responses: pd.DataFrame,
+    start_year_responses: pd.DataFrame,
+    end_month_responses: pd.DataFrame,
+    end_year_responses: pd.DataFrame,
+):
     """Calculate duration
 
     Args:
-        start_responses (pd.DataFrame): DataFrame containing responses data of the start of duration
-        end_responses (pd.DataFrame): DataFrame containing responses data of the end of duration
+        start_month_responses (pd.DataFrame): DataFrame containing responses data of the start of duration in month
+        start_year_responses (pd.DataFrame): DataFrame containing responses data of the start of duration in year
+        end_month_responses (pd.DataFrame): DataFrame containing responses data of the end of duration in month
+        end_year_responses (pd.DataFrame): DataFrame containing responses data of the end of duration in year
 
     Returns:
-        pd.DataFrame: Rounded PhD duration in days, months and years
+        pd.DataFrame: Rounded PhD duration in days, months, years and a column containing binned month which is saved in categorical dtype
     """
+    # replace the non-numerical answer in start_month and end_month response to '01' so that they are rescued during datetime parsing
+    start_month_responses = start_month_responses.replace(
+        to_replace=[
+            "I don't know",
+            "I don't want to answer this question",
+            "No Answer",
+        ],
+        value="06",
+    )
+    end_month_responses = end_month_responses.replace(
+        to_replace=[
+            "I don't know",
+            "I don't want to answer this question",
+            "No Answer",
+        ],
+        value="06",
+    )
 
-    # get labels of start and end questions to get their data
+    # concat the year, month and a dummy date '01' with '-' for datetime parsing later
+    start_year_month = (
+        start_year_responses.iloc[:, 0].astype("str")
+        + "-"
+        + start_month_responses.iloc[:, 0].astype("str")
+        + "-01"
+    )
+    end_year_month = (
+        end_year_responses.iloc[:, 0].astype("str")
+        + "-"
+        + end_month_responses.iloc[:, 0].astype("str")
+        + "-01"
+    )
+
+    # parse datetime from both dataframe for duration calculation
     df = pd.concat(
-        [start_responses, end_responses],
+        [
+            pd.to_datetime(start_year_month, yearfirst=True, errors="coerce").rename(
+                "phd_start_year_month"
+            ),
+            pd.to_datetime(end_year_month, yearfirst=True, errors="coerce").rename(
+                "phd_end_year_month"
+            ),
+        ],
         axis=1,
     )
 
     # duration calculation, return as day
-    df["PhD duration (days)"] = df.iloc[:, 1] - df.iloc[:, 0]
+    df["phd_duration_days"] = df.iloc[:, -1] - df.iloc[:, 0]
 
     # convert days to month and year
-    df["PhD duration (months)"] = df.iloc[:, 2] / np.timedelta64("1", "M")
-    df["PhD duration (years)"] = df.iloc[:, 2] / np.timedelta64("1", "Y")
+    df["phd_duration_months"] = df.iloc[:, 2] / np.timedelta64("1", "M")
+    df["phd_duration_years"] = df.iloc[:, 2] / np.timedelta64("1", "Y")
 
     # convert PhD duration (days) to float type for consistency
-    df["PhD duration (days)"] = df["PhD duration (days)"].dt.days
+    df["phd_duration_days"] = df["phd_duration_days"].dt.days
+
+    # set up bins and labels for the bins
+    labels = [
+        "<12 months",
+        "13-24 months",
+        "25-36 months",
+        "37-48 months",
+        ">48 months",
+    ]
+    bins = [0, 12, 24, 36, 48, float("inf")]
+    binned = pd.cut(df["phd_duration_months"], bins=bins, labels=labels, right=True)
 
     # drop temporary columns used for duration calculation
     # and return only duration in day, month and year
     df = df.iloc[:, 2:].round()
+    df = pd.concat([df, binned.rename("phd_duration_category")], axis=1)
 
     return df
 

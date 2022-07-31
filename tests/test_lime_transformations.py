@@ -205,19 +205,42 @@ class TestDuration(BaseTestLimeSurvey2021WithResponsesCase):
     def test_phd_duration(self):
         """Test calculate_duration"""
 
-        start_question = "A8"
-        end_question = "A9"
+        start_month_responses = "A8a"
+        start_year_responses = "A8b"
+        end_month_responses = "A9a"
+        end_year_responses = "A9b"
 
         result = calculate_duration(
-            start_responses=self.survey.get_responses(start_question, labels=False),
-            end_responses=self.survey.get_responses(end_question, labels=False),
+            start_month_responses=self.survey.get_responses(
+                start_month_responses, labels=True
+            ),
+            start_year_responses=self.survey.get_responses(
+                start_year_responses, labels=True
+            ),
+            end_month_responses=self.survey.get_responses(
+                end_month_responses, labels=True
+            ),
+            end_year_responses=self.survey.get_responses(
+                end_year_responses, labels=True
+            ),
         )
 
         ref = pd.DataFrame(
             data={
-                "PhD duration (days)": [1826.0, 1095.0, 1065.0],
-                "PhD duration (months)": [60.0, 36.0, 35.0],
-                "PhD duration (years)": [5.0, 3.0, 3.0],
+                "phd_duration_days": [1461.0, 1218.0, 1249.0],
+                "phd_duration_months": [48.0, 40.0, 41.0],
+                "phd_duration_years": [4.0, 3.0, 3.0],
+                "phd_duration_category": pd.Categorical(
+                    [">48 months", "37-48 months", "37-48 months"],
+                    categories=[
+                        "<12 months",
+                        "13-24 months",
+                        "25-36 months",
+                        "37-48 months",
+                        ">48 months",
+                    ],
+                    ordered=True,
+                ),
             },
             index=[2, 3, 4],
         )

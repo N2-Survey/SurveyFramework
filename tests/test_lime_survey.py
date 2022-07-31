@@ -144,9 +144,31 @@ class TestLimeSurveyInitialisation(BaseTestLimeSurvey2021Case):
                 },
                 "is_contingent": False,
             },
-            "phd_duration": {
-                "label": "What is the length of PhD?",
+            "phd_duration_days": {
+                "label": "What is the length of PhD in days?",
                 "type": "free",
+                "is_contingent": False,
+            },
+            "phd_duration_months": {
+                "label": "What is the length of PhD in months?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "phd_duration_years": {
+                "label": "What is the length of PhD in years?",
+                "type": "free",
+                "is_contingent": False,
+            },
+            "phd_duration_category": {
+                "label": "What is the length of PhD",
+                "type": "single-choice",
+                "choices": {
+                    "A1": "<12 months",
+                    "A2": "13-24 months",
+                    "A3": "25-36 months",
+                    "A4": "37-48 months",
+                    "A5": ">48 months",
+                },
                 "is_contingent": False,
             },
             "satisfaction_score": {
@@ -392,7 +414,7 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
         """Test adding responses to duration transformation
         questions in read_responses"""
 
-        phd_duration_questions = {"duration": ("A8", "A9")}
+        phd_duration_questions = {"duration": (("A8a", "A8b"), ("A9a", "A9b"))}
 
         survey = LimeSurvey(structure_file=self.structure_file)
         survey.read_responses(
@@ -402,16 +424,27 @@ class TestLimeSurveyReadResponses(BaseTestLimeSurvey2021WithResponsesCase):
 
         ref = pd.DataFrame(
             data={
-                "PhD duration (days)": np.array([1826.0, 1095.0, 1065.0]),
-                "PhD duration (months)": np.array([60.0, 36.0, 35.0]),
-                "PhD duration (years)": np.array([5.0, 3.0, 3.0]),
+                "phd_duration_days": [1461.0, 1218.0, 1249.0],
+                "phd_duration_months": [48.0, 40.0, 41.0],
+                "phd_duration_years": [4.0, 3.0, 3.0],
+                "phd_duration_category": pd.Categorical(
+                    [">48 months", "37-48 months", "37-48 months"],
+                    categories=[
+                        "<12 months",
+                        "13-24 months",
+                        "25-36 months",
+                        "37-48 months",
+                        ">48 months",
+                    ],
+                    ordered=True,
+                ),
             },
             index=[2, 3, 4],
         )
         ref.index.name = "id"
         # "id" of dataframe starts at 2, therefore difference to "index" above
         self.assert_df_equal(
-            survey.responses.iloc[:3, -3:], ref, msg="DataFrames not equal."
+            survey.responses.iloc[:3, -4:], ref, msg="DataFrames not equal."
         )
 
     def test_single_choice_dtype(self):
@@ -1029,32 +1062,20 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
 
     def test_get_response_free(self):
         """Test get response for free question type"""
-        expected_response = pd.to_datetime(
-            [
-                "2017-01-01 00:00:00",
-                "2020-06-01 00:00:00",
-                "2019-08-01 00:00:00",
-                "2017-05-01 00:00:00",
-                "",
-                "2017-08-01 00:00:00",
-                "2018-01-01 00:00:00",
-                "2020-09-01 00:00:00",
-                "2017-08-01 00:00:00",
-                "2019-12-01 00:00:00",
-            ]
-        )
-        response = self.survey.get_responses(self.free_column, labels=False)
-        self.assertEqual(response.shape[1], 1)
-        np.testing.assert_array_equal(
-            expected_response.values, response.iloc[:10, 0].values
+        expected_response = np.asarray(
+            ["Test, if this field is working :)"], dtype=object
         )
 
-        expected_columns = ["When did you start your PhD?"]
+        response = self.survey.get_responses(self.free_column, labels=False)
+        self.assertEqual(response.shape[1], 1)
+        np.testing.assert_array_equal(expected_response, response.iloc[14, 0])
+
+        expected_columns = [
+            "Anything regarding this section you would like to tell us?"
+        ]
         response = self.survey.get_responses(self.free_column, labels=True)
         np.testing.assert_array_equal(expected_columns, response.columns)
-        np.testing.assert_array_equal(
-            expected_response.values, response.iloc[:10, 0].values
-        )
+        np.testing.assert_array_equal(expected_response, response.iloc[14, 0])
 
     def test_get_response_array(self):
         """Test get response for array question type"""
@@ -1200,7 +1221,7 @@ class TestLimeSurveyGetLabel(BaseTestLimeSurvey2021Case):
 
         self.assertEqual(
             label,
-            "When did you start your PhD?",
+            "Anything regarding this section you would like to tell us?",
         )
 
 
