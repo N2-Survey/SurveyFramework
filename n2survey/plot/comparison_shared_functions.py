@@ -19,7 +19,88 @@ __all__ = [
     "calculate_title_pad",
     "aspect_ratio_from_arguments",
     "plot_bubbles",
+    "plot_multi_bars_per_answer",
 ]
+
+
+def plot_multi_bars_per_answer(
+    fig,
+    ax,
+    x,
+    y,
+    bar_positions,
+    positionlist_per_answer,
+    legend_sequence,
+    theme=None,
+    legend_columns=2,
+    legend_title: str = None,
+    plot_title=None,
+    plot_title_position: tuple = (()),
+    threshold_percentage: float = 0,
+    bar_width: float = 0.8,
+    show_zeroes: bool = True,
+):
+    """
+    x is a list of answers to the question,
+    y is a dictionary of answers to 'compare_with' question, example:
+    {'Woman':[1.0,5.0,23.3,13], 'Man':[22.0,33.1,15.0,0.0],...} if the question
+    has, in this example, 4 answers, thus x is a list of 4 strings
+    bar_positions are calculated beforehand notify the position for the group of
+    bars for each answer to question.
+    positionlist_per_answer is for each answer to question, the offset of the
+    sub bars from the 'compare_with' question to the middle.
+    'legend_sequence' is the sequence the answers to 'compare_with' question
+    are plotted.
+    """
+    count = 0
+    for entry, offset_from_xtick in zip(legend_sequence, positionlist_per_answer):
+        ax.bar(
+            bar_positions + offset_from_xtick,
+            list(y[entry]),
+            label=entry,
+            width=bar_width,
+        )
+        plt.xticks(bar_positions, x)
+        label_values = (np.array(y[entry])).astype(str)
+        labels = np.array([i + "%" for i in label_values], dtype=object)
+        labels[np.where(label_values.astype(np.float64) <= threshold_percentage)] = ""
+        labels[np.where(label_values.astype(np.float64) == 100.0)] = "100%"
+        if show_zeroes:
+            labels[np.where(label_values.astype(np.float64) == 0)] = r"|"
+        ax.bar_label(
+            ax.containers[count],
+            labels,
+            fmt="%s",
+            label_type="edge",
+            rotation=90,
+            padding=2,
+        )
+        count = count + 1
+    plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment="right")
+    ax.legend(
+        legend_sequence,
+        loc=(0.1, 1),
+        ncol=legend_columns,
+        frameon=False,
+        title=legend_title,
+    )
+    # set y-axis to invisible
+    ax.axes.get_yaxis().set_visible(False)
+    if plot_title:
+        if plot_title_position:
+            ax.text(plot_title_position[0], plot_title_position[1], plot_title)
+        else:
+            ax.set_title(
+                plot_title,
+                pad=calculate_title_pad(
+                    legend_sequence,
+                    legend_columns,
+                    theme=theme,
+                    legend_title=legend_title,
+                ),
+            )
+    fig.tight_layout()
+    return fig, ax
 
 
 def plot_bubbles(

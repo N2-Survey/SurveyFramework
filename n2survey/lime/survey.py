@@ -19,6 +19,7 @@ from n2survey.lime.transformations import (
 )
 from n2survey.plot import (
     array_single_comparison_plot,
+    comparison_numeric_bar_plot,
     likert_bar_plot,
     multiple_choice_bar_plot,
     multiple_multiple_comparison_plot,
@@ -110,6 +111,7 @@ class LimeSurvey:
     na_label: str = "No Answer"
     theme: dict = None
     output_folder: str = None
+    supported_orgs = ["MPS", "Helmholtz", "Leibniz", "TUM", "N2"]
     additional_questions = {
         "state_anxiety_score": {
             "label": "What is the state anxiety score?",
@@ -236,6 +238,7 @@ class LimeSurvey:
         structure_file: str = None,
         theme: Optional[dict] = None,
         output_folder: Optional[str] = None,
+        org: str = None,
     ) -> None:
         """Get an instance of the Survey
 
@@ -247,6 +250,7 @@ class LimeSurvey:
             output_folder (Optional[str], optional): A path to a folder where outputs,
             i.e. plots, repotrs, etc. will be saved. By default, current woring
             directory is used.
+            org (str, optional): Name of the organization.
         """
 
         # Store path to structure file
@@ -261,6 +265,36 @@ class LimeSurvey:
 
         # Set a folder for output results
         self.output_folder = output_folder or os.path.abspath(os.curdir)
+
+        # Store organization information
+        if org is not None:
+            self._validate_org(org)
+        self.org = org
+
+    def set_org(self, org):
+        """Set organization attribute
+
+        Args:
+            org (str): organization name
+        """
+
+        self._validate_org(org)
+        self.org = org
+
+    def _validate_org(self, org):
+        """Validate organization is among supported ones
+
+        Args:
+            org (str): organization name
+
+        Raises:
+            AssertionError: org from user input not supported
+        """
+
+        if org not in self.supported_orgs:
+            raise AssertionError(
+                f"Only the following organizations are supported: {self.supported_orgs}"
+            )
 
     def read_structure(self, structure_file: str) -> None:
         """Read structure XML file
@@ -286,7 +320,10 @@ class LimeSurvey:
             self.add_question(question, **info)
 
     def read_responses(
-        self, responses_file: str, transformation_questions: dict = {}
+        self,
+        responses_file: str,
+        transformation_questions: dict = {},
+        org: str = None,
     ) -> None:
         """Read responses CSV file
 
@@ -295,6 +332,7 @@ class LimeSurvey:
             transformation_questions (dict, optional): Dict of questions
                 requiring transformation of raw data, e.g. {'depression': 'D3'}
                 or {'supervision': ['E7a', 'E7b']}
+            org (str): organization name
 
         """
 
@@ -338,6 +376,16 @@ class LimeSurvey:
             raw_data = False
             question_responses = responses
             system_info = pd.DataFrame()
+            if org is None:
+                org = responses["organization"].iloc[0]
+                if pd.isna(org):
+                    raise ValueError(
+                        "No organization name found in imported data. Please specify."
+                    )
+                else:
+                    self.set_org(org)
+            else:
+                self.set_org(org)
 
         # Set correct categories for categorical fields
         for column in self.questions.index:
@@ -638,6 +686,7 @@ class LimeSurvey:
     def count(
         self,
         question: str,
+        responses: pd.DataFrame = None,
         labels: bool = True,
         dropna: bool = False,
         add_totals: bool = False,
@@ -647,6 +696,7 @@ class LimeSurvey:
 
         Args:
             question (str): Name of a question group or a sinlge column
+            responses (pd.Dataframe, optional): dataframe to be used instead of `question`
             labels (bool, optional): Use labels instead of codes. Defaults to True.
             dropna (bool, optional): Do not count empty values. Defaults to False.
             add_totals (bool, optional): Add a column and a row with totals. Values
@@ -671,8 +721,11 @@ class LimeSurvey:
               and one additional row. Both called "Total" and contains totals or, if
               total count contains misleading data, NA
         """
-        question_type = self.get_question_type(question)
-        responses = self.get_responses(question, labels=labels, drop_other=True)
+        if responses is None:
+            question_type = self.get_question_type(question)
+            responses = self.get_responses(question, labels=labels, drop_other=True)
+        else:
+            responses = responses
 
         if responses.shape[1] == 1:
             # If it consist of only one column, i.e. free, single choice, or
@@ -807,6 +860,7 @@ class LimeSurvey:
         legend_columns: int = 2,
         plot_title: Union[str, bool] = True,
         plot_title_position: tuple = (()),
+        plot_title_org: bool = False,
         save: Union[str, bool] = False,
         file_format: str = "png",
         dpi: Union[str, float] = "figure",
@@ -862,6 +916,7 @@ class LimeSurvey:
             'plot_title_position': tuple (x,y), if empty, position of the
                 title is calculated depending on number of legend entries
                 and 'legend_columns'
+            'plot_title_org': whether to display organization name in title
             'save': save plot as png or pdf either with question indicator as
                 name if True or as string if string is added here.
                 Ending of String determines file_format.
@@ -912,6 +967,13 @@ class LimeSurvey:
         # get plot title
         if plot_title is True:
             plot_title = self.get_label(question)
+            if plot_title_org:
+                if self.org is None:
+                    raise ValueError(
+                        f"Must specify organization name as one of {self.supported_orgs}"
+                    )
+                else:
+                    plot_title = f"{self.org}: {plot_title}"
         if compare_with:
             fig, ax = self.plot_comparison(
                 question,
@@ -1134,6 +1196,215 @@ class LimeSurvey:
             )
         return fig, ax
 
+    def plot_numeric_comparison(
+        self,
+        question,
+        questions_to_filter,
+        simple_filtering: bool = True,
+        valid_questions: list = None,
+        display_title: bool = True,
+        display_unfiltered_data: bool = True,
+        display_no_answer: bool = True,
+        display_median: bool = False,
+        display_percents: bool = False,
+        fig_size_inches: tuple = None,
+        save: bool = False,
+        **kwargs,
+    ):
+        """Plot comparison plots for numeric questions (with filtering).
+
+        Args:
+            question (str): Name of numeric question (for which filtering will be done)
+            questions_to_filter (dict): Dictionary of non-numeric questions with which `question` will
+                                        be filtered, e.g. {"A6": ["A1", "A3"]}, {"A6": "all"}/{"A6": ["all"]}
+            simple_filtering (bool, optional): Each entry of `questions_to_filter` is used for
+                                               individual filtering. Otherwise up to two entries will be
+                                               filtered simultaneously. Defaults to True.
+            valid_questions (list, optional): List of valid numeric questions for `question`.
+            display_title (bool, optional): Display question as title in resulting plot. Defaults to True.
+            display_unfiltered_data (bool, optional): Display distribution of total data (without filtering). Defaults to True.
+            display_no_answer (bool, optional): Hide invalid answers. Defaults to True.
+            display_median (bool, optional): Display median in each subplot. Defaults to True.
+            display_percents (bool, optional): Display percentages in each subplot. Defaults to False
+            fig_size_inches (tuple): Size of the resulting figure. Defaults to None.
+            save (bool, optional): Save the resulting figure. Defaults to True.
+
+        Raises:
+            NotImplementedError: - `question` NOT numeric single-choice
+                                 - `questions_to_filter` ARE numeric questions,
+                                    HAVE invalid keys or HAVE invalid values
+        """
+        # Prepare theme and non-theme arguments
+        theme = self.theme.copy()
+        theme_kwargs, non_theme_kwargs = _split_plot_kwargs(kwargs)
+        theme = deep_dict_update(theme, theme_kwargs)
+
+        # Set up question as title for figure
+        if display_title:
+            title = self.get_label(question)
+        else:
+            title = None
+
+        # Define valid numeric questions
+        if valid_questions is None:
+            valid_questions = ["B1b", "B2", "B3", "B4", "B10", "C4", "C8"]
+
+        # Check if `question` is numeric single-choice question
+        question_type = self.get_question_type(question)
+        if question_type != "single-choice" or question not in valid_questions:
+            raise NotImplementedError(
+                "Comparison plot is only implemented for numeric single-choice questions."
+                f"{question} is not a numeric single-choice question."
+            )
+
+        # Check if `questions_to_filter`: - are NOT numerical questions &
+        #                                 - have only single-choice questions as keys &
+        #                                 - have valid answer possibilites as values.
+        for key, values in questions_to_filter.items():
+            questions_to_filter_type = self.get_question_type(key)
+            if questions_to_filter_type != "single-choice" or key in valid_questions:
+                raise NotImplementedError(
+                    "Comparison plot is only implemented for single-choice non-numeric questions."
+                    f"{key} is either not a single-choice question or a numeric question."
+                )
+            possible_answers = list(self.questions.loc[key, "choices"])
+            if "-oth-" in possible_answers:
+                possible_answers.remove("-oth-")
+            # If `all` is specified {"A6": "all"}/{"A6": ["all"]}, use all answer possibilities
+            if "all" in values:
+                questions_to_filter[key] = possible_answers
+            if not all(
+                answer in possible_answers for answer in questions_to_filter[key]
+            ):
+                raise ValueError(
+                    f"Selected answer possibilities ({values}) are not in question {key}!"
+                    f"Question {key} has valid possibilties: {possible_answers}!"
+                )
+
+        # Preprocess and group data in `question` according to `selected_answers`
+        # First find indices to split data and store in list as arrays
+        list_of_labels = list()
+        list_of_counts_df = list()
+        list_of_responses = list()
+        # First element is unfiltered data, then filtered data
+        unfiltered_responses = self.get_responses(
+            question, labels=True, drop_other=True
+        )
+        unfiltered_counts_df = self.count(question, labels=True)
+        list_of_labels.append("Total")
+        list_of_counts_df.append(unfiltered_counts_df)
+        list_of_responses.append(unfiltered_responses)
+
+        # Simple filtering: Filter `question` according to answers in `questions_to_filter` individually
+        if simple_filtering:
+            label = "simple"
+            for key, values in questions_to_filter.items():
+                for value in values:
+                    # Get indices and filter array according to these
+                    filtered_responses, counts_df = self.filter_responses(
+                        question, unfiltered_responses, [key, value]
+                    )
+                    # Skip comparisons if filtered DataFrame has no counts of valid answers
+                    # Last entry corresponds to 'No Answer'
+                    if counts_df[:-1].sum(axis=0)[0] > 0:
+                        list_of_labels.append(self.get_choices(key)[value])
+                        list_of_counts_df.append(counts_df)
+                        list_of_responses.append(filtered_responses)
+
+        # Multiple filtering: Filter `question` according to all combinations of answers in `questions_to_filter`
+        # e.g. `questions_to_filter`: {'gender': ['male', 'female'],
+        #                              'nationality': ['German', 'Non-German']}
+        # --> 4 possible combinations: 'male'+'German', 'female'+'German',
+        #                              'male'+'Non-German', 'female'+'Non-German'
+        else:
+            label = "multiple"
+            # Multiple comparisons only done for: - max. 2 `questions_to_filter`
+            if len(questions_to_filter.keys()) != 2:
+                raise NotImplementedError(
+                    "When specifying `simple_filtering=False` please provide exactly two `questions_to_filter`!"
+                )
+            first_key, first_values = list(questions_to_filter.items())[0]
+            second_key, second_values = list(questions_to_filter.items())[1]
+            # Go through all entries of first element of `questions_to_filter`
+            for first_value in first_values:
+                for second_value in second_values:
+                    filtered_responses, counts_df = self.filter_responses(
+                        question,
+                        unfiltered_responses,
+                        [first_key, first_value],
+                        [second_key, second_value],
+                    )
+                    # Skip comparisons if filtered DataFrame has no counts of valid answers
+                    # Last entry corresponds to 'No Answer'
+                    if counts_df[:-1].sum(axis=0)[0] > 0:
+                        list_of_labels.append(
+                            self.get_choices(first_key)[first_value]
+                            + " + "
+                            + self.get_choices(second_key)[second_value]
+                        )
+                        list_of_counts_df.append(counts_df)
+                        list_of_responses.append(filtered_responses)
+        fig, ax = comparison_numeric_bar_plot(
+            self,
+            question,
+            list_of_responses,
+            list_of_counts_df,
+            list_of_labels,
+            display_unfiltered_data=display_unfiltered_data,
+            display_no_answer=display_no_answer,
+            display_percents=display_percents,
+            title=title,
+            fig_size_inches=fig_size_inches,
+            theme=theme,
+            **kwargs,
+        )
+        # Save to a file
+        if save:
+            filename = f"Numeric_{label}_comparison_{question}_with_{list(questions_to_filter.keys())}.png"
+            filename = _clean_file_name(filename).replace(" ", "_")
+            self.save_plot(fig, question, save=filename)
+
+    def filter_responses(self, question, unfiltered_responses, *args):
+        """Filtering of responses called in `plot_numeric_comparison`.
+
+        Args:
+            question (str): Name of numeric question (for which filtering will be done)
+            unfiltered_responses (DataFrame): Unfiltered responses dataframe of `question`
+            *args: List(s) originating from `questions_to_filter` like [question, answer]; for
+                   multiple filtering: two lists are passed
+
+        Returns:
+            filtered_responses (DataFrame): Dataframe of filtered response dataframe
+            countes_filtered_responses (DataFrame): Dataframe of counts of filtered response dataframe
+        """
+        # Simple filtering
+        if len(args) == 1:
+            key, value = args[0]
+            indices, _ = np.where(
+                self.get_responses(key, labels=False, drop_other=True) == value
+            )
+        # Multiple filtering (only works for exactly two filtering options)
+        elif len(args) == 2:
+            first_key, first_value = args[0]
+            second_key, second_value = args[1]
+            first_responses = self.get_responses(
+                first_key, labels=False, drop_other=True
+            )
+            second_responses = self.get_responses(
+                second_key, labels=False, drop_other=True
+            )
+            indices, _ = np.where(
+                np.logical_and(
+                    np.asarray(first_responses) == first_value,
+                    np.asarray(second_responses) == second_value,
+                )
+            )
+        filtered_responses = unfiltered_responses.iloc[indices]
+        counts_filtered_responses = self.count(
+            question, responses=filtered_responses, labels=True
+        )
+        return filtered_responses, counts_filtered_responses
+
     def save_plot(
         self,
         fig,
@@ -1160,7 +1431,7 @@ class LimeSurvey:
                 filename = filename + f"_{entry}"
             if compare_with:
                 filename = filename + f"_vs_{compare_with}"
-            filename = filename + f".{file_format}"
+            filename = f"{self.org}-{filename}.{file_format}"
         filename = _clean_file_name(filename)
         fullpath = os.path.join(self.output_folder, filename)
         fig.savefig(fullpath, dpi=dpi)
@@ -1469,7 +1740,7 @@ class LimeSurvey:
 
     def export_to_file(
         self,
-        organisation: str,
+        org: str = None,
         drop_columns: Union[str, list] = [],
         rename_columns: dict = {},
         directory: str = None,
@@ -1478,8 +1749,9 @@ class LimeSurvey:
         """Export anonymised data for question to file
 
         Args:
-            organisation (str): Name of the organisation to which the
-                exported data belong
+            org (str): Name of the organization to which the
+                exported data belong. Optional if org is specified
+                in instantiation, but overrides it if given here
             drop_columns (str or list, optional): One or list of columns
                 to remove in addition to free inputs
             rename_columns (dict, optional): Dict of columns to rename
@@ -1537,11 +1809,20 @@ class LimeSurvey:
         if rename_columns:
             new_data = new_data.rename(columns=rename_columns)
 
-        new_data.insert(0, "organisation", organisation)
+        # Check org name is given or available from instantiation
+        if org is None:
+            if self.org is None:
+                org = ""
+            else:
+                org = self.org
+        else:
+            # Validate org name
+            self._validate_org(org)
+        new_data.insert(0, "organization", org)
 
         # Generate file name if not given
         if not directory.endswith(".csv"):
-            directory = os.path.join(directory, f"{organisation}-anonymised-data.csv")
+            directory = os.path.join(directory, f"{org}-anonymised-data.csv")
 
         new_data.to_csv(directory)
 

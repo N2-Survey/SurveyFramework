@@ -18,6 +18,7 @@ from .comparison_shared_functions import (
     calculate_title_pad,
     form_bar_positions,
     form_single_answer_bar_positions,
+    plot_multi_bars_per_answer,
 )
 
 
@@ -227,6 +228,9 @@ def array_single_comparison_plot(
                 multiplicator=0.4,
             )
             width = theme["rc"]["figure.figsize"][0]
+            if overview in ["neutral", "positive", "negative"]:
+                width = height
+                height = theme["rc"]["figure.figsize"][1]
         else:
             width, height = theme["rc"]["figure.figsize"]
         theme["rc"]["figure.figsize"] = (width, height)
@@ -270,11 +274,37 @@ def array_single_comparison_plot(
             plot_title_position=plot_title_position,
             maximum_length_x_axis_answers=maximum_length_x_axis_answers,
         )
-    """
     else:
-        plot_vertical()
-    """
+        sub_choices = ["positive", "neutral", "negative"]
+        choice_index = sub_choices.index(overview)
+        for answer in answer_dictionary:
+            bar_count = 0
+            for bar in answer_dictionary[answer]:
+                answer_dictionary[answer][bar_count] = np.abs(bar[choice_index])
+                bar_count = bar_count + 1
 
+        plot_title = f"{plot_title}\n Answered {overview}"
+        fig, ax = plot_multi_bars_per_answer(
+            fig,
+            ax,
+            y_labels,
+            answer_dictionary,
+            bar_positions_complete,
+            positionlist_per_answer,
+            legend_sequence,
+            theme=theme,
+            legend_columns=legend_columns,
+            plot_title=plot_title,
+            legend_title=legend_title,
+            plot_title_position=plot_title_position,
+            threshold_percentage=threshold_percentage,
+            bar_width=bar_width,
+            show_zeroes=show_zeroes,
+        )
+        new_y_axis_size = 1.1 * ax.get_ylim()[1]
+        if theme is not None:
+            new_y_axis_size = new_y_axis_size * theme["font_scale"]
+        ax.set_ylim(top=new_y_axis_size)
     return fig, ax
 
 
