@@ -319,11 +319,7 @@ def get_percentages(question_compare_with_tuple, totalbar=None):
             # convert to percent and round
             if persons_total_answered_yes[question_answer]:
                 single_percentage = np.round(
-                    (
-                        100
-                        * single_percentage
-                        / persons_total_answered_yes[question_answer]
-                    ),
+                    (100 * single_percentage / np.sum(compare_with_bool_array)),
                     decimals=1,
                 )
             percentage[compare_with_answer].append(single_percentage)
