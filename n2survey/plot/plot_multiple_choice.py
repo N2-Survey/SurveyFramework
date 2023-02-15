@@ -1,7 +1,9 @@
-from textwrap import wrap
-
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
+
+from .common import label_wrap
 
 __all__ = ["multiple_choice_bar_plot"]
 
@@ -11,7 +13,7 @@ def create_bar_plot(
     tick_labels,
     palette,
     fig_dim,
-    bar_thickness,
+    bar_width,
     bar_spacing,
     plot_title,
     **kwargs,
@@ -30,8 +32,8 @@ def create_bar_plot(
     """
 
     # Set up parameters
-    default_fontsize = 15
-    bar_height = bar_thickness / (2 * bar_spacing)
+    default_fontsize = mpl.rcParams["ytick.labelsize"]
+    bar_height = bar_width / (2 * bar_spacing)
     max_data = max(data_df.iloc[:, 0])
     total = get_total(data_df)
     is_percentage = data_df.dtypes[0] == "float64"
@@ -72,11 +74,10 @@ def create_bar_plot(
         )
 
     # Display texts
-    wrapped_bottom = "\n".join(wrap(data_df.columns[0], 55))
-
-    bottom_text = f"Total: {total}\n'{wrapped_bottom}'"
-    if is_percentage:
-        bottom_text = bottom_text + " Relative response rates."
+    # wrapped_bottom = label_wrap(data_df.columns[0], 55)
+    bottom_text = "Total: {:.0f}".format(total)  # \n'{wrapped_bottom}'"
+    # if is_percentage:
+    #    bottom_text = bottom_text + " Relative response rates."
     plt.title(bottom_text, fontsize=default_fontsize * 0.9 / bar_spacing, y=-0.1)
 
     # set plot title - already handled by outer plot function
@@ -100,14 +101,14 @@ def get_total(data_df):
     """
 
     if "Total" in data_df.columns:
-        total = str(data_df.iloc[0].loc["Total"])
+        total = data_df.iloc[0].loc["Total"]
     else:
-        total = "Unknown"
+        total = np.nan
 
     return total
 
 
-def make_tick_labels(data_df, wrap_text=True):
+def make_tick_labels(data_df, textwrap_y_axis, max_textwrap_y_axis):
     """
     Create tick labels
 
@@ -121,9 +122,7 @@ def make_tick_labels(data_df, wrap_text=True):
     """
 
     tick_labels = list(data_df.index)
-    if wrap_text:
-        tick_labels = ["\n".join(wrap(label, 20)) for label in tick_labels]
-
+    tick_labels = label_wrap(tick_labels, textwrap_y_axis, max_textwrap_y_axis)
     return tick_labels
 
 
@@ -164,11 +163,12 @@ def multiple_choice_bar_plot(
     data_df,
     theme=None,
     sort="descending",
-    bar_thickness=1,
+    bar_width: float = 1,
     plot_title=False,
-    bar_spacing=1.2,
+    bar_spacing: float = 1.2,
     display_threshold=0,
-    wrap_text=True,
+    textwrap_y_axis: int = 100,
+    max_textwrap_y_axis: int = 200,
     **kwargs,
 ):
     """
@@ -179,7 +179,6 @@ def multiple_choice_bar_plot(
         sort (str, optional): 'ascending' or 'descending' order to sort in. If value other than these two, the df remains unchanged. Default is None.
         plot_title (Optional[str], optional): Title of the plot.
         display_threshold (float, optional): Threshold of the category to be included in the plot. Can be either count or percentage.
-        wrap_text (bool, optional): Whether to wrap text labels if they are too long for a single line
     """
     palette = None
     fig_dim = None
@@ -193,14 +192,16 @@ def multiple_choice_bar_plot(
     if sort is not None:
         filtered_data_df = sort_data(filtered_data_df, sort)
 
-    tick_labels = make_tick_labels(filtered_data_df, wrap_text)
+    tick_labels = make_tick_labels(
+        filtered_data_df, textwrap_y_axis, max_textwrap_y_axis
+    )
 
     fig, ax = create_bar_plot(
         filtered_data_df,
         tick_labels,
         palette,
         fig_dim,
-        bar_thickness,
+        bar_width,
         bar_spacing,
         plot_title=plot_title,
         **kwargs,

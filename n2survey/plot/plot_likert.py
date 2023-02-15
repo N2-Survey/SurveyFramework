@@ -1,8 +1,8 @@
-from textwrap import wrap
-
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+
+from .common import label_wrap
 
 __all__ = ["likert_bar_plot"]
 
@@ -215,13 +215,13 @@ def get_colors(palette, grouped_choices):
     return colors
 
 
-def calc_y_bar_position(grouped_questions, bar_thickness, bar_spacing, group_spacing):
+def calc_y_bar_position(grouped_questions, bar_width, bar_spacing, group_spacing):
     """
     Calculate y axis position of bar plots
 
     Args:
         grouped_questions (list): each sub-list is a group of questions which will be plotted together
-        bar_thickness (float): thickness of a single bar
+        bar_width (float): thickness of a single bar
         bar_spacing (float): horizontal spacing between bars belonging to the same group
         group_spacing (float): horizontal spacing between different question groups
 
@@ -231,7 +231,7 @@ def calc_y_bar_position(grouped_questions, bar_thickness, bar_spacing, group_spa
     bar_positions = []
     prev_position = 0
     for i_group, question_group in enumerate(grouped_questions):
-        group_positions = (bar_thickness + bar_spacing) * np.array(
+        group_positions = (bar_width + bar_spacing) * np.array(
             (range(len(question_group)))
         ) + prev_position
         if i_group > 0:
@@ -239,12 +239,6 @@ def calc_y_bar_position(grouped_questions, bar_thickness, bar_spacing, group_spa
         bar_positions.extend(group_positions)
         prev_position = bar_positions[-1]
     return bar_positions
-
-
-def wrap_ticks_label(labels, wrap_text):
-    if not wrap_text:
-        return labels
-    return ["\n".join(wrap(label, 30)) for label in labels]
 
 
 def format_labels(labels):
@@ -320,13 +314,18 @@ def likert_bar_plot(
     grouped_questions=None,
     sort_questions_by_choices="left",
     plot_title=False,
+    plot_title_position: tuple = (()),
     theme=None,
-    bar_thickness=0.2,
+    bar_width=0.2,
     bar_spacing=0.5,
     group_spacing=1,
+    legend_columns=2,
     calc_fig_size=True,
     x_axis_max_values=None,
-    wrap_text=True,
+    textwrap_y_axis: int = 100,
+    max_textwrap_y_axis: int = 200,
+    textwrap_legend: int = 100,
+    max_textwrap_legend: int = 200,
     **kwargs,
 ):
     """
@@ -338,18 +337,17 @@ def likert_bar_plot(
         sort_by_choices (str, optional): choices by which to sort the questions ("left", "right", "no_sorting").
         plot_title (Union[str, bool], optional): Title of the plot.
         theme(dict, optional): plot theme. If None is provided a default theme is selected.
-        bar_thickness (float): thickness of a single bar
+        bar_width (float): thickness of a single bar
         bar_spacing (float): horizontal spacing between bars belonging to the same group
         group_spacing (float): horizontal spacing between different question groups
         calc_fig_size (bool, optional): Calculate a figure size from the provided data and bar parameters, if False a default figure size is used
         x_axis_max_values (float, optional): Crop the x-Axis to [N%...N%], if None provided the x-axis is  [100%...100%]
-        wrap_text (bool, optional): Add line breaks to long questions
     """
     palette = None
 
     check_question_sorting(sort_questions_by_choices)
 
-    total_answers = data_df.loc["Total", "Total"]
+    # total_answers = data_df.loc["Total", "Total"]
     data_df = data_df.drop("Total", axis=0)
     data_df = data_df.drop("Total", axis=1)
 
@@ -362,20 +360,29 @@ def likert_bar_plot(
     if grouped_choices is None:
         grouped_choices = get_grouped_default_choices(data_df.index)
 
-    if theme is not None:
-        sns.set_theme(**theme)
-        palette = theme.get("palette", None)
-
     if calc_fig_size:
-        rc = {
-            "figure.figsize": (
+        if theme is not None:
+            theme["rc"]["figure.figsize"] = (
                 12,
-                len(data_df.columns) * (bar_thickness + bar_spacing)
+                len(data_df.columns) * (bar_width + bar_spacing)
                 + len(grouped_questions) * group_spacing
                 + 0.5,
             )
-        }
-        sns.set_theme(rc=rc)
+        else:
+            sns.set(
+                rc={
+                    "figure.figsize": (
+                        12,
+                        len(data_df.columns) * (bar_width + bar_spacing)
+                        + len(grouped_questions) * group_spacing
+                        + 0.5,
+                    )
+                }
+            )
+
+    if theme is not None:
+        sns.set_theme(**theme)
+        palette = theme.get("palette", None)
 
     fig, ax = plt.subplots()
 
@@ -402,7 +409,7 @@ def likert_bar_plot(
     colors = get_colors(palette, grouped_choices)
 
     bar_positions = calc_y_bar_position(
-        grouped_questions, bar_thickness, bar_spacing, group_spacing
+        grouped_questions, bar_width, bar_spacing, group_spacing
     )
     # own size + half of the size of the central box
     # have it centered around the choices assigned to the "center" location
@@ -421,20 +428,22 @@ def likert_bar_plot(
             bar_positions,
             widths,
             left=starts,
-            height=bar_thickness,
+            height=bar_width,
             label=format_labels([response_name])[0],
             color=colors[position][index_response],
-            **kwargs,
         )
-        plt.yticks(bar_positions, wrap_ticks_label(data_df.columns.values, wrap_text))
+        plt.yticks(
+            bar_positions,
+            label_wrap(data_df.columns.values, textwrap_y_axis, max_textwrap_y_axis),
+        )
 
     # add counts per question
     for question, bar_position in zip(sorted_questions, bar_positions):
-        n_counts = "(" + str(int(n_responses_absolute[question])) + ")"
-        ax.text(0, bar_position + bar_thickness * 0.25, n_counts)
+        n_counts = "Total:\n(" + str(int(n_responses_absolute[question])) + ")"
+        ax.text(-10, bar_position + bar_width * 0.25, n_counts, color="black")
 
     # add zero reference line
-    ax.axvline(0, linestyle="--", color="black", alpha=0.25)
+    ax.axvline(0, linestyle="--", label=None, color="black", alpha=0.25)
 
     # x axis in percent
     if x_axis_max_values is not None:
@@ -442,11 +451,11 @@ def likert_bar_plot(
     else:
         ax_min_max = 100
     ax.set_xlim(-ax_min_max, ax_min_max)
-    ax.set_xticks(np.arange(-ax_min_max, ax_min_max + 1, 10))
+    ax.set_xticks(np.arange(-ax_min_max, ax_min_max + 1, 20))
     ax.xaxis.set_major_formatter(lambda x, pos: str(abs(int(x))) + "%")
 
     # add total answers and answers per question
-    ax.text(ax_min_max, -0.05, f"Total: {total_answers}")
+    # ax.text(ax_min_max, -0.05, f"Total: {total_answers}",size= mpl.rcParams["font.size"])
 
     # y axis
     ax.invert_yaxis()
@@ -457,22 +466,25 @@ def likert_bar_plot(
     ax.spines["left"].set_visible(False)
 
     # legend
-    if len(location_and_response) > 4:
-        n_columns = int(np.ceil(len(location_and_response) / 2))
-    else:
-        n_columns = len(location_and_response)
+    hax, lax = ax.get_legend_handles_labels()
+    lax = label_wrap(lax, textwrap_legend, max_textwrap_legend)
     ax.legend(
-        ncol=n_columns,
-        bbox_to_anchor=(0, 1, 1, 1),
-        mode="expand",
-        loc="lower left",
-        fontsize="small",
-        framealpha=0.5,
+        hax,
+        lax,
+        ncol=legend_columns,
+        bbox_to_anchor=kwargs.get("bbox_to_anchor", [0.5, 1.1]),
+        # mode="expand",
+        frameon=False,
+        loc="upper center",
+        # framealpha=0.5,
     )
 
     # set plot title - already handled by outer plot function
     if plot_title:
-        ax.set_title(plot_title, y=1.28)
+        if plot_title_position:
+            ax.text(plot_title_position[0], plot_title_position[1], plot_title)
+        else:
+            ax.set_title(plot_title, y=1.28)
 
     plt.tight_layout()
     return fig, ax

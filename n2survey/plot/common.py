@@ -5,13 +5,14 @@ Created on Tue Mar 15 21:28:19 2022
 
 @author: theflike
 """
-from textwrap import wrap
+import textwrap
 from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 __all__ = [
+    "label_wrap",
     "sort_data",
     "form_bar_positions",
     "form_single_answer_bar_positions",
@@ -20,6 +21,16 @@ __all__ = [
     "aspect_ratio_from_arguments",
     "plot_bubbles",
 ]
+
+
+def label_wrap(labels, wrap_width=100, max_width=None):
+    labels_wrapped = [textwrap.fill(lable, wrap_width) for lable in labels]
+    if max_width:
+        labels_short = [
+            textwrap.shorten(lable, max_width, placeholder="...") for lable in labels
+        ]
+        labels_wrapped = [textwrap.fill(lable, wrap_width) for lable in labels_short]
+    return labels_wrapped
 
 
 def plot_bubbles(
@@ -64,10 +75,9 @@ def plot_bubbles(
         )
         plt.xticks(bar_positions, x)
         # collect and wrap up y_axis entries
-        compare_with_answers = [
-            "\n".join(wrap(entry, width=maximum_length_y_axis_answers))
-            for entry in legend_sequence
-        ]
+        compare_with_answers = label_wrap(
+            legend_sequence, maximum_length_y_axis_answers
+        )
         plt.yticks(compare_with_answer_positions, compare_with_answers)
         label_values = (np.array(y[entry])).astype(str)
         labels = np.array([i + "%" for i in label_values], dtype=object)

@@ -177,7 +177,7 @@ def rate_mental_health(
         base_score = 1
         conversion = ["freq" for i in range(8)]
         label = "depression"
-        classification_boundaries = [0, 4, 9, 14, 19, 24]
+        classification_boundaries = [-0.5, 4.5, 9.5, 14.5, 19.5, 24.5]
         classes = [
             "no to minimal depression",
             "mild depression",
@@ -234,8 +234,8 @@ def rate_mental_health(
         df.sum(axis=1, skipna=True).div(responses_counts).mul(num_subquestions)
     )
 
-    # Suppress entries with less than half of all subquestions answered
-    df.loc[responses_counts < num_subquestions / 2, f"{label}_score"] = None
+    # Suppress entries with at least one of the subquestions answered
+    df.loc[responses_counts < num_subquestions / 1, f"{label}_score"] = None
 
     # Classify into categories
     df[f"{label}_class"] = pd.cut(

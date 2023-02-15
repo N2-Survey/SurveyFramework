@@ -32,13 +32,13 @@ class TestRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
                     50.0,
                     100 / 3,
                     130 / 3,
-                    48.0,
                     np.nan,
                     np.nan,
-                    60.0,
+                    np.nan,
+                    np.nan,
                 ],
                 "state_anxiety_class": pd.Categorical(
-                    ["A3", "A1", "A2", "A3", np.nan, np.nan, "A3"],
+                    ["A3", "A1", "A2", np.nan, np.nan, np.nan, np.nan],
                     categories=[
                         "A1",
                         "A2",
@@ -73,13 +73,13 @@ class TestRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
                     47.5,
                     32.5,
                     50.0,
-                    55.0,
-                    170 / 3,
+                    np.nan,
+                    np.nan,
                     np.nan,
                     np.nan,
                 ],
                 "trait_anxiety_class": pd.Categorical(
-                    ["A3", "A1", "A3", "A3", "A3", np.nan, np.nan],
+                    ["A3", "A1", "A3", np.nan, np.nan, np.nan, np.nan],
                     categories=[
                         "A1",
                         "A2",
@@ -110,9 +110,9 @@ class TestRateMentalHealth(BaseTestLimeSurvey2021WithResponsesCase):
 
         ref = pd.DataFrame(
             data={
-                "depression_score": [8.0, 5.0, 8.0, 10.0, 52 / 3, np.nan, np.nan],
+                "depression_score": [8.0, 5.0, 8.0, np.nan, np.nan, np.nan, np.nan],
                 "depression_class": pd.Categorical(
-                    ["A2", "A2", "A2", "A3", "A4", np.nan, np.nan],
+                    ["A2", "A2", "A2", np.nan, np.nan, np.nan, np.nan],
                     categories=[
                         "A1",
                         "A2",

@@ -5,19 +5,19 @@ Created on Tue Mar 15 18:50:01 2022
 
 @author: TheFlike
 """
-from textwrap import wrap
 from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from .comparison_shared_functions import (
+from .common import (
     aspect_ratio_from_arguments,
     calculate_title_pad,
     filter_answer_sequence,
     form_bar_positions,
     form_single_answer_bar_positions,
+    label_wrap,
     plot_bubbles,
     sort_data,
 )
@@ -41,9 +41,13 @@ def multiple_simple_comparison_plot(
     legend_sequence: list = [],
     theme=None,
     calculate_aspect_ratio: bool = True,
-    maximum_length_x_axis_answers=20,
     show_zeroes: bool = True,
     bubbles: Union[bool, float] = None,
+    textwrap_x_axis: int = 100,
+    max_textwrap_x_axis: int = 200,
+    textwrap_legend: int = 100,
+    max_textwrap_legend: int = 200,
+    **kwargs,
 ):
     """
     Plots correlations between multiple choice answers and the answers of
@@ -55,9 +59,10 @@ def multiple_simple_comparison_plot(
     if ignore_no_answer:
         suppress_answers.append("No Answer")
     # form x and y from plot_data_lists
-    (x, y) = form_x_and_y(
+    x, y, total_cnts = form_x_and_y(
         plot_data_list, totalbar=totalbar, suppress_answers=suppress_answers
     )
+
     # remove answers not in x from answer_sequence
     answer_sequence = filter_answer_sequence(x, answer_sequence)
     # sort x-axis (and of course y-values) by answer sequence
@@ -70,16 +75,14 @@ def multiple_simple_comparison_plot(
     legend_sequence = filter_answer_sequence([entry for entry in y], [legend_sequence])
 
     # wrap text in x-axis and, if bubbleplot, also text in y-axis
-    x = ["\n".join(wrap(entry, width=maximum_length_x_axis_answers)) for entry in x]
+    x = label_wrap(x, textwrap_x_axis, max_textwrap_x_axis)
     max_lines_x = max([entry.count("\n") for entry in x]) + 1
+
     if bubbles:
         # can be added to a changeable variable, but I don't think it is
         # necessary for the moment.
-        maximum_length_y_axis_answers = maximum_length_x_axis_answers
-        y_bubble_plot = [
-            "\n".join(wrap(entry, width=maximum_length_y_axis_answers))
-            for entry in legend_sequence
-        ]
+        maximum_length_y_axis_answers = max_textwrap_x_axis
+        y_bubble_plot = label_wrap(legend_sequence, maximum_length_y_axis_answers)
         max_lines_y = max([entry.count("\n") for entry in y_bubble_plot]) + 1
     else:
         max_lines_y = 3
@@ -96,7 +99,7 @@ def multiple_simple_comparison_plot(
         y,
         bar_width=bar_width,
         totalbar=totalbar,
-        distance_between_bars=2,
+        distance_between_bars=2.5,
         positionlist_per_answer=list(positionlist_per_answer),
         no_sub_bars=no_sub_bars,
     )
@@ -146,6 +149,7 @@ def multiple_simple_comparison_plot(
             ax,
             x,
             y,
+            total_cnts,
             bar_positions_complete,
             positionlist_per_answer,
             legend_sequence,
@@ -157,6 +161,9 @@ def multiple_simple_comparison_plot(
             threshold_percentage=threshold_percentage,
             bar_width=bar_width,
             show_zeroes=show_zeroes,
+            textwrap_legend=textwrap_legend,
+            max_textwrap_legend=max_textwrap_legend,
+            **kwargs,
         )
     # enlarge y-axis maximum due to bar labels
     new_y_axis_size = 1.05 * ax.get_ylim()[1]
@@ -171,6 +178,7 @@ def plot_multi_bars_per_answer(
     ax,
     x,
     y,
+    total_cnts,
     bar_positions,
     positionlist_per_answer,
     legend_sequence,
@@ -182,6 +190,9 @@ def plot_multi_bars_per_answer(
     threshold_percentage: float = 0,
     bar_width: float = 0.8,
     show_zeroes: bool = True,
+    textwrap_legend: int = 100,
+    max_textwrap_legend: int = 200,
+    **kwargs,
 ):
     count = 0
     for entry, offset_from_xtick in zip(legend_sequence, positionlist_per_answer):
@@ -191,26 +202,30 @@ def plot_multi_bars_per_answer(
             label=entry,
             width=bar_width,
         )
-        plt.xticks(bar_positions, x)
-        label_values = (np.array(y[entry])).astype(str)
-        labels = np.array([i + "%" for i in label_values], dtype=object)
-        labels[np.where(label_values.astype(np.float64) <= threshold_percentage)] = ""
-        labels[np.where(label_values.astype(np.float64) == 100.0)] = "100%"
+        plt.xticks(np.array(bar_positions) + len(bar_positions) / 20.0, x)
+        labels = np.array(["{:.0f}%".format(p) for p in np.array(y[entry])])
+        labels[np.array(y[entry]) <= threshold_percentage] = ""
+
         if show_zeroes:
-            labels[np.where(label_values.astype(np.float64) == 0)] = r"|"
+            labels[np.where(np.array(y[entry]) == 0)] = r"|"
         ax.bar_label(
             ax.containers[count],
             labels,
             fmt="%s",
             label_type="edge",
             rotation=90,
-            padding=2,
+            padding=3,
         )
         count = count + 1
     plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment="right")
+    legend_sequence = [
+        lst + " (" + str(total_cnts[lst]) + ")" for lst in legend_sequence
+    ]
+    legend_sequence = label_wrap(legend_sequence, textwrap_legend, max_textwrap_legend)
     ax.legend(
         legend_sequence,
-        loc=(0.1, 1),
+        bbox_to_anchor=(kwargs.get("bbox_to_anchor", [0.1, 1, 0, 0])),
+        loc=kwargs.get("loc", "upper center"),
         ncol=legend_columns,
         frameon=False,
         title=legend_title,
@@ -230,6 +245,7 @@ def plot_multi_bars_per_answer(
                     legend_title=legend_title,
                 ),
             )
+    plt.xticks(rotation=60)
     fig.tight_layout()
     return fig, ax
 
@@ -248,13 +264,15 @@ def form_x_and_y(plot_data_list, totalbar=None, suppress_answers=[]):
     count = 0
     for question_compare_with_tuple in plot_data_list:
         answers.append(question_compare_with_tuple[0].count().index.values.astype(str))
-        percentages_for_comparison.append(
-            get_percentages(question_compare_with_tuple, totalbar=totalbar)
+        percent_tmp, total_cnts = get_percentages(
+            question_compare_with_tuple, totalbar=totalbar
         )
+        percentages_for_comparison.append(percent_tmp)
         for answer in suppress_answers:
-            if answer not in answers[count]:
-                print(f"{answer} does not exist for this question")
-            else:
+            # if answer not in answers[count]:
+            # print(f"{answer} does not exist for this question")
+            #    no_exist = True
+            if answer in answers[count]:
                 remove_index = np.where(answers[count] == answer)[0][0]
                 answers[count] = np.delete(answers[count], remove_index)
                 for i in percentages_for_comparison[count].copy():
@@ -278,7 +296,7 @@ def form_x_and_y(plot_data_list, totalbar=None, suppress_answers=[]):
                 )
             else:
                 y[answer] = percentages[answer]
-    return x, y
+    return x, y, total_cnts
 
 
 def get_percentages(question_compare_with_tuple, totalbar=None):
@@ -301,6 +319,7 @@ def get_percentages(question_compare_with_tuple, totalbar=None):
             question_results.loc[:, question_answer]
         )
     percentage = {}
+    total_cnts = {}
     for entry in compare_with_answers:
         percentage[entry] = []
     for compare_with_answer in compare_with_answers:
@@ -319,18 +338,16 @@ def get_percentages(question_compare_with_tuple, totalbar=None):
             # convert to percent and round
             if persons_total_answered_yes[question_answer]:
                 single_percentage = np.round(
-                    (
-                        100
-                        * single_percentage
-                        / persons_total_answered_yes[question_answer]
-                    ),
+                    (100 * single_percentage / np.sum(compare_with_bool_array)),
                     decimals=1,
                 )
             percentage[compare_with_answer].append(single_percentage)
+            total_cnts[compare_with_answer] = np.sum(compare_with_bool_array)
     if totalbar:
         percentage["Total"] = np.round(
             np.count_nonzero(question_results, axis=0) / total_participants * 100,
             decimals=1,
         )
         totalbar = False
-    return percentage
+        total_cnts["Total"] = total_participants
+    return percentage, total_cnts

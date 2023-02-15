@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from .comparison_shared_functions import calculate_title_pad
+from .common import calculate_title_pad, label_wrap
 
 __all__ = ["simple_comparison_plot"]
 
@@ -67,9 +67,10 @@ def form_x_and_y(df, totalbar: bool = None, suppress_answers: list = []):
         # in 'plot'()-function of survey.py
         totalbar = None
         for answer in suppress_answers:
-            if answer not in percentage_correlated_answers:
-                print(f"{answer} does not exist for this question")
-            else:
+            # if answer not in percentage_correlated_answers:
+            # print(f"{answer} does not exist for this question")
+            # not_exists = True
+            if answer in percentage_correlated_answers:
                 percentage_correlated_answers.pop(answer)
         percentages_for_comparison.append(percentage_correlated_answers.copy())
 
@@ -115,9 +116,10 @@ def form_bar_positions(
         )
         for answer in suppress_answers:
             # remove suppressed answers
-            if answer not in percentage_correlated_answers:
-                print(f"{answer} does not exist for this question")
-            else:
+            # if answer not in percentage_correlated_answers:
+            # print(f"{answer} does not exist for this question")
+            # not_exists = True
+            if answer in percentage_correlated_answers:
                 percentage_correlated_answers.pop(answer)
         number_of_answers = number_of_answers + len(percentage_correlated_answers)
         # set totalbar to None to not recalculate multiple total bars, since
@@ -193,7 +195,12 @@ def simple_comparison_plot(
     legend_title: str = None,
     answer_sequence: list = [],
     legend_sequence: list = [],
+    textwrap_x_axis: int = 100,
+    max_textwrap_x_axis: int = 200,
+    textwrap_legend: int = 100,
+    max_textwrap_legend: int = 200,
     theme=None,
+    **kwargs,
 ):
     """
     Plot correlations from the np.ndarray arrays in plot_data_list with the
@@ -201,6 +208,7 @@ def simple_comparison_plot(
     """
     # change plot data from pandas dataframe to arrays
     count = 0
+
     for df, answerlist in zip(plot_data_list.copy(), answer_sequence):
         array = df.values
         # remove combinations that do not occure from answer_sequence
@@ -212,6 +220,8 @@ def simple_comparison_plot(
     # form x-axis with answers to first question and y-axis with
     # percentages of second question correlated to each answer of the first
     # question.
+    unique, counts = np.unique(plot_data_list, return_counts=True)
+    dict_quest_counts = dict(zip(unique, counts))
     if ignore_no_answer:
         suppress_answers.append("No Answer")
     (x, y) = form_x_and_y(
@@ -250,10 +260,10 @@ def simple_comparison_plot(
         q2_answers.append(entry[:, 0])
         percentages.append(entry[:, 1].astype(np.float64))
     all_answers = legend_sequence.copy()
-    existing_answers = np.unique(np.concatenate(np.array(q2_answers, dtype=object)))
-    for entry in all_answers.copy():
-        if entry not in existing_answers:
-            all_answers.pop(all_answers.index(entry))
+    # existing_answers = np.unique(np.concatenate(np.array(q2_answers, dtype=object)))
+    # for entry in all_answers.copy():
+    #    if entry not in existing_answers:
+    #        all_answers.pop(all_answers.index(entry))
     percentage_all = []
     for (percentage, q2_answer) in zip(percentages, q2_answers):
         count = 0
@@ -276,17 +286,41 @@ def simple_comparison_plot(
             label=answer,
             width=bar_width,
         )
-        plt.xticks(bar_positions_complete, x)
+        x_labels = x.copy()
+        for i, element in enumerate(x):
+            if element != "Total":
+                x_labels[i] = element + " (" + str(dict_quest_counts[element]) + ")"
+            else:
+                x_labels[i] = element + " (" + str(len(plot_data_list[0])) + ")"
+        x_labels = label_wrap(x_labels, textwrap_x_axis, max_textwrap_x_axis)
+        plt.xticks(bar_positions_complete, x_labels)
         bottom = bottom + percentage
-        label_values = percentage.astype(str)
-        labels = np.array([i + "%" for i in label_values])
-        labels[np.where(label_values.astype(np.float64) <= threshold_percentage)] = ""
-        ax.bar_label(ax.containers[count], labels, fmt="%s", label_type="center")
+        labels = np.array(["{:.0f}%".format(p) for p in percentage])
+        labels[percentage <= threshold_percentage] = ""
+        if count != len(all_answers) - 1:
+            ax.bar_label(
+                ax.containers[count],
+                labels,
+                fmt="%s",
+                color="white",
+                label_type="center",
+            )
+        else:
+            ax.bar_label(
+                ax.containers[count],
+                labels,
+                fmt="%s",
+                color="black",
+                label_type="center",
+            )
         count = count + 1
+
     labels = all_answers
+    labels = label_wrap(labels, textwrap_legend, max_textwrap_legend)
     ax.legend(
         labels,
-        bbox_to_anchor=([0.1, 1, 0, 0]),
+        bbox_to_anchor=(kwargs.get("bbox_to_anchor", [0.1, 1, 0, 0])),
+        loc=kwargs.get("loc", "upper center"),
         ncol=legend_columns,
         frameon=False,
         title=legend_title,
@@ -303,7 +337,8 @@ def simple_comparison_plot(
                 ),
             )
     # scale
-    plt.setp(ax.get_xticklabels(), rotation=30, horizontalalignment="right")
+    plt.setp(ax.get_xticklabels(), rotation=50, horizontalalignment="right")
     # figure settings
+    # plt.xticks(rotation=60)
     fig.tight_layout()
     return fig, ax

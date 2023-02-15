@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
+from .common import label_wrap
+
 __all__ = ["single_choice_bar_plot"]
 
 
@@ -16,6 +18,8 @@ def single_choice_bar_plot(
     plot_title: Union[str, bool] = False,
     show_percents: bool = True,
     show_total: bool = True,
+    textwrap_x_axis: int = 100,
+    max_textwrap_x_axis: int = 200,
     **kwargs,
 ) -> Tuple[mpl.figure.Figure, mpl.axes.Axes]:
     """Do a bar plot for a single choice question
@@ -55,7 +59,16 @@ def single_choice_bar_plot(
     fig_width, _ = fig.get_size_inches()
 
     # Do the plot
+    x = label_wrap(x, textwrap_x_axis, max_textwrap_x_axis)
     sns.barplot(x=x, y=y, ci=None, ax=ax, **additional_params)
+    ax.spines["bottom"].set_color("black")
+    ax.spines["left"].set_color("black")
+    ax.tick_params(axis="x", which="major", pad=-2)
+    ax.set_xticks(
+        ax.get_xticks() + max(ax.get_xticks()) / 40.0,
+        ax.get_xticklabels(),
+        color="black",
+    )
 
     # set plot title - already handled by outer plot function
     if plot_title:
@@ -64,7 +77,7 @@ def single_choice_bar_plot(
     # Add percents on top
     if show_percents:
         percents = 100 * np.array(y) / total
-        labels = ["{:.1f}%".format(p) for p in percents]
+        labels = ["{:.0f}%".format(p) for p in percents]
         ax.bar_label(ax.containers[0], labels)
 
     if show_total:
@@ -72,7 +85,7 @@ def single_choice_bar_plot(
             len(y) * 0.9,
             max(y) * 1.1,
             f"Total: {total}",
-            size=fig_width * 1.5,
+            size=mpl.rcParams["font.size"],
         )
 
     # scale
@@ -82,5 +95,5 @@ def single_choice_bar_plot(
     # figure settings
     fig.tight_layout()
     fig.autofmt_xdate()
-
+    plt.xticks(rotation=60)
     return fig, ax

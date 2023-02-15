@@ -23,6 +23,7 @@ from n2survey.plot import (
     multiple_choice_bar_plot,
     multiple_multiple_comparison_plot,
     multiple_simple_comparison_plot,
+    plot_free_numbers,
     simple_comparison_plot,
     single_choice_bar_plot,
 )
@@ -579,9 +580,10 @@ class LimeSurvey:
         """
         question_group = self.get_question(question, drop_other=drop_other)
         question_type = self.get_question_type(question)
-
+        # Drop double question type for other options (e.g. A6T and A6other both in xml, but not csv files
+        if question + "T" in question_group.index:
+            question_group = question_group.drop(question + "T")
         responses = self.responses.loc[:, question_group.index]
-
         # convert multiple-choice responses
         if question_type == "multiple-choice":
             # ASSUME: question response consists of multiple columns with
@@ -593,7 +595,6 @@ class LimeSurvey:
             responses[
                 question_group.index[~question_group.is_contingent]
             ] = responses.loc[:, ~question_group.is_contingent].notnull()
-
         # replace labels
         if labels:
             if question_type == "multiple-choice":
@@ -603,6 +604,9 @@ class LimeSurvey:
                 # Get column labels for entire question group as dict
                 rename = self.get_choices(question)
                 # Rename column names
+                # Use *T name for *other option:
+                if "other" in question:
+                    rename[question + "other"] = rename.pop(question + "T")
                 responses = responses.rename(columns=rename)
 
             else:
@@ -618,7 +622,6 @@ class LimeSurvey:
                         )
                 # Rename column names
                 responses = responses.rename(columns=dict(question_group.label))
-
         return responses
 
     def __getitem__(
@@ -752,10 +755,14 @@ class LimeSurvey:
         """
         if responses is None:
             question_type = self.get_question_type(question)
-            responses = self.get_responses(question, labels=labels, drop_other=True)
+            if question_type == "multiple-choice":
+                responses = self.get_responses(
+                    question, labels=labels, drop_other=False
+                )
+            else:
+                responses = self.get_responses(question, labels=labels, drop_other=True)
         else:
             responses = responses
-
         if responses.shape[1] == 1:
             # If it consist of only one column, i.e. free, single choice, or
             # single column
@@ -768,9 +775,18 @@ class LimeSurvey:
                 counts_df = counts_df.sort_index()
         else:
             if question_type == "multiple-choice":
+                # include SQ and Other options in counts
+                map_other = responses.columns.str.contains("Other")
                 counts_df = pd.DataFrame(
-                    responses.sum(axis=0), columns=[self.get_label(question)]
+                    np.nan, index=responses.columns, columns=[self.get_label(question)]
                 )
+                for row, counts in responses.sum(axis=0).iteritems():
+                    counts_df.loc[row, self.get_label(question)] = counts
+                for row, counts in (
+                    responses[responses.columns[map_other]].count().iteritems()
+                ):
+                    counts_df.loc[row, self.get_label(question)] = counts
+
             elif question_type == "array":
                 counts_df = responses.apply(
                     lambda x: x.value_counts(dropna=dropna, sort=False), axis=0
@@ -891,13 +907,20 @@ class LimeSurvey:
         plot_title_position: tuple = (()),
         plot_title_org: bool = False,
         save: Union[str, bool] = False,
+        bar_spacing: float = 0.5,
+        group_spacing: float = 1,
         file_format: str = "png",
         dpi: Union[str, float] = "figure",
         answer_sequence: list = [],
         legend_title: Union[str, bool] = None,
         legend_sequence: list = [],
         calculate_aspect_ratio: bool = True,
-        maximum_length_x_axis_answers: int = 20,
+        textwrap_x_axis: int = 100,
+        max_textwrap_x_axis: int = 200,
+        textwrap_y_axis: int = 100,
+        max_textwrap_y_axis: int = 200,
+        textwrap_legend: int = 100,
+        max_textwrap_legend: int = 200,
         show_zeroes: bool = True,
         bubbles: Union[bool, float] = None,
         kind: str = None,
@@ -959,13 +982,16 @@ class LimeSurvey:
                 can be used if you want to give the order of bars yourself,
                 just add in a list with the answers as entries in the order you
                 want
-
+            'bar_spacing' and 'group_spacing': options for the likert array plots to arrange the bars
             'calculate_aspect_ratio': True or False, if False, aspect ratio is
                 taken from theme, if True aspect ratio of picture is calculated
                 from number of bars and 'bar_width'
-            'maximum_length_x_axis_answers': parameter for word wrapping of the
-                answers plotted on x-axis, standard 20 --> no line longer then
-                20 characters
+            'textwrap_*(x_axis,y_axis, legend)': parameter for word wrapping of the
+                answers plotted on x-axis, yaxis or legend, standard 100 -->
+                no line longer, otherwise wrapped
+            'max_textwrap_*(x_axis,y_axis, legend)': max parameter for word wrapping
+                of the answers plotted on x-axis, yaxis or legend, standard 200 -->
+                if label longer, the rest will be replaced with ...
             'show_zeroes': Plots lines for every 0% bar
             'bubbles': if float or True is given, plots are changed to a bubble
                 plot with answers to 'question' and 'add_questions' on the
@@ -1007,6 +1033,7 @@ class LimeSurvey:
                 theme,
                 add_questions=add_questions,
                 totalbar=totalbar,
+                bar_width=bar_width,
                 suppress_answers=suppress_answers,
                 ignore_no_answer=ignore_no_answer,
                 threshold_percentage=threshold_percentage,
@@ -1018,9 +1045,14 @@ class LimeSurvey:
                 legend_title=legend_title,
                 legend_sequence=legend_sequence,
                 calculate_aspect_ratio=calculate_aspect_ratio,
-                maximum_length_x_axis_answers=maximum_length_x_axis_answers,
                 show_zeroes=show_zeroes,
                 bubbles=bubbles,
+                textwrap_x_axis=textwrap_x_axis,
+                max_textwrap_x_axis=max_textwrap_x_axis,
+                textwrap_y_axis=textwrap_y_axis,
+                max_textwrap_y_axis=max_textwrap_y_axis,
+                textwrap_legend=textwrap_legend,
+                max_textwrap_legend=max_textwrap_legend,
                 **kwargs,
             )
         elif question_type == "single-choice":
@@ -1030,6 +1062,8 @@ class LimeSurvey:
                 y=pd.Series(counts_df.iloc[:, 0], name="Number of Responses"),
                 plot_title=plot_title,
                 theme=theme,
+                textwrap_x_axis=textwrap_x_axis,
+                max_textwrap_x_axis=max_textwrap_x_axis,
                 **non_theme_kwargs,
             )
         elif question_type == "multiple-choice":
@@ -1039,29 +1073,52 @@ class LimeSurvey:
             counts_df.loc[:, "Total"] = self.responses.shape[0]
             counts_df.iloc[-1, :] = np.nan
             counts_df.iloc[:, 0] = counts_df.iloc[:, 0].astype("float64")
-            fig, ax = multiple_choice_bar_plot(
-                counts_df, theme=theme, plot_title=plot_title, **non_theme_kwargs
-            )
-        elif question_type == "array":
 
-            counts_df = self.count(
-                question,
-                labels=True,
-                percents=False,
-                add_totals=True,
-            )
-            counts_df.loc["Total", "Total"] = self.responses.shape[0]
-            fig, ax = likert_bar_plot(
+            fig, ax = multiple_choice_bar_plot(
                 counts_df,
                 theme=theme,
-                bar_spacing=0.2,
-                bar_thickness=0.4,
-                group_spacing=1,
-                calc_fig_size=True,
                 plot_title=plot_title,
+                textwrap_y_axis=textwrap_y_axis,
+                bar_spacing=bar_spacing,
+                bar_width=bar_width,
+                max_textwrap_y_axis=max_textwrap_y_axis,
                 **non_theme_kwargs,
             )
-            plt.tight_layout()
+        elif question_type == "array":
+            if self.get_choices(question) is None:
+                fig, ax = plot_free_numbers(
+                    self.get_responses(question),
+                    theme=theme,
+                    plot_title=plot_title,
+                    textwrap_legend=textwrap_legend,
+                    max_textwrap_legend=max_textwrap_legend,
+                    **kwargs,
+                )
+            else:
+                counts_df = self.count(
+                    question,
+                    labels=True,
+                    percents=False,
+                    add_totals=True,
+                )
+                counts_df.loc["Total", "Total"] = self.responses.shape[0]
+                fig, ax = likert_bar_plot(
+                    counts_df,
+                    theme=theme,
+                    bar_spacing=bar_spacing,
+                    bar_width=bar_width,
+                    legend_columns=legend_columns,
+                    group_spacing=group_spacing,
+                    calc_fig_size=calculate_aspect_ratio,
+                    textwrap_y_axis=textwrap_y_axis,
+                    max_textwrap_y_axis=max_textwrap_y_axis,
+                    textwrap_legend=textwrap_legend,
+                    max_textwrap_legend=max_textwrap_legend,
+                    plot_title_position=plot_title_position,
+                    plot_title=plot_title,
+                    **kwargs,
+                )
+                plt.tight_layout()
 
         # Save to a file
         if save:
@@ -1096,10 +1153,15 @@ class LimeSurvey:
         legend_title: Union[str, bool] = None,
         legend_sequence: list = [],
         calculate_aspect_ratio: bool = True,
-        maximum_length_x_axis_answers: float = 20,
         kind: str = None,
         show_zeroes: bool = True,
         bubbles: Union[bool, float] = None,
+        textwrap_x_axis: int = 100,
+        max_textwrap_x_axis: int = 200,
+        textwrap_y_axis: int = 100,
+        max_textwrap_y_axis: int = 200,
+        textwrap_legend: int = 100,
+        max_textwrap_legend: int = 200,
         **kwargs,
     ):
         """
@@ -1144,6 +1206,11 @@ class LimeSurvey:
                 answer_sequence=answer_sequence,
                 legend_sequence=legend_sequence,
                 theme=theme,
+                textwrap_x_axis=textwrap_x_axis,
+                max_textwrap_x_axis=max_textwrap_x_axis,
+                textwrap_legend=textwrap_legend,
+                max_textwrap_legend=max_textwrap_legend,
+                **kwargs,
             )
         elif all(
             [question_type == "multiple-choice", compare_with_type == "single-choice"]
@@ -1164,10 +1231,14 @@ class LimeSurvey:
                 answer_sequence=answer_sequence,
                 legend_sequence=legend_sequence,
                 calculate_aspect_ratio=calculate_aspect_ratio,
-                maximum_length_x_axis_answers=maximum_length_x_axis_answers,
                 theme=theme,
                 show_zeroes=show_zeroes,
                 bubbles=bubbles,
+                textwrap_x_axis=textwrap_x_axis,
+                max_textwrap_x_axis=max_textwrap_x_axis,
+                textwrap_legend=textwrap_legend,
+                max_textwrap_legend=max_textwrap_legend,
+                **kwargs,
             )
         elif all(
             [question_type == "multiple-choice", compare_with_type == "multiple-choice"]
@@ -1188,7 +1259,6 @@ class LimeSurvey:
                 answer_sequence=answer_sequence,
                 legend_sequence=legend_sequence,
                 calculate_aspect_ratio=calculate_aspect_ratio,
-                maximum_length_x_axis_answers=maximum_length_x_axis_answers,
                 theme=theme,
                 show_zeroes=show_zeroes,
                 bubbles=bubbles,
@@ -1433,7 +1503,7 @@ class LimeSurvey:
             filename = f"{self.org}-{filename}.{file_format}"
         filename = _clean_file_name(filename)
         fullpath = os.path.join(self.output_folder, filename)
-        fig.savefig(fullpath, dpi=dpi)
+        fig.savefig(fullpath, dpi=dpi, bbox_inches="tight")
         print(f"Saved plot to {fullpath}")
         return True
 

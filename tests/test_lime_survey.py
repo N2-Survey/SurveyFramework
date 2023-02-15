@@ -962,7 +962,6 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
                 False,
                 False,
                 True,
-                False,
                 np.nan,
             ],
             [
@@ -979,7 +978,6 @@ class TestLimeSurveyGetResponse(BaseTestLimeSurvey2021WithResponsesCase):
                 False,
                 False,
                 True,
-                False,
                 False,
                 False,
                 False,

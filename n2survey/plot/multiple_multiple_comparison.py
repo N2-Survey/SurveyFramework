@@ -5,19 +5,19 @@ Created on Tue Mar 15 18:50:01 2022
 
 @author: theflike
 """
-from textwrap import wrap
 from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from .comparison_shared_functions import (
+from .common import (
     aspect_ratio_from_arguments,
     calculate_title_pad,
     filter_answer_sequence,
     form_bar_positions,
     form_single_answer_bar_positions,
+    label_wrap,
     plot_bubbles,
     sort_data,
 )
@@ -69,16 +69,13 @@ def multiple_multiple_comparison_plot(
         legend_sequence.insert(0, "Total")
     legend_sequence = filter_answer_sequence([entry for entry in y], [legend_sequence])
     # wrap text in x-axis and, if bubbles, y-axis texts as well
-    x = ["\n".join(wrap(entry, width=maximum_length_x_axis_answers)) for entry in x]
+    x = label_wrap(x, maximum_length_x_axis_answers)
     max_lines_x = max([entry.count("\n") for entry in x]) + 1
     if bubbles:
         # can be added to a changeable variable, but I don't think it is
         # necessary for the moment.
         maximum_length_y_axis_answers = maximum_length_x_axis_answers
-        y_bubble_plot = [
-            "\n".join(wrap(entry, width=maximum_length_y_axis_answers))
-            for entry in legend_sequence
-        ]
+        y_bubble_plot = label_wrap(legend_sequence, maximum_length_y_axis_answers)
         max_lines_y = max([entry.count("\n") for entry in y_bubble_plot]) + 1
     else:
         max_lines_y = 3
