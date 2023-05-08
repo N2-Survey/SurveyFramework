@@ -417,7 +417,6 @@ def likert_bar_plot(
         data_df.loc[grouped_choices["left"]].sum(axis=0)
         + data_df.loc[grouped_choices["center"]].sum(axis=0) / 2
     )
-
     sorted_questions = data_df.columns.values
     for response in location_and_response:
         position, response_name = response
@@ -439,8 +438,43 @@ def likert_bar_plot(
 
     # add counts per question
     for question, bar_position in zip(sorted_questions, bar_positions):
+        perc_left = int(
+            round(data_df.loc[grouped_choices["left"]][question].sum(axis=0), 0)
+        )
+        perc_cent = int(
+            round(data_df.loc[grouped_choices["center"]][question].sum(axis=0), 0)
+        )
+        perc_right = int(
+            round(data_df.loc[grouped_choices["right"]][question].sum(axis=0), 0)
+        )
         n_counts = "Total:\n(" + str(int(n_responses_absolute[question])) + ")"
         ax.text(-10, bar_position + bar_width * 0.25, n_counts, color="black")
+        if perc_left > 20:
+            color_left = "white"
+            offset_l = 0
+        else:
+            color_left = "black"
+            offset_l = perc_cent / 2.0 + perc_left * 2 / 5.0 + 5
+        if perc_right > 20:
+            color_right = "white"
+            offset = 0
+        else:
+            color_right = "black"
+            offset = perc_right + (20 - perc_right) / 3.0
+        ax.text(
+            -perc_cent / 2.0 - perc_left * 3 / 5.0 - offset_l,
+            bar_position + bar_width * 0.1,
+            str(perc_left) + "%",
+            color=color_left,
+            weight="bold",
+        )
+        ax.text(
+            perc_cent / 2.0 + perc_right * 1 / 6.0 + offset,
+            bar_position + bar_width * 0.1,
+            str(perc_right) + "%",
+            color=color_right,
+            weight="bold",
+        )
 
     # add zero reference line
     ax.axvline(0, linestyle="--", label=None, color="black", alpha=0.25)
