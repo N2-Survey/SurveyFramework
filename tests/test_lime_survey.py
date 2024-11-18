@@ -1,4 +1,5 @@
 """Test functions related to Survey class"""
+
 import os
 import re
 import unittest

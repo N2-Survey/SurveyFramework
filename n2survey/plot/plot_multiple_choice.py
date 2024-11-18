@@ -78,14 +78,17 @@ def create_bar_plot(
     bottom_text = "Total: {:.0f}".format(total)  # \n'{wrapped_bottom}'"
     # if is_percentage:
     #    bottom_text = bottom_text + " Relative response rates."
-    plt.title(bottom_text, fontsize=default_fontsize * 0.9 / bar_spacing, y=-0.1)
+    # plt.title(bottom_text, fontsize=default_fontsize * 0.9 / bar_spacing, y=-0.1)
+    ax.text(
+        0.8, -0.1, bottom_text, size=mpl.rcParams["font.size"], transform=ax.transAxes
+    )
 
     # set plot title - already handled by outer plot function
     if plot_title:
         ax.set_title(plot_title)
 
     # Adjust margins
-    plt.subplots_adjust(left=0.25, right=0.9, top=0.8, bottom=0.1)
+    # plt.subplots_adjust(left=0.25, right=0.9, top=0.8, bottom=0.1)
 
     return fig, ax
 

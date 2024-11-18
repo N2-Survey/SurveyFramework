@@ -58,7 +58,7 @@ def plot_bubbles(
         plt.ylim(ylim)
     else:
         plt.ylim(0, (compare_with_answer_positions[-1] + 1))
-    if type(bubbles) == bool:
+    if isinstance(bubbles, (bool)):
         bubble_size = calculate_bubblesize()
     else:
         bubble_size = bubbles

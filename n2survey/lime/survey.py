@@ -592,9 +592,9 @@ class LimeSurvey:
             # Left-hand-side slicing changed from .loc to __getitem__ to avoid categorical assignment error
             # Reason unclear, see: https://stackoverflow.com/questions/71905655/pandas-can-assign-1-column-
             # dataframe-to-series-but-not-to-dataframe-of-same-sha
-            responses[
-                question_group.index[~question_group.is_contingent]
-            ] = responses.loc[:, ~question_group.is_contingent].notnull()
+            responses[question_group.index[~question_group.is_contingent]] = (
+                responses.loc[:, ~question_group.is_contingent].notnull()
+            )
         # replace labels
         if labels:
             if question_type == "multiple-choice":

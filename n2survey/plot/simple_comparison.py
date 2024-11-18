@@ -265,7 +265,7 @@ def simple_comparison_plot(
     #    if entry not in existing_answers:
     #        all_answers.pop(all_answers.index(entry))
     percentage_all = []
-    for (percentage, q2_answer) in zip(percentages, q2_answers):
+    for percentage, q2_answer in zip(percentages, q2_answers):
         count = 0
         percentage_all_single = []
         for answer in all_answers:

@@ -251,7 +251,6 @@ def rate_mental_health(
 
 
 def strRange_to_intRange(strAnswer: str) -> int:
-
     """Calculate the mean of all numbers present in a string.
 
     Args:
@@ -273,7 +272,6 @@ def strRange_to_intRange(strAnswer: str) -> int:
 
 
 def range_to_numerical(question_label: str, responses: pd.DataFrame) -> pd.DataFrame:
-
     """Get numerical values from responses with ranges in a non-numerical datatype.
 
     Args:
