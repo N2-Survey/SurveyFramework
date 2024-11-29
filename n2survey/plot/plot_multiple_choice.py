@@ -64,7 +64,11 @@ def create_bar_plot(
         bar_width = bar.get_width()
         bar.set_y(bar.get_y() + (current_height - bar_height) * 0.5)
         plt.annotate(
-            f"{int(bar_width)}%" if is_percentage else f"{int(bar_width)}",
+            (
+                "{:.0f}%".format(bar_width)
+                if is_percentage
+                else "{:.0f}%".format(bar_width)
+            ),
             xy=(bar_width, bar.get_y() + bar.get_height() / 2),
             xytext=(3, 0),
             textcoords="offset points",
