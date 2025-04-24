@@ -776,7 +776,8 @@ class LimeSurvey:
         else:
             if question_type == "multiple-choice":
                 # include SQ and Other options in counts
-                map_other = responses.columns.str.contains("Other")
+                map_other = responses.columns == question + "other"
+                responses.rename(columns={question + "other": "Other"}, inplace=True)
                 counts_df = pd.DataFrame(
                     np.nan, index=responses.columns, columns=[self.get_label(question)]
                 )
